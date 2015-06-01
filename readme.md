@@ -29,9 +29,9 @@ Next create a copy of this directory and change to it
   git clone --mirror $REMOTE_URL
   cd webofthings
 
-Install the node web socket module:
+Install the dependencies (the node web socket module):
 
-  npm ws
+  npm install
   
 To start the server use the following command from a terminal shell:
 
