@@ -258,7 +258,8 @@ function init_dependencies(thing)
         record_dependency(thing, name, uri);
         
         // create proxy if uri is for a remote thing
-        proxy(uri);
+        // not yet working so commented out here
+        //register_proxy(uri);
       }
     }
   }
