@@ -450,4 +450,4 @@ function init_actions (thing, ws)
 }
 
 exports.thing = thing;
-exports.proxy = proxy;
+exports.proxy = register_proxy;
