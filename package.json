@@ -1,0 +1,7 @@
+{
+  "name": "webofthings",
+  "version": "0.0.1",
+  "dependencies": {
+    "ws": "latest"
+  }
+}

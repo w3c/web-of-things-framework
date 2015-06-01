@@ -1,0 +1,8 @@
+# don't sync node modules that this project pulls in
+
+node_modules/
+.DS_Store
+design.txt
+readme
+notes
+

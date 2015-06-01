@@ -1,0 +1,113 @@
+My Wot Demo:
+
+You define a named local thing with:
+
+   wot.thing(name, model, implementation);
+
+where name is unique identifier on this server for the thing, model is an object defining the thing’s description, and implementation is an object that must have start and stop methods, both of which have one argument that is the newly created thing.
+
+The thing’s model will be made available over http via the path /wot/name.
+
+You create a proxy for a remote thing with:
+
+   wot.proxy(URI, handler);
+
+where URI is the URI for the thing’s description, and handler is a function that is called when the thing is ready for use. The thing is passed as the argument to the handler.
+
+In both cases, things may have dependencies which are set up as named properties. These dependencies could be local, i.e. registered on this server, or be proxies for remote things. 
+
+The thing description is used to create a local object. 
+
+If the thing is local, we uses setters and getters for its property values where the values are held in an internal associative array. The property getters retrieve the internal value from this array. The property setters store the internal value, and also notify proxies with the new value. Events are notified to all proxies for this thing as well as to all local observers for this event. Actions may be invoked directly on this object or remotely by proxies. In the latter case we need to deliver the action’s result (if any) to the proxy that invoked it.
+
+The local object for a proxy also uses property setters and getters. The setters transmit the new value to the thing that the proxy acts on behalf of, and also updates the internal value. The getters retrieve the internal value. When the proxy is notified of an event, it needs to notify all observers of that event, as well as any chained proxies. When an action is called, the proxy remotely invokes this action on the thing this proxy acts on behalf of. Actions may return asynchronous results.
+
+The server needs to queue messages for a thing that has yet to be started, and to deliver those messages in order when the thing is started, i.e. after the return of its start method.
+
+A web socket connection is established for events, property updates, action invocations, and action responses. A single connection is used for each server. This connection is opened when creating a proxy, and there isn’t an existing connection for the target server. Note that the target server may have previously opened a connection with this server, so we shouldn’t care which server opened the connection.
+
+Next Steps
+==========
+
+Modify http server to export function for recording the thing registry that maps ids to descriptions and objects. Define path prefix for thing descriptions and use the rest of the path as a thing id. Use that to return thing descriptions from the registry.
+
+Define register, thing and proxy methods as described above.
+
+Streamline code for creating object for locally hosted things and for proxies for remotely hosted things.
+
+Introduce a server to socket map for re-using sockets where possible. Provide a method to open a socket as a client when needed.
+
+Modify the message dispatcher to queue messages for things that have yet to start.
+
+Test what value return; provides and see if it can be used for generating a result message. Extend invoke message to carry proxy id and call id.  Extend action handlers to cache the socket, proxy id and call id.
+
+Add method to register proxy on remote server (typically outside of the firewall).
+
+
+Open Issues
+===========
+
+Error handling need to be thought through.
+
+I am reserving property names that start with an underscore character. This makes it safe for me to use underscore for internal properties used as part of the framework implementation.
+
+I need to think about how things are bound the sensors and actuators. On NodeJS there are many modules that could help with this. If a sensor is polled, the start method could set up a timer event with setInterval. If the sensor uses call backs or events to signal changes, I can likewise handle these to update the thing property value. For actions, I need a way to initialise the thing’s action handler, e.g.
+
+   thing._implementation[act] = <the desired function>
+
+This could be done in the start method. One question is how to determine if the action yields a result? What value does return; yield? If it is “undefined” then we could test that to determine whether or not we need to return a result to the proxy id provided in the action invocation. The invocation needs to provide the web socket and the proxy id. This can be discarded once the invoked function has returned and we’ve forwarded the JSON representation of the result.
+
+I currently assume that the thing descriptions are pre-existing files on the server. I may instead want create the files when registering a thing. This would then involve passing the object containing the description. I could use the first part of the path to recognise that this is a request for a description and the second part of the path as an id that is used to find the thing’s description. When registering a thing, the id could be generated automatically. This approach would have the benefit of including the description in the code along with the code for initialising the thing (it’s start method).
+
+Note that I currently use the URI for the description as an id for the thing in the web socket messages.
+
+How to deal with a chain of proxies. We need a way to register the description for a proxy so that it can be used as part of a chain. The server needs to manage the URIs it exposes. We also need a way for a server inside a firewall to register a proxy on a server that is outside of the firewall, e.g.
+
+  wot.register_proxy(URI, description, id);
+
+where URI is the server outside of the firewall, description is an object for the description or its serialisation as JSON, and id is the identifier that should be used for messages to the server within the firewall. This assumes that the internal server establishes a web socket connection to the external server, using the URI provided.
+
+How does the server know which protocols are supported for a given target server? For now, I assume a fixed mapping from the HTTP URI for a thing’s description to the web socket address. I want to add a .well-known/protocols JSON file that lists the supported protocols and ports.
+
+Things of the same type may share the same description, and this description could be on a different server. We thus need support for referencing shared descriptions, e.g.
+
+{
+  @description: URI
+}
+
+Another case is where the description is on server A, but the thing is hosted on server B. The description then needs to provide a pointer to server B.
+
+If a web socket connection closes when there are active proxies depending upon it, then we need to try to re-establish the connection.
+
+There should be an event that signals that a thing has been stopped. The proxy should provide a handler that listens for this and updates the proxy’s status to stopped.
+
+@dependencies could be considered as a syntactic shortcut for using @properties?
+
+e.g.
+
+{
+  "@dependencies" : {
+    "door" : "/wot/door.json",
+    "light" : "/wot/light.json"
+  }
+}
+
+as a shortcut for:
+
+{
+  @properties {
+    door: {
+      type: “thing”,
+      model: “/wot/door.json”
+    }
+    light: {
+      type: “thing”,
+      model: “/wot/light.json”
+    }
+  }
+}
+
+That sounds like something for community discussion!  If you wanted to annotate the relationship, then there is relatively little between the two representations.
+
+If there is a chain of dependencies they will need to be resolved. It is bad practice to design things to involve large numbers of direct or indirect dependencies, and it is better to use events or actions that hide the things involved.
+
