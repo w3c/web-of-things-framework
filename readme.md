@@ -49,9 +49,7 @@ To load the demo web page point your web browser to
   
 and open the browser console to view the log
 
-### References
- 
-1.  <a name="1">http://www.w3.org/blog/2015/05/building-the-web-of-things</a>
+1. <a name="1">http://www.w3.org/blog/2015/05/building-the-web-of-things</a>
 2. <a name="1">http://www.w3.org/2015/05/wot-framework.pdf</a>
 3. <a name="2">http://www.w3.org/WoT/IG/</a>
 
@@ -60,9 +58,9 @@ and open the browser console to view the log
 We welcome contributions. If you find a bug in the source code or a mistake in the documentation, you can help us by submitting an issue to our [GitHub repository](https://github.com/w3c/web-of-things-framework), and likewise if you have suggestions for new features. Even better you can submit a Pull Request with a fix.
 
 We encourage you to join the W3C [Web of Things Community Group](http://www.w3.org/WoT/IG/) where contribution and discussions happen. Anyone can join and there are no fees.
- 
+
 ## License
- 
+
 (The MIT License)
 
 Copyright (c) 2015 Dave Raggett &lt;dsr@w3.org&gt;

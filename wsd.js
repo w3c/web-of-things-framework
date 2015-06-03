@@ -16,11 +16,13 @@ var connections = {};
 
 function register_thing(uri, thing)
 {
+  console.log("registering thing: " + uri);
   things[uri] = thing;
 }
 
 function register_proxy(uri, ws)
 {
+  console.log("registering proxy: " + uri);
   if (!proxies[uri])
     proxies[uri] = [];
     
@@ -73,8 +75,8 @@ function dispatch_message (message)
     
   if (!thing)
   {
-    console.log("unknown thing: " + message.uri);
-    raise("unknown thing: " + message.uri);
+    console.log("dispatch_message: unknown thing: " + message.uri);
+    raise("dispatch_message: unknown thing: " + message.uri);
   }
     
   if (message.event)  // notify event to proxy
@@ -84,7 +86,7 @@ function dispatch_message (message)
     for (var i = 0; i < observers.length; ++i)
       observers[i](message.name, message.data);
   }
-  else if (message.state)  // update all properties on proxy 
+  else if (message.state)  // update all properties on proxy
   {
     var obj = message.state;
       
@@ -129,7 +131,7 @@ wss.on('connection', function(ws)
       
       if (!thing)
       {
-        console.log("unknown thing: " + message.proxy);
+        console.log("on connection, proxy: unknown thing: " + message.proxy);
         return;
       }
       
@@ -157,7 +159,7 @@ wss.on('connection', function(ws)
       
       if (!thing)
       {
-        console.log("unknown thing: " + message.uri);
+        console.log("on connection, patch: unknown thing: " + message.uri);
         return;
       }
       
@@ -172,7 +174,7 @@ wss.on('connection', function(ws)
       
       if (!thing)
       {
-        console.log("unknown thing: " + message.uri);
+        console.log("on connection, action: unknown thing: " + message.uri);
         return;
       }
       

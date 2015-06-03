@@ -53,8 +53,8 @@ function thing (name, model, implementation)
 // handler is null if called from init_dependencies
 function register_proxy (uri, handler)
 {
-  var options = url.parse(uri);
-  
+  var options = url.parse(url.resolve(base, uri));
+
   if (!options.host)
   {
     options.host = "localhost";
@@ -396,8 +396,8 @@ function init_properties (thing, ws)
               patch: prop,
               data: value
             };
-            
-            wsd.notify(JSON.stringify(message));
+
+            wsd.notify(message);
           }
         });
       }
