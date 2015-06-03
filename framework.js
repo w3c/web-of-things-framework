@@ -7,12 +7,14 @@ var http = require('http');
 var httpd = require('./httpd.js');  // launch the http server
 var wsd = require('./wsd.js');  // launch the web sockets server
 var base = 'http://localhost:8888/wot/'; // base URI for models on this server
+var baseUri = url.parse(base);
 var pending = {};  // mapping from uri to list of things with unresolved dependencies
 
 // registry of locally hosted things with mapping from thing id to model, implementation and status
 var registry = {};
 
 httpd.set_registry(registry);  // pass reference to http server so it can serve up models
+wsd.set_registry(registry);
 
 // create new thing given its unique name, model and implementation
 function thing (name, model, implementation)
@@ -55,29 +57,19 @@ function register_proxy (uri, handler)
 {
   var options = url.parse(url.resolve(base, uri));
 
-  if (!options.host)
-  {
-    options.host = "localhost";
-    options.port = 8888;
-  }
-  
   // is this thing hosted by this server?
-  
-  // *** this test is insufficient -- please fix me ***
-  if (options.port = 8888 && 
-       (options.host === "localhost" ||
-        options.host === '127.0.0.1')) {
+  if (options.host === baseUri.host) {
     return record_proxy(options.pathname, handler);
   }
   
   // otherwise on a remote server, so use HTTP to retrieve model
   
   return http.get (options, function(response) {
-      var body = '';
-      response.on('data', function(d) {
-        body += d;
-      });
-  
+    var body = '';
+    response.on('data', function(d) {
+      body += d;
+    });
+
     response.on('end', function() {
       try {
         var model = JSON.parse(body);
@@ -247,23 +239,23 @@ function init_dependencies(thing)
     {
       var uri = dependencies[name];
       console.log("dependee: " + uri);
-      
+
       uri = url.resolve(thing._uri, uri)
       var entry = registry[uri];
-      
+
       if (entry)
         resolve_dependency(thing, name, entry.thing);
       else
       {
         record_dependency(thing, name, uri);
-        
+
         // create proxy if uri is for a remote thing
         // not yet working so commented out here
-        //register_proxy(uri);
+        register_proxy(uri);
       }
     }
   }
-  
+
   // some things may be waiting for this thing
   notify_dependents(thing);
 }
@@ -287,8 +279,8 @@ function init_events(thing)
     if (events.hasOwnProperty(ev))
       thing._observers[ev] = [];
   }
-  
-  thing._observe = function (name, handler) { 
+
+  thing._observe = function (name, handler) {
     var observers = thing._observers[name];
       
     // check handler is a function

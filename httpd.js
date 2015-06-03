@@ -3,7 +3,7 @@
 // could be easily extended to handle request body
 
 var port = 8888;
-var base = 'http://localhost:8888/'; // base URI for models on this server
+var base = 'http://localhost:' + port + '/'; // base URI for models on this server
 
 var http = require("http");
 var url = require('url');
