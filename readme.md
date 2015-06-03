@@ -26,20 +26,20 @@ Then install node.js and npm from https://nodejs.org/download/
 
 Next create a copy of this directory and change to it
 
-  git clone --mirror https://github.com/w3c/web-of-things-framework
-  cd webofthings
+    git clone https://github.com/w3c/web-of-things-framework webofthings
+    cd webofthings
 
 Install the node web socket module:
 
-  npm install ws
+    npm install
   
 To start the server use the following command from a terminal shell:
 
-  node demo.js
+    node demo.js
   
 To load the demo web page point your web browser to
 
-  http://localhost:8888/
+    http://localhost:8888/
   
 and open the browser console to view the log
 
