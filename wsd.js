@@ -3,6 +3,9 @@
 
 var exports = module.exports = {}
 
+var url = require('url');
+var base = 'http://localhost:8888/wot/'; // base URI for models on this server
+
 // run the websocket server
 var WebSocket = require('ws'),
     WebSocketServer = WebSocket.Server,
@@ -14,13 +17,15 @@ var things = {};
 var proxies = {};
 var connections = {};
 
-function register_thing(uri, thing)
+function set_registry(map)
 {
-  things[uri] = thing;
+  things = map;
 }
 
 function register_proxy(uri, ws)
 {
+  uri = typeof uri == 'string' ? uri : uri.href;
+  console.log("registering proxy: " + uri);
   if (!proxies[uri])
     proxies[uri] = [];
     
@@ -29,7 +34,12 @@ function register_proxy(uri, ws)
 
 function find_thing(uri)
 {
-  return things[uri];
+  var uri = url.resolve(base, uri);
+
+  if (!things.hasOwnProperty(uri)) {
+    return null
+  }
+  return things[uri].thing;
 }
 
 function connect (host, handler, data)
@@ -69,12 +79,12 @@ function connect (host, handler, data)
 // dispatch message from web socket connection
 function dispatch_message (message)
 {
-  var thing = things[message.uri];
-    
+  var thing = find_thing(message.uri);
+
   if (!thing)
   {
-    console.log("unknown thing: " + message.uri);
-    raise("unknown thing: " + message.uri);
+    console.log("dispatch_message: unknown thing: " + message.uri);
+    raise("dispatch_message: unknown thing: " + message.uri);
   }
     
   if (message.event)  // notify event to proxy
@@ -84,7 +94,7 @@ function dispatch_message (message)
     for (var i = 0; i < observers.length; ++i)
       observers[i](message.name, message.data);
   }
-  else if (message.state)  // update all properties on proxy 
+  else if (message.state)  // update all properties on proxy
   {
     var obj = message.state;
       
@@ -124,12 +134,12 @@ wss.on('connection', function(ws)
       // register this ws connection as a proxy so
       // we can notify events and property updates
       register_proxy(message.proxy, ws);
-      
-      var thing = things[message.proxy];
-      
+
+      var thing = find_thing(message.proxy);
+
       if (!thing)
       {
-        console.log("unknown thing: " + message.proxy);
+        console.log("on connection, proxy: unknown thing: " + message.proxy);
         return;
       }
       
@@ -153,11 +163,11 @@ wss.on('connection', function(ws)
     }
     else if (message.patch)
     {
-      var thing = things[message.uri];
-      
+      var thing = find_thing(message.uri);
+
       if (!thing)
       {
-        console.log("unknown thing: " + message.uri);
+        console.log("on connection, patch: unknown thing: " + message.uri);
         return;
       }
       
@@ -168,11 +178,11 @@ wss.on('connection', function(ws)
     }
     else if (message.action)
     {
-      var thing = things[message.uri];
-      
+      var thing = find_thing(message.uri);
+
       if (!thing)
       {
-        console.log("unknown thing: " + message.uri);
+        console.log("on connection, action: unknown thing: " + message.uri);
         return;
       }
       
@@ -223,7 +233,7 @@ function notify(message, client)
   }
 }
 
+exports.set_registry = set_registry;
 exports.notify = notify;
-exports.register_thing = register_thing;
 exports.register_proxy = register_proxy;
 exports.find_thing = find_thing;

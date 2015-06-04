@@ -3,6 +3,7 @@
 // could be easily extended to handle request body
 
 var port = 8888;
+var base = 'http://localhost:' + port + '/'; // base URI for models on this server
 
 var http = require("http");
 var url = require('url');
@@ -31,7 +32,7 @@ function set_registry(map)
 
 http.createServer(function(request, response)
 {
-  var uri = url.parse(request.url);
+  var uri = url.parse(url.resolve(base, request.url));
 
   console.log('HTTP request: ' + request.method + ' ' + uri.path);
   
@@ -39,7 +40,7 @@ http.createServer(function(request, response)
   {
     if (/^\/wot\/.+/.test(uri.path))
     {
-      var id = uri.path.substr(5);
+      var id = uri.href;
       console.log('found id: ' + id);
       var entry = registry[id];
       var body;
