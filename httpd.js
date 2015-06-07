@@ -36,7 +36,7 @@ http.createServer(function(request, response)
 
   console.log('HTTP request: ' + request.method + ' ' + uri.path);
   
-  if (request.method === "GET")
+  if (request.method === "GET" || request.method === 'HEAD')
   {
     if (/^\/wot\/.+/.test(uri.path))
     {
@@ -67,7 +67,9 @@ http.createServer(function(request, response)
         });
       }
       
-      response.write(body);
+      if (request.method === "GET")
+        response.write(body);
+        
       response.end();
       return;
     }
@@ -92,7 +94,10 @@ http.createServer(function(request, response)
         'Content-Type' : 'test/plain',
         'Content-Length' : body.length
         });
-        response.write(body);
+        
+        if (request.method === "GET")
+          response.write(body);
+          
         response.end();
       }
       else
@@ -104,8 +109,12 @@ http.createServer(function(request, response)
         'Content-Length' : stat.size
          });
 
-         var stream = fs.createReadStream(filename);
-         stream.pipe(response);
+         if (request.method === "GET") {
+           var stream = fs.createReadStream(filename);
+           stream.pipe(response);
+         }
+         else
+           response.end();
       }
     });
   }

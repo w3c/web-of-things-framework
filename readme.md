@@ -73,6 +73,8 @@ There are opportunities to help with embedded systems, especially when it comes 
 
 There are also plenty of areas where you could contribute that don’t involve programming, for example, gathering use cases and requirements, the details of the bindings to protocols, and the architectural considerations. Security and privacy are areas where we need to better understand what’s practical. Real-time control e.g. of manufacturing robots is one of the potential application domains where the architectural considerations are especially challenging. When it comes to programming, you would have an opportunity to take on the role of an IoT application developer who writes the application scripts. We will be looking of people who can try things out and share the experiences with others as a way of building interest in the wider community.
 
+Please see the other project documentation (*.md), e.g. [protocol bindings](https://github.com/w3c/web-of-things-framework/blob/master/bindings.md) and also the list of project issues where we are looking for help, including design topics and bugs.
+
 ## License
 
 (The MIT License)

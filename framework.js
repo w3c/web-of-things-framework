@@ -3,6 +3,8 @@ var exports = module.exports = {};
 
 var fs = require('fs');
 var url = require('url');
+var os = require('os');
+var dns = require('dns');
 var http = require('http');
 var httpd = require('./httpd.js');  // launch the http server
 var wsd = require('./wsd.js');  // launch the web sockets server
@@ -21,19 +23,19 @@ function thing (name, model, implementation)
 {
   console.log("creating: " + name);
 
-  var uri = url.resolve(base, name);
+  var options = url.parse(url.resolve(base, name));
   
   var thing = new function Thing () {
     this._name = name;
-    this._uri = uri;
+    this._uri = options.href;
     this._model = model;
     this._observers = {};
     this._properties = {};
     this._values = {};
     this._running = false;
     this._implementation = implementation;
-    registry[uri] = { model: model, thing: this };
- 
+    register_thing(model, this);
+
     init_events (this);
     init_properties (this);
     init_actions (this);
@@ -53,16 +55,44 @@ function thing (name, model, implementation)
 // create a proxy for a thing on a remote server
 // will call handler(thing) once thing is ready
 // handler is null if called from init_dependencies
-function register_proxy (uri, handler)
+function register_proxy (uri, succeed, fail)
 {
   var options = url.parse(url.resolve(base, uri));
-
-  // is this thing hosted by this server?
-  if (options.host === baseUri.host) {
-    return record_proxy(options.pathname, handler);
-  }
   
-  // otherwise on a remote server, so use HTTP to retrieve model
+  test_host(options.hostname, 
+    function () {
+      // local host so use local thing
+      var thing = registry[options.href];
+      
+      if (thing)
+        succeed(thing.thing);
+      else // not yet created
+      {
+        console.log('waiting for ' + uri + ' to be created');
+        record_handler(uri, succeed);
+      }
+    },
+    function () {
+      // remote host so find proxy
+      console.log(options.hostname + " is remote");
+      launch_proxy(options, succeed, fail);
+    },
+    function () {
+      // unknown host name
+      fail("server couldn't determine IP address for " + options.hostname);
+    });
+}
+
+function register_thing(model, thing)
+{
+  console.log('registering ' + thing._uri);
+  registry[thing._uri] = { model: model, thing: thing };
+}
+
+function launch_proxy(options, succeed, fail)
+{
+  // use HTTP to retrieve model
+  console.log('connecting to ' + options.href);
   
   return http.get (options, function(response) {
     var body = '';
@@ -76,36 +106,19 @@ function register_proxy (uri, handler)
         
         // now get a socket for the remote server
         // first check if one already exists
-        
-        var ws = sockets[url.format(options)];
-        
-        if (ws)
-          create_proxy(uri, model, ws, handler);
-        else // we need to open a connection
-        {    
-          ws = new WebSocket('ws://www.host.com/path');
-          
-          ws.on('open', function() {
-            sockets[options.host] = ws;
-            create_proxy(uri, model, ws, handler);
-          });
-          
-          ws.on('message', function(message) {
-            console.log('received: %s', message);
-          });
-          
-          ws.on('close', function(message) {
-            delete framework.sockets[options.host];
-            
-          });
-        }
+        wsd.connect(options.hostname, function (ws) {
+          create_proxy(options.href, model, ws, succeed);
+        },
+        function (err) {
+          fail(err);
+        });
       } catch (e) {
-        fail ("couldn't load " + uri + ", " + e);
+        fail ("couldn't load " + options.href + ", " + e);
       }
     });
   
     response.on('error', function(err) {
-      fail ("couldn't load " + uri + ", error: " + err);
+      fail ("couldn't load " + options.href + ", error: " + err);
     });
   });
 }
@@ -127,7 +140,7 @@ function create_proxy(uri, model, ws, handler)
     this._properties = {};
     this._values = {};
     this._running = false;
-    registry[uri] = { model: model, thing: this };
+    register_thing(model, this);
  
     init_events (this);
     init_properties (this);
@@ -136,8 +149,9 @@ function create_proxy(uri, model, ws, handler)
   };
     
   // register the new proxy
-  wsc.things[uri] = thing;
-  wsc.register_proxy(uri, ws);
+  registry[uri] = thing;
+  //wsd.things[uri] = thing;
+  wsd.register_proxy(uri, ws);
       
   // now register proxy with the thing it proxies for
     
@@ -146,21 +160,9 @@ function create_proxy(uri, model, ws, handler)
   };
     
   ws.send(JSON.stringify(message));
-  console.log("registered: " + thing._uri);
-}
-
-// *** not finished -- please fix me ***
-function record_proxy (pathname, handler)
-{
-  console.log("*** record_proxy isn't implemented");
+  handler(thing);
   
-  // when the corresponding thing is set up
-  // pass it to the given handler
-  if (/^\/wot\/.+/.test(pathname))
-  {
-    var id = pathname.substr(5);
-    console.log('seeking thing for id: ' + id);
-  }
+  console.log("registered: " + thing._uri);
 }
 
 function notify_dependents (dependee)
@@ -172,7 +174,10 @@ function notify_dependents (dependee)
   {
     var s = "";
     for (var i = 0; i < dependents.length; ++i)
-      s += dependents[i].dependent._name + ' ';
+    {
+      if (dependents[i].dependent._name)
+        s += dependents[i].dependent._name + ' ';
+    }
     console.log('dependents are: ' + s);
   }
   else
@@ -183,13 +188,28 @@ function notify_dependents (dependee)
     for (var i = 0; i < dependents.length; ++i)
     {
       var dependency = dependents[i];
-      var thing = dependency.dependent;
-      var property = dependency.property;
-      resolve_dependency(thing, property, dependee)
+      
+      if (dependency.handler) {
+        dependency.handler(dependee);
+      } else if (dependency.dependent) {
+        var thing = dependency.dependent;
+        var property = dependency.property;
+        resolve_dependency(thing, property, dependee)
+      }
     }
   
     delete pending[dependee._name];
   }
+}
+
+// someone wants to use a handler for a local
+// thing that has yet to be created
+function record_handler(dependee, handler)
+{
+  if (!pending[dependee])
+  	pending[dependee] = [];
+  	
+  pending[dependee].push({handler: handler});
 }
 
 // dependent is a thing, property is the property name for the dependee
@@ -207,7 +227,7 @@ function resolve_dependency(thing, property, dependee)
   console.log('setting ' +  thing._name + "'s " + property + " to " + dependee._name);
   thing[property] = dependee;
   
-  if (--thing._unresolved <= 0)
+  if (--thing._unresolved <= 0 && thing._implementation)
   {
     console.log("starting2: " + thing._name);
     thing._implementation.start(thing);
@@ -240,23 +260,30 @@ function init_dependencies(thing)
       var uri = dependencies[name];
       console.log("dependee: " + uri);
 
-      uri = url.resolve(thing._uri, uri)
+      // *** fix me - handle malformed uri ***
+      uri = url.parse(url.resolve(thing._uri, uri)).href;
       var entry = registry[uri];
 
       if (entry)
         resolve_dependency(thing, name, entry.thing);
       else
       {
-        record_dependency(thing, name, uri);
-
+        var target = url.resolve(base, uri)
+        record_dependency(thing, name, target);
+        
         // create proxy if uri is for a remote thing
-        // not yet working so commented out here
-        register_proxy(uri);
+        register_proxy(uri, function (dependee) {
+            // nothing to do here
+          },
+          function (err) {
+            console.log(err);
+          });
       }
     }
   }
 
   // some things may be waiting for this thing
+  console.log("notifying dependents for " + thing._uri);
   notify_dependents(thing);
 }
 
@@ -440,6 +467,48 @@ function init_actions (thing, ws)
       }
     }
   }
+}
+
+function test_host(host, local, remote, unknown)
+{
+  dns.resolve(host, function (err, addresses) {
+    if (err) {      
+      if (unknown)
+        unknown();
+    } else {
+      if (is_local(addresses))
+        local();
+      else
+        remote();
+    }
+  });
+}
+
+// initialise list of local IP addresses
+// assumes that network cards aren't hot plugged
+// used to determine whether or not to create a proxy
+
+var ifaces = os.networkInterfaces();
+var localAddresses = [];
+  
+Object.keys(ifaces).forEach( function (ifname) {
+  ifaces[ifname].forEach(function (iface) {
+    localAddresses.push(iface.address);
+  });
+});
+
+function is_local(addresses)
+{
+  for (var i = 0; i < addresses.length; ++i) {
+    var raddr = addresses[i];
+    
+    for (var j = 0; j < localAddresses.length; ++j) {
+      if (localAddresses[j] === raddr)
+        return true;
+    }
+  }
+  
+  return false;
 }
 
 exports.thing = thing;

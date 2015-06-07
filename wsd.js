@@ -42,22 +42,24 @@ function find_thing(uri)
   return things[uri].thing;
 }
 
-function connect (host, handler, data)
+function connect (host, succeed, fail)
 {
   var ws = connections[host];
   
   if (ws)
   {
-    hander (data, ws);  // reuse existing connection
+    succeeed(ws);  // reuse existing connection
   }
   else // create new connection
   {
+    console.log('opening web socket connection with ' + host);
     ws = new WebSocket('ws://' + host + ':8080/webofthings');
     
     ws.on ('open', function () {
+      console.log('opened web socket connection with ' + host);
       connections[host] = ws;
-      ws.send({ host: host });
-      hander (data, ws);
+      ws.send(JSON.stringify({ host: host }));
+      succeed(ws);
     });
     
     ws.on ('close', function () {
@@ -73,6 +75,11 @@ function connect (host, handler, data)
         console.log("JSON syntax error in " + message.data);
       }
     });
+    
+    ws.on ('error', function (e) {
+      fail(e);
+    });
+
   }
 }
 
@@ -237,3 +244,4 @@ exports.set_registry = set_registry;
 exports.notify = notify;
 exports.register_proxy = register_proxy;
 exports.find_thing = find_thing;
+exports.connect = connect;
