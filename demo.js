@@ -91,7 +91,6 @@ wot.thing("bar1",
     },
   });
 
-//wot.proxy("http://akira.w3.org:8888/wot/switch12", function (thing) {
 wot.proxy("http://localhost:8888/wot/switch12", function (thing) {
     console.log('got proxy for switch12');
   },
