@@ -61,6 +61,8 @@ and open the browser console to view the log
 
 ## Contributing
 
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/w3c/web-of-things-framework?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+
 We welcome contributions. If you find a bug in the source code or a mistake in the documentation, you can help us by submitting an issue to our [GitHub repository](https://github.com/w3c/web-of-things-framework), and likewise if you have suggestions for new features. Even better you can submit a Pull Request with a fix.
 
 We encourage you to join the W3C [Web of Things Community Group](http://www.w3.org/WoT/IG/) where contribution and discussions happen. Anyone can join and there are no fees.
