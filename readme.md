@@ -65,7 +65,7 @@ and open the browser console to view the log
 
 We welcome contributions. If you find a bug in the source code or a mistake in the documentation, you can help us by submitting an issue to our [GitHub repository](https://github.com/w3c/web-of-things-framework), and likewise if you have suggestions for new features. Even better you can submit a Pull Request with a fix. We also have a Gitter chat channel, see above link.
 
-We encourage you to join the W3C [Web of Things Community Group](http://www.w3.org/WoT/IG/) where contribution and discussions happen. Anyone can join and there are no fees.
+We encourage you to join the W3C [Web of Things Community Group](https://www.w3.org/community/wot/) where contribution and discussions happen. Anyone can join and there are no fees.
 
 The amount of time you contribute and the areas in which you contribute is up to you. 
 
