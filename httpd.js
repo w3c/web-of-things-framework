@@ -62,7 +62,7 @@ http.createServer(function(request, response)
       {
         body = "404 not found: " + request.url;
         response.writeHead(404, {
-        'Content-Type' : 'test/plain',
+        'Content-Type' : 'text/plain',
         'Content-Length' : body.length
         });
       }
@@ -91,7 +91,7 @@ http.createServer(function(request, response)
       {
         var body = "404 not found: " + request.url;
         response.writeHead(404, {
-        'Content-Type' : 'test/plain',
+        'Content-Type' : 'text/plain',
         'Content-Length' : body.length
         });
         
@@ -120,9 +120,9 @@ http.createServer(function(request, response)
   }
   else // unimplemented HTTP Method
   {
-    var body = "501: not implemented" + request.method + " " + request.url;
+    var body = "501: not implemented " + request.method + " " + request.url;
     response.writeHead(501, {
-       'Content-Type' : 'test/plain',
+       'Content-Type' : 'text/plain',
        'Content-Length' : body.length
     });
     response.write(body);
