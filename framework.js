@@ -512,4 +512,4 @@ function is_local(addresses)
 }
 
 exports.thing = thing;
-exports.proxy = register_proxy;
+exports.register_proxy = register_proxy;

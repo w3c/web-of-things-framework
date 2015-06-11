@@ -91,7 +91,7 @@ wot.thing("bar1",
     },
   });
 
-wot.proxy("http://localhost:8888/wot/switch12", function (thing) {
+wot.register_proxy("http://localhost:8888/wot/switch12", function (thing) {
     console.log('got proxy for switch12');
   },
   function (err) {
