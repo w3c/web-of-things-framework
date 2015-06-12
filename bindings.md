@@ -66,7 +66,7 @@ wot.thing("door12",
     },
     stop: function (thing) {
     },
-    unlock: function () {
+    unlock: function (thing) {
       console.log("unlocking door12");
     }
   });

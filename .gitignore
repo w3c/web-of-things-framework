@@ -11,3 +11,4 @@ notes
 *.suo
 obj/
 bin/
+.ntvs_analysis.dat
