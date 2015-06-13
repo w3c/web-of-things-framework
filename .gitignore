@@ -6,9 +6,3 @@ design.txt
 readme
 notes
 
-# Visual Studio Node.js plug-in files
-*.njsproj
-*.suo
-obj/
-bin/
-.ntvs_analysis.dat

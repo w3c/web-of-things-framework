@@ -15,7 +15,7 @@ wot.thing("agent12",
       console.log("light is " + (thing.light.on ? "on" : "off"));
     },
     stop: function (thing) {
-    }
+    },
   });
 
 wot.thing("door12",
@@ -39,7 +39,7 @@ wot.thing("door12",
     },
     stop: function (thing) {
     },
-    unlock: function (thing) {
+    unlock: function () {
       console.log("unlocking door12");
     }
   });
@@ -58,7 +58,7 @@ wot.thing("switch12",
       console.log("started switch12");
     },
     stop: function (thing) {
-    }
+    },
   });
 
 // test for resolving circular dependencies
@@ -74,7 +74,7 @@ wot.thing("foo1",
       console.log("foo1's bar is " + thing.bar._name);
     },
     stop: function (thing) {
-    }
+    },
   });
 
 wot.thing("bar1",
@@ -88,7 +88,7 @@ wot.thing("bar1",
       console.log("bar1's foo is " + thing.foo._name);
     },
     stop: function (thing) {
-    }
+    },
   });
 
 wot.register_proxy("http://localhost:8888/wot/switch12", function (thing) {
