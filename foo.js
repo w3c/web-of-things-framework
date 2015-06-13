@@ -42,14 +42,25 @@ function thing (name, model, implementation)
     init_dependencies (this);
   };
   
-  // if no dependencies, start the new thing now if not already running
-      
-  if (thing._unresolved == 0 && !thing._running)
+  // if no unresolved dependencies, start the new thing now if not already running
+    
+  if (thing._unresolved <= 0)
   {
-    console.log("starting1: " + name);
-    implementation.start(thing);
-    thing._running = true;
+    if (!thing._running)
+    {
+      console.log("starting1 " + name);
+      thing._running = true;
+      implementation.start(thing);
+    }
+    else
+      console.log(name + ' is already running');
   }
+  else
+    console.log("deferring start of " + name + " until its dependencies are resolved");
+    
+
+  // some things may be waiting for this thing
+  notify_dependents(thing);
 }
 
 // create a proxy for a thing on a remote server
@@ -163,12 +174,14 @@ function create_proxy(uri, model, ws, handler)
   handler(thing);
   
   console.log("registered: " + thing._uri);
+  
+  // some things may be waiting for this thing
+  notify_dependents(thing);
 }
 
 function notify_dependents (dependee)
 {
-  console.log('notify dependents on ' + dependee._name);
-  var dependents = pending[dependee._name];
+  var dependents = pending[dependee._uri];
   
   if (dependents)
   {
@@ -178,13 +191,13 @@ function notify_dependents (dependee)
       if (dependents[i].dependent._name)
         s += dependents[i].dependent._name + ' ';
     }
-    console.log('dependents are: ' + s);
   }
-  else
-    console.log('no dependents');
+//  else
+//    console.log('nothing as yet depends on ' + dependee._uri);
   
   if (dependents)
   {
+    console.log('resolving dependencies on ' + dependee._name);
     for (var i = 0; i < dependents.length; ++i)
     {
       var dependency = dependents[i];
@@ -194,7 +207,7 @@ function notify_dependents (dependee)
       } else if (dependency.dependent) {
         var thing = dependency.dependent;
         var property = dependency.property;
-        resolve_dependency(thing, property, dependee)
+        resolve_dependency(thing, property, dependee, true)
       }
     }
   
@@ -219,19 +232,21 @@ function record_dependency(dependent, property, dependee)
   if (!pending[dependee])
   	pending[dependee] = [];
   	
+  console.log(dependent._name + ' depends on ' + dependee);
   pending[dependee].push({property: property, dependent: dependent});
 }
 
-function resolve_dependency(thing, property, dependee)
+function resolve_dependency(thing, property, dependee, start)
 {
   console.log('setting ' +  thing._name + "'s " + property + " to " + dependee._name);
   thing[property] = dependee;
+  thing._unresolved--;
   
-  if (--thing._unresolved <= 0 && thing._implementation)
+  if (start && thing._unresolved <= 0 && thing._implementation && !thing._running)
   {
-    console.log("starting2: " + thing._name);
-    thing._implementation.start(thing);
+    console.log('starting2 ' + thing._name);
     thing._running = true;
+    thing._implementation.start(thing);
   }
 }
 
@@ -258,14 +273,14 @@ function init_dependencies(thing)
     if (dependencies.hasOwnProperty(name))
     {
       var uri = dependencies[name];
-      console.log("dependee: " + uri);
 
-      // *** fix me - handle malformed uri ***
+      // *** fix me - handle error on malformed uri ***
       uri = url.parse(url.resolve(thing._uri, uri)).href;
+
       var entry = registry[uri];
 
       if (entry)
-        resolve_dependency(thing, name, entry.thing);
+        resolve_dependency(thing, name, entry.thing, false);
       else
       {
         var target = url.resolve(base, uri)
@@ -281,10 +296,6 @@ function init_dependencies(thing)
       }
     }
   }
-
-  // some things may be waiting for this thing
-  console.log("notifying dependents for " + thing._uri);
-  notify_dependents(thing);
 }
 
 function init_events(thing)
