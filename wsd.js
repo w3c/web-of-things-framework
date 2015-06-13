@@ -37,7 +37,7 @@ function find_thing(uri)
   var uri = url.resolve(base, uri);
 
   if (!things.hasOwnProperty(uri)) {
-      return null;
+    return null
   }
   return things[uri].thing;
 }
@@ -48,7 +48,7 @@ function connect (host, succeed, fail)
   
   if (ws)
   {
-    succeed(ws);  // reuse existing connection
+    succeeed(ws);  // reuse existing connection
   }
   else // create new connection
   {
@@ -159,7 +159,7 @@ wss.on('connection', function(ws)
           props[prop] = thing._values[prop];
       }
       
-      props["_running"] = thing._running;
+      prop["_running"] = thing._running;
       
       var response = {
         uri: message.proxy,
