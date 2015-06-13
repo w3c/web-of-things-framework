@@ -30,6 +30,7 @@ function set_registry(map) {
 }
 
 http.createServer(function(request, response) {
+    console.log('http request');
     var uri = url.parse(url.resolve(base, request.url));
 
     console.log('HTTP request: ' + request.method + ' ' + uri.path);

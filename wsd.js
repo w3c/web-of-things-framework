@@ -65,13 +65,13 @@ function connect(host, succeed, fail) {
             delete connections[host];
         });
 
-        ws.on('message', function(message) {
-            console.log("received message from server: " + host + " " + message.data);
+        ws.on('message', function(message, flags) {
+            console.log("received message from server: " + host + " " + message);
             try {
-                var message = JSON.parse(message.data);
-                dispatch(ws, message);
+                var obj = JSON.parse(message);
+                dispatch(ws, obj);
             } catch (e) {
-                console.log("JSON syntax error in " + message.data);
+                console.log("Error in handling" + message);
             }
         });
 
@@ -88,10 +88,11 @@ wss.on('connection', function(ws) {
         console.log('received: ' + message);
 
         try {
-            var message = JSON.parse(message.data);
-            dispatch(ws, message);
+            var obj = JSON.parse(message);
+            console.log("JSON parsed without error");
+            dispatch(ws, obj);
         } catch (e) {
-            console.log("JSON syntax error in " + message.data);
+            console.log("Error in handling " + message);
         }
     });
 
