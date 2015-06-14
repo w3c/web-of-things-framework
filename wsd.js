@@ -3,7 +3,11 @@
 
 var exports = module.exports = {}
 
+var os = require('os'),
+   hostname = os.hostname();
+   
 var url = require('url');
+
 var base = 'http://localhost:8888/wot/'; // base URI for models on this server
 
 // run the websocket server
@@ -24,22 +28,59 @@ function set_registry(map) {
     things = map;
 }
 
+function local_hostname() {
+    return hostname;
+}
+
 function register_proxy(uri, ws) {
     uri = typeof uri == 'string' ? uri : uri.href;
-    console.log("registering proxy: " + uri);
+    console.log("wsd: registering proxy: " + uri);
     if (!proxies[uri])
         proxies[uri] = [];
 
     proxies[uri].push(ws);
 }
 
-function find_thing(uri) {
+// asynchronous on account of need to check external host names for this server
+function find_thing(uri, succeed, fail) {
     var uri = url.resolve(base, uri);
 
     if (!things.hasOwnProperty(uri)) {
-        return null
+        var options = url.parse(uri);
+        var uri1 = options.href;
+        
+        if (things[uri1] && things[uri1].thing) {
+            succeed(things[uri1].thing);
+        }
+        else // is its hostname for this server?
+        {
+            islocal.test(options.hostname,
+                function() {
+                    // it's local so its compute localhost uri
+                    options.hostname = 'localhost';
+                    var uri2 = url.format(options);
+                    var thing = things[uri2];
+                
+                    if (things[uri2] && things[uri2].thing) {
+                        things[uri1] = things[uri2].thing;
+                        succeed(things[uri2].thing);
+                    } else {
+                        // *** we need to defer the response to the client -- FIX ME ***                
+                        fail("the thing you want to proxy is not yet registered");
+                    }
+                },
+                function() {
+                    // it's a remote host so we can't handle it
+                    fail("this server can't handle proxies for things on other servers: " + options.href)
+                },
+                function() {
+                    // unknown host name
+                    fail("server couldn't determine IP address for " + options.hostname);
+            });
+        }
     }
-    return things[uri].thing;
+    
+    succeed(things[uri].thing);
 }
 
 function connect(host, succeed, fail) {
@@ -208,6 +249,7 @@ function notify(message, client) {
     }
 }
 
+exports.local_hostname = local_hostname;
 exports.set_registry = set_registry;
 exports.notify = notify;
 exports.register_proxy = register_proxy;
