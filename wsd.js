@@ -71,7 +71,7 @@ function find_thing(uri, succeed, fail) {
                 },
                 function() {
                     // it's a remote host so we can't handle it
-                    fail("this server can't handle proxies for things on other servers: " + options.href)
+                    fail("this server can't handle proxies for things on other servers: " + options.href);
                 },
                 function() {
                     // unknown host name
@@ -165,7 +165,7 @@ function dispatch(ws, message) {
         var props = {};
         var names = thing._properties;
 
-        for (prop in names) {
+        for (var prop in names) {
             if (names.hasOwnProperty(prop) && prop.substr(0, 1) !== "_")
                 props[prop] = thing._values[prop];
         }

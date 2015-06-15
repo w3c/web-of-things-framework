@@ -38,8 +38,8 @@ var wot = {
         this.ws.onmessage = function(message) {
             console.log("received message: " + message.data);
             try {
-                var message = JSON.parse(message.data);
-                wot.dispatch_message(message);
+                var msg = JSON.parse(message.data);
+                wot.dispatch_message(msg);
             } catch (e) {
                 console.log("JSON syntax error in " + message.data);
             }
@@ -156,23 +156,27 @@ var wot = {
         for (var prop in properties) {
             if (properties.hasOwnProperty(prop)) {
                 thing._properties[prop] = null;
-                Object.defineProperty(thing, prop, {
-                    get: function() {
-                        return thing._values[prop];
-                    },
-                    set: function(value) {
-                        // should throw error if property isn't writeable
-                        console.log("setting " + prop + " = " + value);
-                        thing._values[prop] = value;
-                        var message = {
-                            uri: thing._uri,
-                            patch: prop,
-                            data: value
-                        };
 
-                        wot.ws.send(JSON.stringify(message));
-                    }
-                });
+                (function(property) {
+                    Object.defineProperty(thing, property, {
+                        get: function () {
+                            return thing._values[property];
+                        },
+                        set: function (value) {
+                            // should throw error if property isn't writeable
+                            console.log("setting " + property + " = " + value);
+                            thing._values[property] = value;
+                            var message = {
+                                uri: thing._uri,
+                                patch: property,
+                                data: value
+                            };
+                            
+                            wot.ws.send(JSON.stringify(message));
+                        }
+                    });
+
+                })(prop);
             }
         }
 
@@ -184,14 +188,16 @@ var wot = {
 
         for (var act in actions) {
             if (actions.hasOwnProperty(act)) {
-                thing[act] = function(data) {
-                    // invoke action on proxied thing
-                    var message = {};
-                    message.uri = thing._uri;
-                    message.action = act;
-                    message.data = data;
-                    wot.ws.send(JSON.stringify(message));
-                };
+                (function(action) {
+                    thing[action] = function (data) {
+                        // invoke action on proxied thing
+                        var message = {};
+                        message.uri = thing._uri;
+                        message.action = action;
+                        message.data = data;
+                        wot.ws.send(JSON.stringify(message));
+                    };
+                })(act);
             }
         }
 
@@ -238,7 +244,7 @@ var wot = {
         };
 
         req.send();
-    },
+    }
 
 
 };
