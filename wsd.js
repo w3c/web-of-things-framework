@@ -155,7 +155,7 @@ function dispatch(ws, message) {
         	var props = {};
         	var names = thing._properties;
 
-        	for (prop in names) {
+        	for (var prop in names) {
             	if (names.hasOwnProperty(prop) && prop.substr(0, 1) !== "_")
                 	props[prop] = thing._values[prop];
         	}
