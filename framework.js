@@ -16,6 +16,7 @@ var registry = {};
 
 httpd.set_registry(registry); // pass reference to http server so it can serve up models
 wsd.register_base_uri(base_uri);
+console.log("this server thinks its hostname is " + os.hostname());
 
 // create new thing given its unique name, model and implementation
 function thing(name, model, implementation) {
@@ -68,7 +69,7 @@ function register_proxy(uri, succeed, fail) {
     if ((options.hostname === base.hostname ||
     		options.hostname === os.hostname()) &&
     	options.port == base.port) {
-        // local host so use local thing
+        console.log('for this server so use local thing: ' + uri);
         var thing = registry[options.href];
 
         if (thing)
@@ -82,7 +83,7 @@ function register_proxy(uri, succeed, fail) {
     else // assume remote host
     {
         // remote host so find proxy
-        console.log(options.hostname + " is remote");
+        console.log(options.href + " is another server");
         launch_proxy(options.href, succeed, fail);
     }
 }

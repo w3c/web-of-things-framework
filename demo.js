@@ -91,6 +91,13 @@ wot.register_proxy("http://localhost:8888/wot/switch12", function(thing) {
         console.log(err);
     });
 
+wot.register_proxy("http://localhost:9999/wot/switch12", function(thing) {
+        console.log('got proxy for switch12');
+    },
+    function(err) {
+        console.log(err);
+    });
+
 wot.register_proxy("http://akira.w3.org:8888/wot/switch12", function(thing) {
         console.log('got proxy for switch12');
     },

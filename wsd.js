@@ -37,6 +37,9 @@ function register_continuation(uri, method, context) {
 function register_thing(thing) {
     var context, continuation, continuations = pending[thing._uri];
     
+    console.log('wsd: registering thing ' + thing._uri);
+    things[thing._uri] = thing;
+    
     if (continuations) {
         for (var i = 0; i < continuations.length; ++i) {
             continuation = continuations[i];
@@ -135,79 +138,57 @@ wss.on('connection', function(ws) {
 });
 
 function dispatch(ws, message) {
+    console.log('received: ' + JSON.stringify(message));
     if (message.host) {
+    	console.log('connection from host ' + message.host);
         var host = message.host;
         connections[host] = ws;
     } else if (message.proxy) {
         // register this ws connection as a proxy so
         // we can notify events and property updates
-        register_proxy(message.proxy, ws);
+        var uri = url.resolve(base_uri, message.proxy);
+        register_proxy(uri, ws);
 
-        var thing = find_thing(message.proxy);
+        find_thing(uri, function (thing) {
+        	var props = {};
+        	var names = thing._properties;
 
-        if (!thing) {
-            console.log("on connection, proxy: unknown thing: " + message.proxy);
-            var response = {
-                error: "unknown thing for get"
-            };
-            ws.send(JSON.stringify(response));
-            return;
-        }
+        	for (prop in names) {
+            	if (names.hasOwnProperty(prop) && prop.substr(0, 1) !== "_")
+                	props[prop] = thing._values[prop];
+        	}
 
-        var props = {};
-        var names = thing._properties;
+        	// return state of properties
+        	props["_running"] = thing._running;
 
-        for (prop in names) {
-            if (names.hasOwnProperty(prop) && prop.substr(0, 1) !== "_")
-                props[prop] = thing._values[prop];
-        }
+        	var response = {
+            	uri: message.proxy,
+            	state: props
+        	};
 
-        // return state of properties
-        props["_running"] = thing._running;
-
-        var response = {
-            uri: message.proxy,
-            state: props
-        };
-
-        ws.send(JSON.stringify(response));
+        	ws.send(JSON.stringify(response));
+        });
     } else if (message.patch) {
-        var thing = find_thing(message.uri);
+    	var uri = url.resolve(base_uri, message.uri);
+        find_thing(uri, function (thing) {
+        	thing[message.patch] = message.data;
 
-        if (!thing) {
-            console.log("on connection, patch: unknown thing: " + message.uri);
-            var response = {
-                error: "unknown thing for patch"
-            };
-            ws.send(JSON.stringify(response));
-            return;
-        }
-
-        thing[message.patch] = message.data;
-
-        // update other proxies for this thing
-        notify(message, ws);
+        	// update other proxies for this thing
+        	notify(message, ws);
+        });
     } else if (message.action) {
-        var thing = find_thing(message.uri);
+    	var uri = url.resolve(base_uri, message.uri);
+        find_thing(uri, function (thing) {
+        	var result = thing[message.action](message.data);
 
-        if (!thing) {
-            console.log("on connection, action: unknown thing: " + message.uri);
-            var response = {
-                error: "unknown thing for action"
-            };
-            ws.send(JSON.stringify(response));
-            return;
-        }
-
-        var result = thing[message.action](message.data);
-
-        if (result && message.call) {
-            var response = {};
-            response.uri = message.uri;
-            response.call = message.call;
-            response.data = result;
-            ws.send(JSON.stringify(response));
-        }
+        	if (result && message.call) {
+            	var response = {};
+            	response.uri = uri;
+            	response.call = message.call;
+            	response.data = result;
+            	ws.send(JSON.stringify(response));
+        	}
+        });
     } else if (message.error) {
         console.log("received error message: " + error);
     } else {
