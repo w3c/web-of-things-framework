@@ -84,7 +84,6 @@ wot.register_proxy("/wot/door12", function(thing) {
         console.log(err);
     });
 
-
 wot.register_proxy("http://localhost:8888/wot/switch12", function(thing) {
         console.log('got proxy for switch12');
     },

@@ -2,6 +2,7 @@
 var exports = module.exports = {};
 
 var assert = require('assert');
+var os = require('os');
 var fs = require('fs');
 var url = require('url');
 var http = require('http');
@@ -62,8 +63,11 @@ function thing(name, model, implementation) {
 // handler is null if called from init_dependencies
 function register_proxy(uri, succeed, fail) {
     var options = url.parse(url.resolve(base_uri, uri));
+    var base = url.parse(base_uri);
     
-    if (options.hostname === 'localhost') {
+    if ((options.hostname === base.hostname ||
+    		options.hostname === os.hostname()) &&
+    	options.port == base.port) {
         // local host so use local thing
         var thing = registry[options.href];
 
