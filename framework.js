@@ -10,9 +10,12 @@ var httpd = require('./httpd.js'); // launch the http server
 var wsd = require('./wsd.js'); // launch the web sockets server
 var base_uri = 'http://localhost:8888/wot/'; // base URI for models on this server
 var pending = {}; // mapping from uri to list of things with unresolved dependencies
+var Thing = require('./thing.js');
+var Registry = require('./registry.js');
 
 // registry of locally hosted things with mapping from thing id to model, implementation and status
 var registry = {};
+var registry2 = new Registry(base_uri);
 
 httpd.set_registry(registry); // pass reference to http server so it can serve up models
 wsd.register_base_uri(base_uri);
@@ -20,26 +23,14 @@ console.log("this server thinks its hostname is " + os.hostname());
 
 // create new thing given its unique name, model and implementation
 function thing(name, model, implementation) {
-    console.log("creating: " + name);
-    var options = url.parse(url.resolve(base_uri, name));
-
-    var thing = new function Thing() {
-        this._name = name;
-        this._uri = options.href;
-        this._model = model;
-        this._observers = {};
-        this._properties = {};
-        this._values = {};
-        this._running = false;
-        this._queue = [];
-        this._implementation = implementation;
-        register_thing(model, this);
-
-        init_events(this);
-        init_properties(this);
-        init_actions(this);
-        init_dependencies(this);
-    };
+    var thing = registry2.register(name, model, implementation);
+    
+    register_thing(model, thing);
+    
+    init_events(thing);
+    init_properties(thing);
+    init_actions(thing);
+    init_dependencies(thing);
 
     // if no unresolved dependencies, start the new thing now if not already running
 
