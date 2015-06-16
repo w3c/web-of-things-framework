@@ -7,6 +7,8 @@ var os = require('os'), hostname = os.hostname();
    
 var url = require('url');
 
+var base_uri;
+
 function register_base_uri(uri) {
 	base_uri = uri;
 }
@@ -43,7 +45,7 @@ function register_thing(thing) {
     if (continuations) {
         for (var i = 0; i < continuations.length; ++i) {
             continuation = continuations[i];
-            continuations.method(thing, contination.context);
+            continuations.method(thing, continuation.context);
         }
           
         delete pending[things._uri];
