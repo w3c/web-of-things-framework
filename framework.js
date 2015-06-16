@@ -7,23 +7,19 @@ var url = require('url');
 var http = require('http');
 var httpd = require('./httpd.js'); // launch the http server
 var wsd = require('./wsd.js'); // launch the web sockets server
-var base = 'http://localhost:8888/wot/'; // base URI for models on this server
-var baseUri = url.parse(base);
+var base_uri = 'http://localhost:8888/wot/'; // base URI for models on this server
 var pending = {}; // mapping from uri to list of things with unresolved dependencies
 
 // registry of locally hosted things with mapping from thing id to model, implementation and status
 var registry = {};
 
 httpd.set_registry(registry); // pass reference to http server so it can serve up models
-wsd.set_registry(registry);
+wsd.register_base_uri(base_uri);
 
 // create new thing given its unique name, model and implementation
 function thing(name, model, implementation) {
     console.log("creating: " + name);
-    if (pending[base+name])
-      console.log(name + ' has ' + (pending[base+name].length) + ' dependents');
-
-    var options = url.parse(url.resolve(base, name));
+    var options = url.parse(url.resolve(base_uri, name));
 
     var thing = new function Thing() {
         this._name = name;
@@ -65,7 +61,7 @@ function thing(name, model, implementation) {
 // will call handler(thing) once thing is ready
 // handler is null if called from init_dependencies
 function register_proxy(uri, succeed, fail) {
-    var options = url.parse(url.resolve(base, uri));
+    var options = url.parse(url.resolve(base_uri, uri));
     
     if (options.hostname === 'localhost') {
         // local host so use local thing
@@ -83,7 +79,7 @@ function register_proxy(uri, succeed, fail) {
     {
         // remote host so find proxy
         console.log(options.hostname + " is remote");
-        launch_proxy(options, succeed, fail);
+        launch_proxy(options.href, succeed, fail);
     }
 }
 
@@ -93,13 +89,15 @@ function register_thing(model, thing) {
         model: model,
         thing: thing
     };
+    
+    wsd.register_thing(thing);
 }
 
-function launch_proxy(options, succeed, fail) {
+function launch_proxy(uri, succeed, fail) {
     // use HTTP to retrieve model
-    console.log('connecting to ' + options.href);
+    console.log('connecting to ' + uri);
 
-    return http.get(options, function(response) {
+    var request = http.request(uri, function(response) {
         var body = '';
         response.on('data', function(d) {
             body += d;
@@ -118,14 +116,15 @@ function launch_proxy(options, succeed, fail) {
                         fail(err);
                     });
             } catch (e) {
-                fail("couldn't load " + options.href + ", " + e);
+                fail("unable to load " + uri + ", " + e);
             }
         });
-
-        response.on('error', function(err) {
-            fail("couldn't load " + options.href + ", error: " + err);
-        });
     });
+    
+    request.on('error', function(err) {
+        fail("couldn't load " + uri + ", error: " + err);
+    });
+
 }
 
 function unregister_proxy(uri) {
@@ -134,7 +133,7 @@ function unregister_proxy(uri) {
 }
 
 function create_proxy(uri, model, ws, handler) {
-    var options = url.parse(url.resolve(base, uri));
+    var options = url.parse(url.resolve(base_uri, uri));
 
     console.log("wot.register proxy: " + options.href);
     assert(options.hostname !== 'localhost', 'trying to register proxy for localhost');
@@ -203,18 +202,7 @@ function queue_act(thing, act, data) {
 
 function notify_dependents(dependee) {
     var dependents = pending[dependee._uri];
-
-    if (dependents) {
-        var s = "";
-        for (var i = 0; i < dependents.length; ++i) {
-        console.log(dependee._name + ' :' + i);
-            if (dependents[i].dependent._name)
-                s += dependents[i].dependent._name + ' ';
-        }
-    }
-    //  else
-    //    console.log('nothing as yet depends on ' + dependee._uri);
-
+    
     if (dependents) {
         console.log('resolving dependencies on ' + dependee._name);
         for (var i = 0; i < dependents.length; ++i) {
@@ -299,7 +287,7 @@ function init_dependencies(thing) {
             if (entry)
                 resolve_dependency(thing, name, entry.thing, false);
             else {
-                var target = url.resolve(base, uri)
+                var target = url.resolve(base_uri, uri)
                 record_dependency(thing, name, target);
 
                 // create proxy if uri is for a remote thing

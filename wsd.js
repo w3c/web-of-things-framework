@@ -3,12 +3,13 @@
 
 var exports = module.exports = {}
 
-var os = require('os'),
-   hostname = os.hostname();
+var os = require('os'), hostname = os.hostname();
    
 var url = require('url');
 
-var base = 'http://localhost:8888/wot/'; // base URI for models on this server
+function register_base_uri(uri) {
+	base_uri = uri;
+}
 
 // run the websocket server
 var WebSocket = require('ws'),
@@ -20,16 +21,30 @@ var WebSocket = require('ws'),
 
 console.log('started web sockets server on port 8080');
 
-var things = {};
+var things = {};  // 
 var proxies = {};
 var connections = {};
+var pending = {};
 
-function set_registry(map) {
-    things = map;
+function register_continuation(uri, method, context) {
+  if (!pending[uri])
+      pending[uri] = [];
+      
+  pending[uri ] = { method: method, context: context };
 }
 
-function local_hostname() {
-    return hostname;
+// used to call continuations pending on a local thing being registered
+function register_thing(thing) {
+    var context, continuation, continuations = pending[thing._uri];
+    
+    if (continuations) {
+        for (var i = 0; i < continuations.length; ++i) {
+            continuation = continuations[i];
+            continuations.method(thing, contination.context);
+        }
+          
+        delete pending[things._uri];
+    }
 }
 
 function register_proxy(uri, ws) {
@@ -41,46 +56,22 @@ function register_proxy(uri, ws) {
     proxies[uri].push(ws);
 }
 
-// asynchronous on account of need to check external host names for this server
-function find_thing(uri, succeed, fail) {
-    var uri = url.resolve(base, uri);
-
-    if (!things.hasOwnProperty(uri)) {
-        var options = url.parse(uri);
-        var uri1 = options.href;
+// asynchronous because the thing may not yet have been created
+function find_thing(uri, method, context) {
+    var uri = url.resolve(base_uri, uri);
+    var options = url.parse(uri);
+    var uri = options.href;
         
-        if (things[uri1] && things[uri1].thing) {
-            succeed(things[uri1].thing);
-        }
-        else // is its hostname for this server?
-        {
-            islocal.test(options.hostname,
-                function() {
-                    // it's local so its compute localhost uri
-                    options.hostname = 'localhost';
-                    var uri2 = url.format(options);
-                    var thing = things[uri2];
-                
-                    if (things[uri2] && things[uri2].thing) {
-                        things[uri1] = things[uri2].thing;
-                        succeed(things[uri2].thing);
-                    } else {
-                        // *** we need to defer the response to the client -- FIX ME ***                
-                        fail("the thing you want to proxy is not yet registered");
-                    }
-                },
-                function() {
-                    // it's a remote host so we can't handle it
-                    fail("this server can't handle proxies for things on other servers: " + options.href)
-                },
-                function() {
-                    // unknown host name
-                    fail("server couldn't determine IP address for " + options.hostname);
-            });
-        }
+    // is it already registered?
+    if (things[uri] && things[uri].thing) {
+        method(things[uri].thing, context);
     }
-    
-    succeed(things[uri].thing);
+    else // it is not yet registered
+    {
+        options.hostname = 'localhost';
+        uri = url.format(options);
+        register_continuation(uri, method, context);
+    }
 }
 
 function connect(host, succeed, fail) {
@@ -96,8 +87,9 @@ function connect(host, succeed, fail) {
         ws.on('open', function() {
             console.log('opened web socket connection with ' + host);
             connections[host] = ws;
+            // now let other server know our hostname
             ws.send(JSON.stringify({
-                host: host
+                host: os.hostname()
             }));
             succeed(ws);
         });
@@ -249,9 +241,8 @@ function notify(message, client) {
     }
 }
 
-exports.local_hostname = local_hostname;
-exports.set_registry = set_registry;
-exports.notify = notify;
-exports.register_proxy = register_proxy;
-exports.find_thing = find_thing;
 exports.connect = connect;
+exports.notify = notify;
+exports.register_thing = register_thing;
+exports.register_proxy = register_proxy;
+exports.register_base_uri = register_base_uri;
