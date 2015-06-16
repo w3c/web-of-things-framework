@@ -218,7 +218,7 @@ function notify_dependents(dependee) {
             } else if (dependency.dependent) {
                 var thing = dependency.dependent;
                 var property = dependency.property;
-                resolve_dependency(thing, property, dependee, true)
+                resolve_dependency(thing, property, dependee, true);
             }
         }
 
@@ -292,7 +292,7 @@ function init_dependencies(thing) {
             if (entry)
                 resolve_dependency(thing, name, entry.thing, false);
             else {
-                var target = url.resolve(base_uri, uri)
+                var target = url.resolve(base_uri, uri);
                 record_dependency(thing, name, target);
 
                 // create proxy if uri is for a remote thing
@@ -389,22 +389,25 @@ function init_properties(thing, ws) {
         for (var prop in properties) {
             if (properties.hasOwnProperty(prop)) {
                 thing._properties[prop] = null;
-                Object.defineProperty(thing, prop, {
-                    get: function() {
-                        return thing._values[prop];
-                    },
 
-                    set: function(value) {
-                        thing._values[prop] = value;
-                        var message = {
-                            uri: thing._uri,
-                            patch: prop,
-                            data: value
-                        };
-
-                        ws.send(JSON.stringify(message));
-                    }
-                });
+                (function(property) {
+                    Object.defineProperty(thing, property, {
+                        get: function () {
+                            return thing._values[property];
+                        },
+                        
+                        set: function (value) {
+                            thing._values[property] = value;
+                            var message = {
+                                uri: thing._uri,
+                                patch: property,
+                                data: value
+                            };
+                            
+                            ws.send(JSON.stringify(message));
+                        }
+                    });
+                })(prop);
             }
         }
     } else // local thing so notify all of its proxies
@@ -412,27 +415,29 @@ function init_properties(thing, ws) {
         for (var prop in properties) {
             if (properties.hasOwnProperty(prop)) {
                 thing._properties[prop] = null;
-                Object.defineProperty(thing, prop, {
-                    get: function() {
-                        return thing._values[prop];
-                    },
-
-                    set: function(value) {
-                        if (thing._running) {
-                            console.log("setting " + thing._name + "." + prop + " = " + value);
-                            thing._values[prop] = value;
-                        } else
-                            queue_update(thing, prop, value);
-
-                        var message = {
-                            uri: thing._uri,
-                            patch: prop,
-                            data: value
-                        };
-
-                        wsd.notify(message);
-                    }
-                });
+                (function(property) {
+                    Object.defineProperty(thing, property, {
+                        get: function () {
+                            return thing._values[property];
+                        },
+                        
+                        set: function (value) {
+                            if (thing._running) {
+                                console.log("setting " + thing._name + "." + property + " = " + value);
+                                thing._values[property] = value;
+                            } else
+                                queue_update(thing, property, value);
+                            
+                            var message = {
+                                uri: thing._uri,
+                                patch: property,
+                                data: value
+                            };
+                            
+                            wsd.notify(message);
+                        }
+                    });
+                })(prop);
             }
         }
     }
@@ -452,30 +457,35 @@ function init_actions(thing, ws) {
 
     if (ws) // proxied thing so pass to remote thing
     {
-        for (var act in actions) {
+        for (var act in actions) {            
             if (actions.hasOwnProperty(act)) {
-                thing[act] = function(data) {
-                    var message = {
-                        uri: thing._uri,
-                        action: act,
-                        data: data
+                (function (action) {
+                    thing[action] = function (data) {
+                        var message = {
+                            uri: thing._uri,
+                            action: action,
+                            data: data
+                        };
+                        
+                        ws.send(JSON.stringify(message));
                     };
-
-                    ws.send(JSON.stringify(message));
-                };
+                
+                })(act);
             }
         }
     } else // local thing so invoke implementation
     {
         for (var act in actions) {
             if (actions.hasOwnProperty(act)) {
-                thing[act] = function(data) {
-                    if (thing._running) {
-                        console.log('invoking action: ' + thing._name + '.' + act + '()');
-                        thing._implementation[act](thing, data);
-                    } else
-                        queue_act(thing, act, data)
-                }
+                (function(action) {
+                    thing[action] = function (data) {
+                        if (thing._running) {
+                            console.log('invoking action: ' + thing._name + '.' + action + '()');
+                            thing._implementation[action](thing, data);
+                        } else
+                            queue_act(thing, action, data);
+                    }                    
+                })(act);
             }
         }
     }

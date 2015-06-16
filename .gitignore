@@ -6,3 +6,11 @@ design.txt
 readme
 notes
 
+# don't sync Visual Studio files
+.ntvs_analysis.dat
+bin/
+obj/
+*.njsproj
+*.suo
+*.sln
+
