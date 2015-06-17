@@ -36,7 +36,7 @@ function ProxyThing(uri, onstart) {
                 data: data
             }
 
-            wsd.notify(message);
+            self._wsd.notify(message);
         };
 
         for (var ev in events) {
@@ -163,7 +163,6 @@ function ProxyThing(uri, onstart) {
         var request = http.get(uri, function(response) {
             var body = '';
             response.on('data', function(d) {
-                console.log(d);
                 body += d;
             });
 
@@ -174,7 +173,7 @@ function ProxyThing(uri, onstart) {
 
                     // now get a socket for the remote server
                     // first check if one already exists
-                    wsd.connect(options.hostname, function(ws) {
+                    self._wsd.connect(options.hostname, function(ws) {
                             succeed(ws, model);
                         },
                         function(err) {
@@ -197,14 +196,13 @@ function ProxyThing(uri, onstart) {
                 self._ws = ws;
                 self._model = model;
 
-                wsd.register_proxy(options.href, self._ws);
+                self._wsd.register_proxy(options.href, self._ws);
 
                 // now register proxy with the thing it proxies for
                 var message = {
                     proxy: self._uri
                 };
 
-                console.log("sending message: " + message);
                 self._ws.send(JSON.stringify(message));
 
                 created(self);

@@ -1,5 +1,6 @@
 ﻿
 var url = require('url');
+var os = require('os');
 var LocalThing = require('./local.js');
 var ProxyThing = require('./proxy.js');
 var wsd = require('./wsd.js'); // launch the web sockets server
@@ -139,6 +140,28 @@ function Registry(baseUri) {
 
         self.run_start_queue();
     }
+
+    self.isLocalUri = function(uri) {
+        var parsed = url.parse(uri);
+        var base_parsed = url.parse(self._base_uri);
+        
+        if (parsed.port !== base_parsed.port) {
+            return false;
+        }        
+
+        if (parsed.hostname === 'localhost' ||
+            parsed.host === 'localhost' ||
+            parsed.hostname === '127.0.0.1' ||
+            parsed.host === '127.0.0.1' ||
+            parsed.hostname === '::1' ||
+            parsed.host === '::1' ||
+            parsed.hostname === os.hostname() ||
+            parsed.host === os.hostname()) {
+            return true;
+        }
+
+        return false;
+    }
 }
 
 Registry.prototype.find = function(uri, succeed, missing) {
@@ -182,26 +205,34 @@ Registry.prototype.register = function(name, model, implementation) {
 
 Registry.prototype.register_proxy = function(uri, onstart) {
     var self = this;
+    var existing;
 
-    var existing = self.get_proxy(uri);
-    if (existing) {
-        onstart(existing.thing);
+    if (self.isLocalUri(uri)) {
+        existing = self.get_thing(uri);
+        if (existing) {
+            onstart(existing.thing);
+        }
     } else {
-        var proxy = new ProxyThing(uri, onstart);
+        existing = self.get_proxy(uri);
+        if (existing) {
+            onstart(existing.thing);
+        } else {
+            var proxy = new ProxyThing(uri, onstart);
 
-        proxy.initialize(function(thing) {
-                self._proxies[uri] = {
-                    model: thing._model,
-                    thing: thing
-                };
+            proxy.initialize(function(thing) {
+                    self._proxies[uri] = {
+                        model: thing._model,
+                        thing: thing
+                    };
 
-                self.record_dependencies(thing);
-                self.resolve_dependents(thing);
-                self._wsd.register_thing(thing);
-            },
-            function(err) {
-                console.log(err);
-            });
+                    self.record_dependencies(thing);
+                    self.resolve_dependents(thing);
+                    self._wsd.register_thing(thing);
+                },
+                function(err) {
+                    console.log(err);
+                });
+        }
     }
 }
 

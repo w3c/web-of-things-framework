@@ -58,11 +58,13 @@ function register_thing(thing) {
 
 function register_proxy(uri, ws) {
     uri = typeof uri == 'string' ? uri : uri.href;
-    console.log("wsd: registering proxy: " + uri);
-    if (!proxies[uri])
-        proxies[uri] = [];
+    var id = url.parse(uri).path;
 
-    proxies[uri].push(ws);
+    console.log("wsd: registering proxy: " + id);
+    if (!proxies[id])
+        proxies[id] = [];
+
+    proxies[id].push(ws);
 }
 
 // asynchronous because the thing may not yet have been created
@@ -207,7 +209,8 @@ function dispatch(ws, message) {
 // send message to all current connections with proxies for
 // the same thing, but excluding the given client if provided
 function notify(message, client) {
-    var connections = proxies[message.uri];
+    var id = url.parse(message.uri).path;
+    var connections = proxies[id];
 
     if (connections) {
         var notification = JSON.stringify(message);

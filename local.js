@@ -32,7 +32,7 @@ function LocalThing(uri, name, model, implementation) {
                 data: data
             }
 
-            wsd.notify(message);
+            self._wsd.notify(message);
             //thing.emit('event', Thing, message);
         };
 
