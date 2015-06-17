@@ -151,10 +151,9 @@ function dispatch(ws, message) {
     } else if (message.proxy) {
         // register this ws connection as a proxy so
         // we can notify events and property updates
-        var uri = url.resolve(base_uri, message.proxy);
-        register_proxy(uri, ws);
+        register_proxy(message.proxy, ws);
 
-        find_thing(uri, function(thing) {
+        find_thing(message.proxy, function(thing) {
             var props = {};
             var names = thing._properties;
 

@@ -127,7 +127,9 @@ Registry.prototype.find = function (uri, succeed, missing) {
 }
 
 Registry.prototype.find_model = function (uri, succeed, missing) {
-    var found = this.get(uri);
+    var id = url.parse(thing._url).path;
+    
+    var found = this.get(id);
     if (!found) {
         missing("Thing not found: " + uri);
     }
@@ -140,33 +142,48 @@ Registry.prototype.register = function(name, model, implementation) {
     
     var thing = new LocalThing(self._base_uri, name, model, implementation);
 
-    self._things[thing._uri] = {
-        model: thing._model,
-        thing: thing
-    };
+    var id = url.parse(thing._uri).path;
+
+    var existing = self.get(id);
+    
+    if (existing) {
+        throw ('The thing already exists: ' + thing._uri);
+    } else {
+        self._things[id] = {
+            model: thing._model,
+            thing: thing
+        };
 
 
-    self.record_dependencies(thing);
-    self.resolve_dependents(thing);
-    self._wsd.register_thing(thing);
+        self.record_dependencies(thing);
+        self.resolve_dependents(thing);
+        self._wsd.register_thing(thing);
+    }
 }
 
 Registry.prototype.register_proxy = function (uri, onstart) {
     var self = this;
-        
-    new ProxyThing(uri, onstart, function(thing) {
-        self._things[thing._uri] = {
-            model: thing._model,
-            thing: thing
-        };
-        
-        self.record_dependencies(thing);
-        self.resolve_dependents(thing);
-        self._wsd.register_thing(thing);        
-    },
-    function(err) {
-        console.log(err);
-    });    
+    
+    var id = url.parse(uri).path;
+
+    var existing = self.get(id);
+    if (existing) {
+        onstart(existing.thing);
+    } else {
+        new ProxyThing(uri, onstart, function(thing) {
+                self._things[id] = {
+                    model: thing._model,
+                    thing: thing
+                };
+
+                self.record_dependencies(thing);
+                self.resolve_dependents(thing);
+                self._wsd.register_thing(thing);
+            },
+            function(err) {
+                console.log(err);
+            });
+    }
 }
 
 

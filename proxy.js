@@ -94,7 +94,7 @@ function ProxyThing(uri, onstart, succeed, fail) {
     // initialise thing's getters and setters
     // if ws is null, thing isn't a proxy and hence
     // we need to notify property changes to its proxies
-    self.init_properties = function(thing, ws) {
+    self.init_properties = function(thing) {
         // initialise getters and setters for properties
         // this doesn't yet validate property values
         // it also assumes all properties are writable (bad!)
@@ -129,7 +129,7 @@ function ProxyThing(uri, onstart, succeed, fail) {
     // initialise thing's actions
     // if ws is null, thing is local and we need
     // to bind the actions to the implementation
-    self.init_actions = function(thing, ws) {
+    self.init_actions = function(thing) {
         // set up methods for invoking actions on proxied thing
         // this doesn't yet validate the action's data
         // this doesn't yet support results returned by actions

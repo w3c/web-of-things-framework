@@ -11,7 +11,6 @@ function LocalThing(base_uri, name, model, implementation) {
 
     console.log("creating local: " + name + " at " + options.href);
 
-    self._base_uri = base_uri;
     self._name = name;
     self._uri = options.href;
     self._model = model;
@@ -24,19 +23,6 @@ function LocalThing(base_uri, name, model, implementation) {
     self._wsd = wsd;
     self.__queue = [];
     self._pending = {}; // mapping from uri to list of things with unresolved dependencies
-
-    self.isLocal = function(otherUri) {
-        var options = url.parse(url.resolve(self._base_uri, otherUri));
-        var base = url.parse(self._base_uri);
-
-        if ((options.hostname === base.hostname ||
-                options.hostname === os.hostname()) &&
-            options.port === base.port) {
-            return true;
-        }
-
-        return false;
-    }
 
     self.init_events = function(thing) {
         var events = thing._model["@events"];
@@ -107,7 +93,7 @@ function LocalThing(base_uri, name, model, implementation) {
     // initialise thing's getters and setters
     // if ws is null, thing isn't a proxy and hence
     // we need to notify property changes to its proxies
-    self.init_properties = function(thing, ws) {
+    self.init_properties = function(thing) {
         // initialise getters and setters for properties
         // this doesn't yet validate property values
         // it also assumes all properties are writable (bad!)
@@ -148,7 +134,7 @@ function LocalThing(base_uri, name, model, implementation) {
     // initialise thing's actions
     // if ws is null, thing is local and we need
     // to bind the actions to the implementation
-    self.init_actions = function(thing, ws) {
+    self.init_actions = function(thing) {
         // set up methods for invoking actions on proxied thing
         // this doesn't yet validate the action's data
         // this doesn't yet support results returned by actions
@@ -211,7 +197,7 @@ function LocalThing(base_uri, name, model, implementation) {
     self.init_actions(self);
 }
 
-LocalThing.prototype.start = function() {
+LocalThing.prototype.start = function () {
     var self = this;
     if (!self._running && self._implementation && self._implementation.start) {
         self._implementation.start(self);
