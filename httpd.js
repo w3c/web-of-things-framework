@@ -34,42 +34,53 @@ http.createServer(function(request, response) {
     var uri = url.parse(url.resolve(base, request.url));
 
     console.log('HTTP request: ' + request.method + ' ' + uri.path);
+    
+    var body;
 
     if (request.method === "GET" || request.method === 'HEAD') {
         if (/^\/wot\/.+/.test(uri.path)) {
             var id = uri.href;
             console.log('found id: ' + id);
-            var entry = registry[id];
-            var body;
 
-            console.log('entry for: ' + id + ' = ' + JSON.stringify(entry));
+            registry.find(id, 
+                function found(thing) {
+                    console.log('entry for: ' + id + ' = ' + JSON.stringify(thing));
 
-            if (entry && entry.model) {
-                body = JSON.stringify(entry.model);
+                    body = JSON.stringify(thing._model);
+                
+                    response.writeHead(200, {
+                        'Content-Type': mime_types.json,
+                        'Pragma': 'no-cache',
+                        'Cache-Control': 'no-cache',
+                        'Content-Length': body.length
+                    });
 
-                response.writeHead(200, {
-                    'Content-Type': mime_types.json,
-                    'Pragma': 'no-cache',
-                    'Cache-Control': 'no-cache',
-                    'Content-Length': body.length
+                    if (request.method === "GET") {
+                        response.write(body);
+                    }
+
+                    response.end();
+                },
+                function missing(err) {
+                    body = "404 not found: " + request.url;
+                    response.writeHead(404, {
+                        'Content-Type': 'text/plain',
+                        'Content-Length': body.length
+                    });                    
+
+                    if (request.method === "GET") {
+                        response.write(body);
+                    }
+
+                    response.end();
                 });
-            } else {
-                body = "404 not found: " + request.url;
-                response.writeHead(404, {
-                    'Content-Type': 'text/plain',
-                    'Content-Length': body.length
-                });
-            }
 
-            if (request.method === "GET")
-                response.write(body);
-
-            response.end();
             return;
         }
 
-        if (uri.path === '/')
+        if (uri.path === '/') {
             uri.path = '/index.html';
+        }
 
         var filename = './www' + uri.path;
 
@@ -81,7 +92,7 @@ http.createServer(function(request, response) {
                 mime = mime_types[ext.split(".")[1]];
 
             if (error || !mime) {
-                var body = "404 not found: " + request.url;
+                body = "404 not found: " + request.url;
                 response.writeHead(404, {
                     'Content-Type': 'text/plain',
                     'Content-Length': body.length
@@ -108,7 +119,7 @@ http.createServer(function(request, response) {
         });
     } else // unimplemented HTTP Method
     {
-        var body = "501: not implemented " + request.method + " " + request.url;
+        body = "501: not implemented " + request.method + " " + request.url;
         response.writeHead(501, {
             'Content-Type': 'text/plain',
             'Content-Length': body.length

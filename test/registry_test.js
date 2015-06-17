@@ -1,30 +1,30 @@
 var Registry = require('../registry.js');
+var Thing = require('../thing.js');
 var assert = require("assert");
 var should = require('should');
 
 describe('Registry', function() {
-    it('should register items', function(done) {
-        var registry = new Registry("http://localhost:8888/wot/");
+    it('should register items', function (done) {
+        var baseUri = "http://localhost:8888/wot/";
+        var registry = new Registry(baseUri);
         
         var started = false;
 
-        thingUri = registry.register(
-            "thing1", 
+        var thing1 = registry.register("thing1", 
             {
                 // empty model        
             },
             {
-                start: function (thing) {
-                    started = true;
-                },
-                stop: function(thing) {
-                }
-            });
+            start: function (thing) {
+                started = true;
+            },
+            stop: function (thing) {
+            }
+        });
         
-        assert.equal('http://localhost:8888/wot/thing1', thingUri,
-                    "The thing uri was not created as expected");
+        assert.equal('http://localhost:8888/wot/thing1', thing1._uri);
 
-        registry.find(thingUri, 
+        registry.find(thing1._uri, 
             function (found) {
                 assert(found, "The thing was not found");
                 assert.equal('http://localhost:8888/wot/thing1', found._uri);
@@ -38,30 +38,30 @@ describe('Registry', function() {
     });
 
     it('should register dependent items', function (done) {
-        var registry = new Registry("http://localhost:8888/wot/");
-        
+        var baseUri = "http://localhost:8888/wot/";
+        var registry = new Registry(baseUri);
+
         var thing1_started = false;
         var thing2_started = false;
         var thing3_started = false;
-        
-        thing1Uri = registry.register(
-            "thing1", 
+
+        registry.register("thing1",
             {
-                "@dependencies": {
-                    "other": "thing2"
-                }
+            "@dependencies": {
+                "other": "thing2"
+            }
+        },
+            {
+            start: function (thing) {
+                thing1_started = true;
             },
-            {
-                start: function (thing) {
-                    thing1_started = true;
-                },
-                stop: function (thing) {
-                }
-            });
+            stop: function (thing) {
+            }
+        });
 
         assert(!thing1_started, "It should not be started yet");
 
-        thing2Uri = registry.register(
+        registry.register(
             "thing2", 
             {
             },
@@ -76,7 +76,7 @@ describe('Registry', function() {
         assert(thing1_started, "Thing1 should now be started");
         assert(thing2_started, "Thing2 should now be started");
         
-        thing3Uri = registry.register(
+        registry.register(
             "thing3", 
             {
                 "@dependencies": {

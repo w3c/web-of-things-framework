@@ -3,9 +3,8 @@ var EventEmitter = require('events').EventEmitter;
 var util = require('util');
 var wsd = require('./wsd.js'); // launch the web sockets server
 
-
 // create new thing given its unique name, model and implementation
-function Thing(base_uri, name, model, implementation, registry) {
+function Thing(base_uri, name, model, implementation) {
     var self = this;
     
     EventEmitter.call(self);
@@ -27,7 +26,6 @@ function Thing(base_uri, name, model, implementation, registry) {
     self._wsd = wsd;
     self.__queue = [];
     self._pending = {}; // mapping from uri to list of things with unresolved dependencies
-    self._registry = registry;
     self._ws = undefined;
      
     self.isLocal = function(otherUri) {
@@ -259,84 +257,7 @@ function Thing(base_uri, name, model, implementation, registry) {
             data: data
         });
     }
-    
-    
-    // dependent is a thing, property is the property name for the dependee
-    // and dependee is the *name*  for the thing this thing is depending on
-    self.record_dependency = function(dependent, property, dependee) {
-        var self = this;
-
-        if (!self._pending[dependee]) {
-            self._pending[dependee] = [];
-        }
-
-        console.log(dependent._name + ' depends on ' + dependee);
-        self._pending[dependee].push({
-            property: property,
-            dependent: dependent
-        });
-    }
-    
-    self.resolve_dependency = function(thing, property, dependee, start) {
-        console.log('setting ' + thing._name + "'s " + property + " to " + dependee._name);
-        thing[property] = dependee;
-        thing._unresolved--;
-        
-        if (start && thing._unresolved <= 0 && thing._implementation && !thing._running) {
-            console.log('starting2 ' + thing._name);
-            thing._running = true;
-            thing._implementation.start(thing);
-            flush_queue(thing);
-        }
-    }
-
-    
-    // resolve all dependencies for this thing
-    // these could be local things on this server
-    // otherwise we need to create proxies for them
-    // a given dependency must only be given once
-    self.init_dependencies = function(thing) {
-        var dependencies = thing._model["@dependencies"];
-        var name, count = 0;
-        
-        // first count the number of dependencies
-        for (name in dependencies) {
-            if (dependencies.hasOwnProperty(name))
-                ++count;
-        }
-        
-        thing._unresolved = count;
-        
-        for (name in dependencies) {
-            if (dependencies.hasOwnProperty(name)) {
-                var uri = dependencies[name];
-                
-                // *** fix me - handle error on malformed uri ***
-                uri = url.parse(url.resolve(thing._uri, uri)).href;
-                
-                var entry = thing._registry[uri];
-
-                if (entry) {
-                    self.resolve_dependency(thing, name, entry.thing, false);
-                } else {
-                    var target = url.resolve(base_uri, uri);
-                    self.record_dependency(thing, name, target);
-
-                    // create proxy if uri is for a remote thing
-                    var options = url.parse(uri);
-                    if (options.hostname !== 'localhost') {
-                        self.register_proxy(uri, function(dependee) {
-                                // nothing to do here
-                            },
-                            function(err) {
-                                console.log(err);
-                            });
-                    }
-                }
-            }
-        }
-    }
-        
+            
     self.launch_proxy = function (uri, succeed, fail) {
         // use HTTP to retrieve model
         console.log('connecting to ' + uri);
@@ -398,7 +319,6 @@ function Thing(base_uri, name, model, implementation, registry) {
     self.init_events(self);
     self.init_properties(self);
     self.init_actions(self);
-    self.init_dependencies(self);
 }
 
 Thing.prototype.start = function () {

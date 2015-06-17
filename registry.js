@@ -1,37 +1,41 @@
 ﻿var url = require('url');
 var Thing = require('./thing.js');
+var wsd = require('./wsd.js'); // launch the web sockets server
 
 function Registry(baseUri) {
-    this._things = {};
-    this._base_uri = baseUri;
+    var self = this;
+    
+    self._things = {};
+    self._base_uri = baseUri;
+    self._wsd = wsd;
     
     // { 
     //   waiting: <uri to the object that is waiting to be resolved>
     //   needed: <uri to the object that is needed>
     //   name: the name of the dependency
     // }
-    this._waiting_for = [];
+    self._waiting_for = [];
     
     // the items that need to be started now that everything is resolved    
-    this._start_queue = [];
+    self._start_queue = [];
 
-    this.get = function(uri) {
-        if (this._things.hasOwnProperty(uri)) {
-            return this._things[uri];
+    self.get = function(uri) {
+        if (self._things.hasOwnProperty(uri)) {
+            return self._things[uri];
         }
         
         return undefined;        
     }
     
-    this.has_dependencies = function(thing) {
+    self.has_dependencies = function (thing) {
         return thing._model.hasOwnProperty("@dependencies");
     }
 
-    this.record_dependencies = function(thing) {
+    self.record_dependencies = function(thing) {
         thing._unresolved = 0;
 
-        if (!this.has_dependencies(thing)) {
-            this._start_queue.push(thing);
+        if (!self.has_dependencies(thing)) {
+            self._start_queue.push(thing);
             return;
         }
 
@@ -47,7 +51,7 @@ function Registry(baseUri) {
                 
                 console.log(thing._uri + " is waiting on " + uri + " (" + name + ")");
 
-                this._waiting_for.push({
+                self._waiting_for.push({
                     name: name,
                     waiting: thing._uri,
                     needed: uri
@@ -57,8 +61,7 @@ function Registry(baseUri) {
         }
     }
     
-    this.run_start_queue = function () {
-        var self = this;
+    self.run_start_queue = function () {
         for (var i = 0; i < self._start_queue.length; i++) {
             var thing = self._start_queue[i];
             if (!thing._running) {
@@ -71,33 +74,32 @@ function Registry(baseUri) {
             }
         }
         
-        this._start_queue = [];
+        self._start_queue = [];
     }
     
     // thing is the thing we just created
-    // dependency is the object from this._waiting_for
+    // dependency is the object from self._waiting_for
     // indicating which thing is resolvable
-    this.resolve_dependent = function (name, parent_uri, child_uri) {
-        var parent = this.get(parent_uri).thing;
-        var child = this.get(child_uri).thing;
+    self.resolve_dependent = function (name, parent_uri, child_uri) {
+        var parent = self.get(parent_uri).thing;
+        var child = self.get(child_uri).thing;
         
         parent[name] = child;
         parent._unresolved--;
 
         if (parent._unresolved === 0) {
-            this._start_queue.push(parent);
+            self._start_queue.push(parent);
         }
     }
     
-    this.resolve_dependents = function (thing) {
-        var self = this;
+    self.resolve_dependents = function (thing) {
         
-        // resolve things that depend on this object
+        // resolve things that depend on self object
         for (var i = 0; i < self._waiting_for.length; i++) {
             var dependency = self._waiting_for[i];
             if (dependency.needed === thing._uri) {
                 self.resolve_dependent(dependency.name, dependency.waiting, thing._uri);
-                this._waiting_for.splice(i, 1);
+                self._waiting_for.splice(i, 1);
                 i--;
             }
         }
@@ -109,13 +111,13 @@ function Registry(baseUri) {
                 var other = self.get(dependency.needed);
                 if (other) {
                     self.resolve_dependent(dependency.name, thing._uri, dependency.needed);
-                    this._waiting_for.splice(i, 1);
+                    self._waiting_for.splice(i, 1);
                     i--;
                 }
             }
         }
         
-        this.run_start_queue();
+        self.run_start_queue();
     }
 }
 
@@ -139,7 +141,8 @@ Registry.prototype.find_model = function (uri, succeed, missing) {
 
 Registry.prototype.register = function(name, model, implementation) {
     var self = this;
-    var thing = new Thing(this._base_uri, name, model, implementation, this._things);
+
+    var thing = new Thing(self._base_uri, name, model, implementation);
 
     self._things[thing._uri] = {
         model: thing._model,
@@ -149,8 +152,9 @@ Registry.prototype.register = function(name, model, implementation) {
 
     self.record_dependencies(thing);
     self.resolve_dependents(thing);
+    self._wsd.register_thing(thing);
 
-    return thing._uri;
+    return thing;
 }
 
 
