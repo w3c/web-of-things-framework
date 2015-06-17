@@ -200,7 +200,6 @@ function ProxyThing(uri, onstart) {
                 wsd.register_proxy(options.href, self._ws);
 
                 // now register proxy with the thing it proxies for
-
                 var message = {
                     proxy: self._uri
                 };
@@ -217,15 +216,15 @@ function ProxyThing(uri, onstart) {
 
 }
 
-ProxyThing.prototype.initialize = function (succeed, fail) {
+ProxyThing.prototype.initialize = function(succeed, fail) {
     var self = this;
 
-    self.become_proxy(function (thing) {
+    self.become_proxy(function(thing) {
         thing.init_events(self);
         thing.init_properties(self);
         thing.init_actions(self);
         succeed(thing);
-    }, fail);    
+    }, fail);
 }
 
 ProxyThing.prototype.start = function() {

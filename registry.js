@@ -1,36 +1,56 @@
-﻿var url = require('url');
+﻿
+var url = require('url');
 var LocalThing = require('./local.js');
 var ProxyThing = require('./proxy.js');
 var wsd = require('./wsd.js'); // launch the web sockets server
 
 function Registry(baseUri) {
     var self = this;
-    
+
     self._things = {};
+    self._proxies = {};
     self._base_uri = baseUri;
     self._wsd = wsd;
-    
+
     // { 
     //   waiting: <uri to the object that is waiting to be resolved>
     //   needed: <uri to the object that is needed>
     //   name: the name of the dependency
     // }
     self._waiting_for = [];
-    
+
     // the items that need to be started now that everything is resolved    
     self._start_queue = [];
 
-    self.get = function (uri) {        
+    self.get_either = function(uri) {
+        var thing = self.get_thing(uri);
+
+        if (thing) {
+            return thing;
+        }
+
+        return self.get_proxy(uri);
+    }
+
+    self.get_thing = function(uri) {
         var id = url.parse(uri).path;
 
         if (self._things.hasOwnProperty(id)) {
             return self._things[id];
         }
-        
-        return undefined;        
+
+        return undefined;
     }
-    
-    self.has_dependencies = function (thing) {
+
+    self.get_proxy = function(uri) {
+        if (self._proxies.hasOwnProperty(uri)) {
+            return self._proxies[uri];
+        }
+
+        return undefined;
+    }
+
+    self.has_dependencies = function(thing) {
         return thing._model.hasOwnProperty("@dependencies");
     }
 
@@ -48,10 +68,10 @@ function Registry(baseUri) {
         for (var name in dependencies) {
             if (dependencies.hasOwnProperty(name)) {
                 var uri = dependencies[name];
-                
+
                 // *** fix me - handle error on malformed uri ***
                 uri = url.parse(url.resolve(thing._uri, uri)).href;
-                
+
                 console.log(thing._uri + " is waiting on " + uri + " (" + name + ")");
 
                 self._waiting_for.push({
@@ -63,25 +83,25 @@ function Registry(baseUri) {
             }
         }
     }
-    
-    self.run_start_queue = function () {
+
+    self.run_start_queue = function() {
         for (var i = 0; i < self._start_queue.length; i++) {
             var thing = self._start_queue[i];
             if (!thing._running) {
                 thing.start();
             }
         }
-        
+
         self._start_queue = [];
     }
-    
+
     // thing is the thing we just created
     // dependency is the object from self._waiting_for
     // indicating which thing is resolvable
-    self.resolve_dependent = function (name, parentUri, childUri) {
-        var parent = self.get(parentUri).thing;
-        var child = self.get(childUri).thing;
-        
+    self.resolve_dependent = function(name, parentUri, childUri) {
+        var parent = self.get_thing(parentUri).thing;
+        var child = self.get_thing(childUri).thing;
+
         parent[name] = child;
         parent._unresolved--;
 
@@ -89,8 +109,8 @@ function Registry(baseUri) {
             self._start_queue.push(parent);
         }
     }
-    
-    self.resolve_dependents = function (thing) {
+
+    self.resolve_dependents = function(thing) {
         var dependency;
         var i;
 
@@ -103,12 +123,12 @@ function Registry(baseUri) {
                 i--;
             }
         }
-        
+
         // resolve dependencies of the provided object
         for (i = 0; i < self._waiting_for.length; i++) {
             dependency = self._waiting_for[i];
             if (dependency.waiting === thing._uri) {
-                var other = self.get(dependency.needed);
+                var other = self.get_thing(dependency.needed);
                 if (other) {
                     self.resolve_dependent(dependency.name, thing._uri, dependency.needed);
                     self._waiting_for.splice(i, 1);
@@ -116,48 +136,43 @@ function Registry(baseUri) {
                 }
             }
         }
-        
+
         self.run_start_queue();
     }
 }
 
-Registry.prototype.find = function (uri, succeed, missing) {
-    var found = this.get(uri);
-    
+Registry.prototype.find = function(uri, succeed, missing) {
+    var found = this.get_thing(uri);
+
     if (!found) {
         missing("Thing not found: " + uri);
+    } else {
+        succeed(found.thing);
     }
-
-    succeed(found.thing);
 }
 
-Registry.prototype.find_model = function (uri, succeed, missing) {
-    var found = this.get(id);
-    if (!found) {
-        missing("Thing not found: " + uri);
-    }
-
-    succeed(found.model);
-}
 
 Registry.prototype.register = function(name, model, implementation) {
     var self = this;
-        
+
     var options = url.parse(url.resolve(self._base_uri, name));
-    
-    var existing = self.get(options.href);
-    
+    var id = url.parse(options.href).path;
+
+    var existing = self.get_thing(options.href);
+
     if (existing) {
         throw ('The thing already exists: ' + options.href);
     } else {
         var thing = new LocalThing(options.href, name, model, implementation);
-        var id = url.parse(options.href).path;
+
+        // if there is a proxy for this ID we're about to over-write it
+        // so get rid of it before going on
+        delete self._proxies[id];
 
         self._things[id] = {
             model: thing._model,
             thing: thing
         };
-
 
         self.record_dependencies(thing);
         self.resolve_dependents(thing);
@@ -165,19 +180,17 @@ Registry.prototype.register = function(name, model, implementation) {
     }
 }
 
-Registry.prototype.register_proxy = function (uri, onstart) {
+Registry.prototype.register_proxy = function(uri, onstart) {
     var self = this;
-    
-    var id = url.parse(uri).path;
 
-    var existing = self.get(id);
+    var existing = self.get_proxy(uri);
     if (existing) {
         onstart(existing.thing);
     } else {
         var proxy = new ProxyThing(uri, onstart);
-        
-        proxy.initialize(function (thing) {
-                self._things[id] = {
+
+        proxy.initialize(function(thing) {
+                self._proxies[uri] = {
                     model: thing._model,
                     thing: thing
                 };
