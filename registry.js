@@ -78,9 +78,9 @@ function Registry(baseUri) {
     // thing is the thing we just created
     // dependency is the object from self._waiting_for
     // indicating which thing is resolvable
-    self.resolve_dependent = function (name, parent_uri, child_uri) {
-        var parent = self.get(parent_uri).thing;
-        var child = self.get(child_uri).thing;
+    self.resolve_dependent = function (name, parentUri, childUri) {
+        var parent = self.get(parentUri).thing;
+        var child = self.get(childUri).thing;
         
         parent[name] = child;
         parent._unresolved--;
@@ -91,10 +91,12 @@ function Registry(baseUri) {
     }
     
     self.resolve_dependents = function (thing) {
-        
+        var dependency;
+        var i;
+
         // resolve things that depend on self object
-        for (var i = 0; i < self._waiting_for.length; i++) {
-            var dependency = self._waiting_for[i];
+        for (i = 0; i < self._waiting_for.length; i++) {
+            dependency = self._waiting_for[i];
             if (dependency.needed === thing._uri) {
                 self.resolve_dependent(dependency.name, dependency.waiting, thing._uri);
                 self._waiting_for.splice(i, 1);
@@ -103,8 +105,8 @@ function Registry(baseUri) {
         }
         
         // resolve dependencies of the provided object
-        for (var i = 0; i < self._waiting_for.length; i++) {
-            var dependency = self._waiting_for[i];
+        for (i = 0; i < self._waiting_for.length; i++) {
+            dependency = self._waiting_for[i];
             if (dependency.waiting === thing._uri) {
                 var other = self.get(dependency.needed);
                 if (other) {
@@ -172,7 +174,9 @@ Registry.prototype.register_proxy = function (uri, onstart) {
     if (existing) {
         onstart(existing.thing);
     } else {
-        new ProxyThing(uri, onstart, function(thing) {
+        var proxy = new ProxyThing(uri, onstart);
+        
+        proxy.initialize(function (thing) {
                 self._things[id] = {
                     model: thing._model,
                     thing: thing

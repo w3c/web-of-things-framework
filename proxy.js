@@ -5,7 +5,7 @@ var wsd = require('./wsd.js'); // launch the web sockets server
 var http = require('http');
 
 // create new thing given its unique name, model and implementation
-function ProxyThing(uri, onstart, succeed, fail) {
+function ProxyThing(uri, onstart) {
     var self = this;
 
     var options = url.parse(uri);
@@ -215,13 +215,17 @@ function ProxyThing(uri, onstart, succeed, fail) {
             });
     }
 
-    self.become_proxy(function(thing) {
+}
+
+ProxyThing.prototype.initialize = function (succeed, fail) {
+    var self = this;
+
+    self.become_proxy(function (thing) {
         thing.init_events(self);
         thing.init_properties(self);
         thing.init_actions(self);
         succeed(thing);
-    }, fail);
-
+    }, fail);    
 }
 
 ProxyThing.prototype.start = function() {
