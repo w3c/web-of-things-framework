@@ -20,9 +20,11 @@ function Registry(baseUri) {
     // the items that need to be started now that everything is resolved    
     self._start_queue = [];
 
-    self.get = function(uri) {
-        if (self._things.hasOwnProperty(uri)) {
-            return self._things[uri];
+    self.get = function (uri) {        
+        var id = url.parse(uri).path;
+
+        if (self._things.hasOwnProperty(id)) {
+            return self._things[id];
         }
         
         return undefined;        
@@ -119,6 +121,7 @@ function Registry(baseUri) {
 
 Registry.prototype.find = function (uri, succeed, missing) {
     var found = this.get(uri);
+    
     if (!found) {
         missing("Thing not found: " + uri);
     }
@@ -127,8 +130,6 @@ Registry.prototype.find = function (uri, succeed, missing) {
 }
 
 Registry.prototype.find_model = function (uri, succeed, missing) {
-    var id = url.parse(thing._url).path;
-    
     var found = this.get(id);
     if (!found) {
         missing("Thing not found: " + uri);
@@ -139,16 +140,17 @@ Registry.prototype.find_model = function (uri, succeed, missing) {
 
 Registry.prototype.register = function(name, model, implementation) {
     var self = this;
+        
+    var options = url.parse(url.resolve(self._base_uri, name));
     
-    var thing = new LocalThing(self._base_uri, name, model, implementation);
-
-    var id = url.parse(thing._uri).path;
-
-    var existing = self.get(id);
+    var existing = self.get(options.href);
     
     if (existing) {
-        throw ('The thing already exists: ' + thing._uri);
+        throw ('The thing already exists: ' + options.href);
     } else {
+        var thing = new LocalThing(options.href, name, model, implementation);
+        var id = url.parse(options.href).path;
+
         self._things[id] = {
             model: thing._model,
             thing: thing

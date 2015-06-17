@@ -4,15 +4,13 @@ var util = require('util');
 var wsd = require('./wsd.js'); // launch the web sockets server
 
 // create new thing given its unique name, model and implementation
-function LocalThing(base_uri, name, model, implementation) {
+function LocalThing(uri, name, model, implementation) {
     var self = this;
 
-    var options = url.parse(url.resolve(base_uri, name));
-
-    console.log("creating local: " + name + " at " + options.href);
+    console.log("creating local: " + name + " at " + uri);
 
     self._name = name;
-    self._uri = options.href;
+    self._uri = uri;
     self._model = model;
     self._observers = {};
     self._properties = {};
