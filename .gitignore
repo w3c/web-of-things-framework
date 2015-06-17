@@ -5,6 +5,7 @@ node_modules/
 design.txt
 readme
 notes
+npm-*.log
 
 # don't sync Visual Studio files
 .ntvs_analysis.dat

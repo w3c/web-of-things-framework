@@ -1,5 +1,4 @@
 var Registry = require('../registry.js');
-var Thing = require('../thing.js');
 var assert = require("assert");
 var should = require('should');
 

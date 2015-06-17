@@ -1,5 +1,6 @@
 ﻿var url = require('url');
-var Thing = require('./thing.js');
+var LocalThing = require('./local.js');
+var ProxyThing = require('./proxy.js');
 var wsd = require('./wsd.js'); // launch the web sockets server
 
 function Registry(baseUri) {
@@ -65,12 +66,7 @@ function Registry(baseUri) {
         for (var i = 0; i < self._start_queue.length; i++) {
             var thing = self._start_queue[i];
             if (!thing._running) {
-                console.log("starting " + thing._uri);
-                thing._running = true;
-
-                if (thing._implementation && thing._implementation.start) {
-                    thing._implementation.start(thing);
-                }
+                thing.start();
             }
         }
         
@@ -141,8 +137,8 @@ Registry.prototype.find_model = function (uri, succeed, missing) {
 
 Registry.prototype.register = function(name, model, implementation) {
     var self = this;
-
-    var thing = new Thing(self._base_uri, name, model, implementation);
+    
+    var thing = new LocalThing(self._base_uri, name, model, implementation);
 
     self._things[thing._uri] = {
         model: thing._model,
@@ -153,8 +149,24 @@ Registry.prototype.register = function(name, model, implementation) {
     self.record_dependencies(thing);
     self.resolve_dependents(thing);
     self._wsd.register_thing(thing);
+}
 
-    return thing;
+Registry.prototype.register_proxy = function (uri, onstart) {
+    var self = this;
+        
+    new ProxyThing(uri, onstart, function(thing) {
+        self._things[thing._uri] = {
+            model: thing._model,
+            thing: thing
+        };
+        
+        self.record_dependencies(thing);
+        self.resolve_dependents(thing);
+        self._wsd.register_thing(thing);        
+    },
+    function(err) {
+        console.log(err);
+    });    
 }
 
 

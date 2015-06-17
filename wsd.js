@@ -8,9 +8,11 @@ var os = require('os'), hostname = os.hostname();
 var url = require('url');
 
 var base_uri;
+var registry;
 
-function register_base_uri(uri) {
-	base_uri = uri;
+function register_base_uri(uri, things) {
+    base_uri = uri;
+    registry = things;
 }
 
 // run the websocket server
@@ -23,7 +25,6 @@ var WebSocket = require('ws'),
 
 console.log('started web sockets server on port 8080');
 
-var things = {};  // 
 var proxies = {};
 var connections = {};
 var pending = {};
@@ -40,7 +41,6 @@ function register_thing(thing) {
     var context, continuation, continuations = pending[thing._uri];
     
     console.log('wsd: registering thing ' + thing._uri);
-    things[thing._uri] = thing;
     
     if (continuations) {
         for (var i = 0; i < continuations.length; ++i) {
@@ -48,7 +48,7 @@ function register_thing(thing) {
             continuations.method(thing, continuation.context);
         }
           
-        delete pending[things._uri];
+        delete pending[thing._uri];
     }
 }
 
@@ -62,21 +62,22 @@ function register_proxy(uri, ws) {
 }
 
 // asynchronous because the thing may not yet have been created
-function find_thing(uri, method, context) {
+function find_thing(uri, succeed, context) {
     var uri = url.resolve(base_uri, uri);
     var options = url.parse(uri);
     var uri = options.href;
-        
-    // is it already registered?
-    if (things[uri] && things[uri].thing) {
-        method(things[uri].thing, context);
-    }
-    else // it is not yet registered
-    {
-        options.hostname = 'localhost';
-        uri = url.format(options);
-        register_continuation(uri, method, context);
-    }
+
+    registry.find(uri, 
+        function (found) {
+            succeed(found, context);            
+        },
+        function (err) {
+            console.log(err);
+            options.hostname = 'localhost';
+            uri = url.format(options);
+            register_continuation(uri, method, context);            
+        }
+    );
 }
 
 function connect(host, succeed, fail) {
@@ -109,7 +110,7 @@ function connect(host, succeed, fail) {
                 var obj = JSON.parse(message);
                 dispatch(ws, obj);
             } catch (e) {
-                console.log("Error in handling" + message);
+                console.log("Error in handling" + message + " - " + e);
             }
         });
 
@@ -127,10 +128,9 @@ wss.on('connection', function(ws) {
 
         try {
             var obj = JSON.parse(message);
-            console.log("JSON parsed without error");
             dispatch(ws, obj);
         } catch (e) {
-            console.log("Error in handling " + message);
+            console.log("Error in handling " + message + " - " + e);
         }
     });
 
@@ -140,9 +140,8 @@ wss.on('connection', function(ws) {
 });
 
 function dispatch(ws, message) {
-    console.log('received: ' + JSON.stringify(message));
     if (message.host) {
-    	console.log('connection from host ' + message.host);
+        console.log('connection from host ' + message.host);
         var host = message.host;
         connections[host] = ws;
     } else if (message.proxy) {
@@ -152,44 +151,44 @@ function dispatch(ws, message) {
         register_proxy(uri, ws);
 
         find_thing(uri, function (thing) {
-        	var props = {};
-        	var names = thing._properties;
+            var props = {};
+            var names = thing._properties;
 
-        	for (var prop in names) {
-            	if (names.hasOwnProperty(prop) && prop.substr(0, 1) !== "_")
-                	props[prop] = thing._values[prop];
-        	}
+            for (var prop in names) {
+                if (names.hasOwnProperty(prop) && prop.substr(0, 1) !== "_")
+                    props[prop] = thing._values[prop];
+            }
 
-        	// return state of properties
-        	props["_running"] = thing._running;
+            // return state of properties
+            props["_running"] = thing._running;
 
-        	var response = {
-            	uri: message.proxy,
-            	state: props
-        	};
+            var response = {
+                uri: message.proxy,
+                state: props
+            };
 
-        	ws.send(JSON.stringify(response));
+            ws.send(JSON.stringify(response));
         });
     } else if (message.patch) {
-    	var uri = url.resolve(base_uri, message.uri);
+        var uri = url.resolve(base_uri, message.uri);
         find_thing(uri, function (thing) {
-        	thing[message.patch] = message.data;
+            thing[message.patch] = message.data;
 
-        	// update other proxies for this thing
-        	notify(message, ws);
+            // update other proxies for this thing
+            notify(message, ws);
         });
     } else if (message.action) {
-    	var uri = url.resolve(base_uri, message.uri);
+        var uri = url.resolve(base_uri, message.uri);
         find_thing(uri, function (thing) {
-        	var result = thing[message.action](message.data);
+            var result = thing[message.action](message.data);
 
-        	if (result && message.call) {
-            	var response = {};
-            	response.uri = uri;
-            	response.call = message.call;
-            	response.data = result;
-            	ws.send(JSON.stringify(response));
-        	}
+            if (result && message.call) {
+                var response = {};
+                response.uri = uri;
+                response.call = message.call;
+                response.data = result;
+                ws.send(JSON.stringify(response));
+            }
         });
     } else if (message.error) {
         console.log("received error message: " + error);
