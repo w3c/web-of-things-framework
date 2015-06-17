@@ -116,32 +116,6 @@ function Registry(baseUri) {
         }
         
         this.run_start_queue();
-                
-        //for (name in dependencies) {
-        //    if (dependencies.hasOwnProperty(name)) {
-        //        var uri = dependencies[name];
-                
-        //        // *** fix me - handle error on malformed uri ***
-        //        uri = url.parse(url.resolve(thing._uri, uri)).href;
-                
-        //        var entry = this.get(uri);
-                
-        //        if (entry) {
-        //            resolve_dependency(thing, name, entry.thing, false);
-        //        } else {
-        //            var target = url.resolve(self.base_uri, uri);
-
-        //            unresolved(name, target);
-        //            record_dependency(thing, name, target);
-                    
-        //            // create proxy if uri is for a remote thing
-        //            var options = url.parse(uri);
-        //            if (options.hostname !== 'localhost') {
-        //                register_proxy(uri, function (dependee) { }, error);
-        //            }
-        //        }
-        //    }
-        //}
     }
 }
 
@@ -165,7 +139,7 @@ Registry.prototype.find_model = function (uri, succeed, missing) {
 
 Registry.prototype.register = function(name, model, implementation) {
     var self = this;
-    var thing = new Thing(this._base_uri, name, model, implementation);
+    var thing = new Thing(this._base_uri, name, model, implementation, this._things);
 
     self._things[thing._uri] = {
         model: thing._model,
