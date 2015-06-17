@@ -3,8 +3,9 @@
 
 var exports = module.exports = {}
 
-var os = require('os'), hostname = os.hostname();
-   
+var os = require('os'),
+    hostname = os.hostname();
+
 var url = require('url');
 
 var base_uri;
@@ -30,24 +31,27 @@ var connections = {};
 var pending = {};
 
 function register_continuation(uri, method, context) {
-  if (!pending[uri])
-      pending[uri] = [];
-      
-  pending[uri ] = { method: method, context: context };
+    if (!pending[uri])
+        pending[uri] = [];
+
+    pending[uri] = {
+        method: method,
+        context: context
+    };
 }
 
 // used to call continuations pending on a local thing being registered
 function register_thing(thing) {
     var context, continuation, continuations = pending[thing._uri];
-    
+
     console.log('wsd: registering thing ' + thing._uri);
-    
+
     if (continuations) {
         for (var i = 0; i < continuations.length; ++i) {
             continuation = continuations[i];
             continuations.method(thing, continuation.context);
         }
-          
+
         delete pending[thing._uri];
     }
 }
@@ -67,15 +71,15 @@ function find_thing(uri, succeed, context) {
     var options = url.parse(uri);
     var uri = options.href;
 
-    registry.find(uri, 
-        function (found) {
-            succeed(found, context);            
+    registry.find(uri,
+        function(found) {
+            succeed(found, context);
         },
-        function (err) {
+        function(err) {
             console.log(err);
             options.hostname = 'localhost';
             uri = url.format(options);
-            register_continuation(uri, method, context);            
+            register_continuation(uri, method, context);
         }
     );
 }
@@ -150,7 +154,7 @@ function dispatch(ws, message) {
         var uri = url.resolve(base_uri, message.proxy);
         register_proxy(uri, ws);
 
-        find_thing(uri, function (thing) {
+        find_thing(uri, function(thing) {
             var props = {};
             var names = thing._properties;
 
@@ -171,7 +175,7 @@ function dispatch(ws, message) {
         });
     } else if (message.patch) {
         var uri = url.resolve(base_uri, message.uri);
-        find_thing(uri, function (thing) {
+        find_thing(uri, function(thing) {
             thing[message.patch] = message.data;
 
             // update other proxies for this thing
@@ -179,7 +183,7 @@ function dispatch(ws, message) {
         });
     } else if (message.action) {
         var uri = url.resolve(base_uri, message.uri);
-        find_thing(uri, function (thing) {
+        find_thing(uri, function(thing) {
             var result = thing[message.action](message.data);
 
             if (result && message.call) {

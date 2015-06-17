@@ -1,4 +1,5 @@
-﻿var url = require('url');
+﻿
+var url = require('url');
 var util = require('util');
 var wsd = require('./wsd.js'); // launch the web sockets server
 var http = require('http');
@@ -6,11 +7,11 @@ var http = require('http');
 // create new thing given its unique name, model and implementation
 function ProxyThing(uri, onstart, succeed, fail) {
     var self = this;
-        
+
     var options = url.parse(uri);
-    
+
     console.log("creating proxy at: " + options.href);
-    
+
     self._name = "proxy";
     self._uri = options.href;
     self._model = {};
@@ -24,63 +25,63 @@ function ProxyThing(uri, onstart, succeed, fail) {
     self._pending = {}; // mapping from uri to list of things with unresolved dependencies
     self._ws = undefined;
     self._onStart = onstart;
-        
-    self.init_events = function (thing) {
+
+    self.init_events = function(thing) {
         var events = thing._model["@events"];
-        
-        thing._raise_event = function (name, data) {
+
+        thing._raise_event = function(name, data) {
             var message = {
                 uri: thing._uri,
                 event: name,
                 data: data
             }
-            
+
             wsd.notify(message);
         };
-        
+
         for (var ev in events) {
             if (events.hasOwnProperty(ev))
                 thing._observers[ev] = [];
         }
-        
-        thing._observe = function (name, handler) {
+
+        thing._observe = function(name, handler) {
             var observers = thing._observers[name];
-            
+
             // check handler is a function
-            
+
             if (!(handler && getClass.call(handler) == '[object Function]'))
                 throw ("event handler is not a function");
-            
+
             // if observers is null, an illegal event name
-            
+
             if (!observers)
                 throw ("undefined event name");
-            
+
             // check if self handler is already defined
-            
+
             for (var i = 0; i < observers.length; ++i) {
                 if (observers[i] == handler)
                     return;
             }
-            
+
             observers.push(handler);
         };
-        
-        thing._unobserve = function (name, handler) {
+
+        thing._unobserve = function(name, handler) {
             var observers = thing._observers[name];
-            
+
             // check handler is a function
-            
+
             if (!(handler && getClass.call(handler) == '[object Function]'))
                 throw ("event handler is not a function");
-            
+
             // if observers is null, an illegal event name
-            
+
             if (!observers)
                 throw ("undefined event name");
-            
+
             // search for self handler
-            
+
             for (var i = 0; i < observers.length; ++i) {
                 if (observers[i] == handler) {
                     delete observers[i];
@@ -89,7 +90,7 @@ function ProxyThing(uri, onstart, succeed, fail) {
             }
         };
     }
-    
+
     // initialise thing's getters and setters
     // if ws is null, thing isn't a proxy and hence
     // we need to notify property changes to its proxies
@@ -154,44 +155,44 @@ function ProxyThing(uri, onstart, succeed, fail) {
             }
         }
     }
-        
-    self.launch_proxy = function (uri, succeed, fail) {
+
+    self.launch_proxy = function(uri, succeed, fail) {
         // use HTTP to retrieve model
         console.log('connecting to ' + uri);
-        
-        var request = http.get(uri, function (response) {
+
+        var request = http.get(uri, function(response) {
             var body = '';
-            response.on('data', function (d) {
+            response.on('data', function(d) {
                 console.log(d);
                 body += d;
             });
-            
-            response.on('end', function () {
+
+            response.on('end', function() {
                 try {
                     var model = JSON.parse(body);
                     var options = url.parse(uri);
-                    
+
                     // now get a socket for the remote server
                     // first check if one already exists
-                    wsd.connect(options.hostname, function (ws) {
-                        succeed(ws, model);
-                    },
-                    function (err) {
-                        fail(err);
-                    });
+                    wsd.connect(options.hostname, function(ws) {
+                            succeed(ws, model);
+                        },
+                        function(err) {
+                            fail(err);
+                        });
                 } catch (e) {
                     fail("unable to load " + uri + ", " + e);
                 }
             });
         });
-        
-        request.on('error', function (err) {
+
+        request.on('error', function(err) {
             fail("couldn't load " + uri + ", error: " + err);
         });
 
     }
-    
-    self.become_proxy = function (created, failed) {
+
+    self.become_proxy = function(created, failed) {
         self.launch_proxy(self._uri, function succeed(ws, model) {
                 self._ws = ws;
                 self._model = model;
@@ -209,21 +210,21 @@ function ProxyThing(uri, onstart, succeed, fail) {
 
                 created(self);
             },
-        function fail(msg) {
-            failed (msg);
-        });
+            function fail(msg) {
+                failed(msg);
+            });
     }
-    
+
     self.become_proxy(function(thing) {
         thing.init_events(self);
         thing.init_properties(self);
         thing.init_actions(self);
         succeed(thing);
     }, fail);
-    
+
 }
 
-ProxyThing.prototype.start = function () {
+ProxyThing.prototype.start = function() {
     var self = this;
 
     if (!self._running) {
@@ -233,7 +234,6 @@ ProxyThing.prototype.start = function () {
     }
 }
 
-ProxyThing.prototype.stop = function () {
-}
+ProxyThing.prototype.stop = function() {}
 
 module.exports = ProxyThing;

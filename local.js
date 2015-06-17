@@ -1,15 +1,16 @@
-﻿var url = require('url');
+﻿
+var url = require('url');
 var util = require('util');
 var wsd = require('./wsd.js'); // launch the web sockets server
 
 // create new thing given its unique name, model and implementation
 function LocalThing(base_uri, name, model, implementation) {
     var self = this;
-        
+
     var options = url.parse(url.resolve(base_uri, name));
-    
+
     console.log("creating local: " + name + " at " + options.href);
-    
+
     self._base_uri = base_uri;
     self._name = name;
     self._uri = options.href;
@@ -23,77 +24,77 @@ function LocalThing(base_uri, name, model, implementation) {
     self._wsd = wsd;
     self.__queue = [];
     self._pending = {}; // mapping from uri to list of things with unresolved dependencies
-    
-    self.isLocal = function (otherUri) {
+
+    self.isLocal = function(otherUri) {
         var options = url.parse(url.resolve(self._base_uri, otherUri));
         var base = url.parse(self._base_uri);
-        
+
         if ((options.hostname === base.hostname ||
                 options.hostname === os.hostname()) &&
             options.port === base.port) {
             return true;
         }
-        
+
         return false;
     }
-    
-    self.init_events = function (thing) {
+
+    self.init_events = function(thing) {
         var events = thing._model["@events"];
-        
-        thing._raise_event = function (name, data) {
+
+        thing._raise_event = function(name, data) {
             var message = {
                 uri: thing._uri,
                 event: name,
                 data: data
             }
-            
+
             wsd.notify(message);
             //thing.emit('event', Thing, message);
         };
-        
+
         for (var ev in events) {
             if (events.hasOwnProperty(ev))
                 thing._observers[ev] = [];
         }
-        
-        thing._observe = function (name, handler) {
+
+        thing._observe = function(name, handler) {
             var observers = thing._observers[name];
-            
+
             // check handler is a function
-            
+
             if (!(handler && getClass.call(handler) == '[object Function]'))
                 throw ("event handler is not a function");
-            
+
             // if observers is null, an illegal event name
-            
+
             if (!observers)
                 throw ("undefined event name");
-            
+
             // check if self handler is already defined
-            
+
             for (var i = 0; i < observers.length; ++i) {
                 if (observers[i] == handler)
                     return;
             }
-            
+
             observers.push(handler);
         };
-        
-        thing._unobserve = function (name, handler) {
+
+        thing._unobserve = function(name, handler) {
             var observers = thing._observers[name];
-            
+
             // check handler is a function
-            
+
             if (!(handler && getClass.call(handler) == '[object Function]'))
                 throw ("event handler is not a function");
-            
+
             // if observers is null, an illegal event name
-            
+
             if (!observers)
                 throw ("undefined event name");
-            
+
             // search for self handler
-            
+
             for (var i = 0; i < observers.length; ++i) {
                 if (observers[i] == handler) {
                     delete observers[i];
@@ -102,7 +103,7 @@ function LocalThing(base_uri, name, model, implementation) {
             }
         };
     }
-    
+
     // initialise thing's getters and setters
     // if ws is null, thing isn't a proxy and hence
     // we need to notify property changes to its proxies
@@ -171,56 +172,56 @@ function LocalThing(base_uri, name, model, implementation) {
         }
     }
 
-    self.drain_queues = function (thing) {
+    self.drain_queues = function(thing) {
         for (var change in self._update_queue) {
-                        
+
         }
     }
-    
-    self.flush_queue = function (thing) {
+
+    self.flush_queue = function(thing) {
         for (var i = 0; i < thing._queue.length; ++i) {
             var entry = thing._queue[i];
-            
+
             if (entry.name) {
                 thing._values[entry.name] = entry.value;
             } else if (entry.act) {
                 thing._implementation[entry.act](thing, entry.data);
             }
         }
-        
+
         thing._queue = [];
     }
-    
-    self.queue_update = function (thing, name, value) {
+
+    self.queue_update = function(thing, name, value) {
         thing._queue.push({
             name: name,
             value: value
         });
     }
-    
-    self.queue_act = function (thing, act, data) {
+
+    self.queue_act = function(thing, act, data) {
         thing._queue.push({
             act: act,
             data: data
         });
     }
-            
+
     self.init_events(self);
     self.init_properties(self);
     self.init_actions(self);
 }
 
-LocalThing.prototype.start = function () {
+LocalThing.prototype.start = function() {
     var self = this;
     if (!self._running && self._implementation && self._implementation.start) {
         self._implementation.start(self);
         self._running = true;
-        
+
         self.flush_queue(self);
     }
 }
 
-LocalThing.prototype.stop = function () {
+LocalThing.prototype.stop = function() {
     var self = this;
     if (self._running && self._implementation && self._implementation.stop) {
         self._implementation.stop(self);

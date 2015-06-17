@@ -34,7 +34,7 @@ http.createServer(function(request, response) {
     var uri = url.parse(url.resolve(base, request.url));
 
     console.log('HTTP request: ' + request.method + ' ' + uri.path);
-    
+
     var body;
 
     if (request.method === "GET" || request.method === 'HEAD') {
@@ -42,12 +42,12 @@ http.createServer(function(request, response) {
             var id = uri.href;
             console.log('found id: ' + id);
 
-            registry.find(id, 
+            registry.find(id,
                 function found(thing) {
                     console.log('entry for: ' + id + ' = ' + JSON.stringify(thing));
 
                     body = JSON.stringify(thing._model);
-                
+
                     response.writeHead(200, {
                         'Content-Type': mime_types.json,
                         'Pragma': 'no-cache',
@@ -66,7 +66,7 @@ http.createServer(function(request, response) {
                     response.writeHead(404, {
                         'Content-Type': 'text/plain',
                         'Content-Length': body.length
-                    });                    
+                    });
 
                     if (request.method === "GET") {
                         response.write(body);
