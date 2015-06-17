@@ -9,7 +9,7 @@ describe('Registry', function() {
         
         var started = false;
 
-        var thing1 = registry.register("thing1", 
+        registry.register("thing1", 
             {
                 // empty model        
             },
@@ -21,9 +21,7 @@ describe('Registry', function() {
             }
         });
         
-        assert.equal('http://localhost:8888/wot/thing1', thing1._uri);
-
-        registry.find(thing1._uri, 
+        registry.find('http://localhost:8888/wot/thing1', 
             function (found) {
                 assert(found, "The thing was not found");
                 assert.equal('http://localhost:8888/wot/thing1', found._uri);
