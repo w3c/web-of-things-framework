@@ -3,10 +3,13 @@
   "version": "0.0.1",
   "scripts" : {
     "start": "node demo.js",
-    "test": "./node_modules/.bin/mocha"
+    "test": "./node_modules/.bin/mocha -w"
   },
   "dependencies": {
-    "ws": "latest",
-    "mocha": "latest"
+    "ws": "latest"
+  },
+  "devDependencies": {
+    "mocha": "latest",
+    "should": "latest"
   }
 }

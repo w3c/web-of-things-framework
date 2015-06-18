@@ -45,12 +45,20 @@ wot.thing("switch12", {
             "type": "boolean",
             "writeable": true
         }
+    },
+    "@actions": {
+        "toggle": null
     }
 }, {
     start: function(thing) {
+        console.log("starting switch12");
         thing.on = true;
     },
     stop: function(thing) {},
+    toggle: function(thing) {
+        console.log("toggling switch12");
+        thing.on = !thing.on;
+    }
 });
 
 // test for resolving circular dependencies
@@ -84,22 +92,26 @@ wot.register_proxy("/wot/door12", function(thing) {
         console.log(err);
     });
 
-wot.register_proxy("http://localhost:8888/wot/switch12", function(thing) {
-        console.log('got proxy for switch12');
+wot.register_proxy("http://bubbafat:8888/wot/switch12", function(thing) {
+        console.log('got proxy for bubbafat:8888 switch12');
+        thing.toggle();
+        thing.toggle();
+        thing.toggle();
+        thing.toggle();
     },
     function(err) {
         console.log(err);
     });
 
 wot.register_proxy("http://localhost:9999/wot/switch12", function(thing) {
-        console.log('got proxy for switch12');
+        console.log('got proxy for localhost:9999 switch12');
     },
     function(err) {
         console.log(err);
     });
 
 wot.register_proxy("http://akira.w3.org:8888/wot/switch12", function(thing) {
-        console.log('got proxy for switch12');
+        console.log('got proxy for akira:8888 switch12');
     },
     function(err) {
         console.log(err);
