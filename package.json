@@ -6,7 +6,12 @@
     "test": "./node_modules/.bin/mocha"
   },
   "dependencies": {
-    "ws": "latest",
-    "mocha": "latest"
+    "ws": "latest"
   }
+    ,
+    "devDependencies": {
+        "mocha": "latest",
+        "should":"latest"
+    },
+    "engine": "node >= 0.1.0"
 }
