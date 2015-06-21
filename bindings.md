@@ -121,7 +121,23 @@ This code currently only supports HTTP for downloading resources for use by Web 
 
 The files that you want to serve up to web browsers should be put into the folder "www". The "thing" models are registed by scripts and dynamically served, so you should not put these models in this folder.
 
-Future work will add HTTP bindings. This will involve clients providing an HTTP end point for delivering events, property updates and action results.  In addition, we will define a means for registering a proxy for a thing hosted by a client. This is intended to allow a web of things server within a firewall to set up a proxy on a cloud based server accessible on the Internet.
+Future work will add HTTP bindings. This will involve clients providing an HTTP end point for delivering events, property updates and action results.  Here is a possible API for registering a proxy.
+
+```
+wot.register_proxy(thing uri, handler, call back uri);
+```
+where _thing uri_ is the URI for the thing you want to proxy, _handler_ is a function that will be called with the new proxy object, and _call back uri_ is the HTTP URI that the server hosting the thing can deliver notifications to.
+
+An open question is whether the call back URI should have a unique path for each thing, or whether the thing is identified via a field in the JSON payload as it is for the Web Sockets bindings. This latter approach might be simpler to implement.
+
+In addition, we will define a means for registering a proxy for a thing hosted by a client. This is intended to allow a web of things server within a firewall to set up a proxy on a cloud based server accessible on the Internet.  Here is a possible API for this.
+
+```
+wot.publish(thing, uri);
+```
+Where _thing_ is the object for a local thing or a proxy, and _uri_ is the HTTP URI for the target server on which you wish to publish a proxy for the given thing. Calling this API results in the request being forwarded to the target server along with the thing's model.
+
+Given that this API is expected to be most commonly used from a server within a firewall, the request may be passed via Web Sockets, opening a new connection to the target server if one isn't already open. Further work is anticipated on allowing the request to be passed via HTTP and other protocols.
 
 ## Web Sockets
 
@@ -205,3 +221,22 @@ The Thing server later sends the action's result (if any) with:
   data: result data
 }
 ```
+
+## MQTT
+
+_We invite feedback from MQTT experts on the following proposed binding of the Web of Things Framework to MQTT_
+
+MQTT is a pub-sub messaging protocol consisting of clients and brokers that communicate over TCP/IP. Each messag is associated with a topic that is used by brokers to route the message to clients who have registered an interest in that topic. Topics can be defined hierarchically with slash (/) as a separator.
+
+For the Web of Things, a pair of topics is required for each thing. The first is used to forward messages to that thing. The second is used by that server to forward messages to proxies for that thing on other servers.
+
+* thing/_THING ID_
+* proxy/_THING ID_
+
+Where _THING ID_ is a unique identifier for the thing being proxied. 
+
+The MQTT payload is essentially the same as for Web sockets except for the URI which can be omitted as it is implied by the _THING ID_.
+
+
+
+
