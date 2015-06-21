@@ -31,9 +31,9 @@ var wot = require('./framework.js');  // launch the server
   
 wot.thing("agent12",
   {
-    "@dependencies" : {
-      "door" : "door12",
-      "light" : "switch12"
+    "@properties" : {
+      "door" : { "type" = "thing", "uri" = "door12" },
+      "light" : { "type" = "thing", "uri" = "switch12" }
     }
   }, {
     start: function (thing) {
@@ -228,14 +228,20 @@ _We invite feedback from MQTT experts on the following proposed binding of the W
 
 MQTT is a pub-sub messaging protocol consisting of clients and brokers that communicate over TCP/IP. Each messag is associated with a topic that is used by brokers to route the message to clients who have registered an interest in that topic. Topics can be defined hierarchically with slash (/) as a separator.
 
-For the Web of Things, a pair of topics is required for each thing. The first is used to forward messages to that thing. The second is used by that server to forward messages to proxies for that thing on other servers.
+One complication is the need to identify a broker that can connect directly or indirecly the client and target servers. 
+
+For the Web of Things, a pair of topics is required for each thing. The first is used to forward messages to that thing. The second is used to forward messages to proxies for that thing on other servers.
 
 * thing/_THING ID_
 * proxy/_THING ID_
 
 Where _THING ID_ is a unique identifier for the thing being proxied. 
 
-The MQTT payload is essentially the same as for Web sockets except for the URI which can be omitted as it is implied by the _THING ID_.
+**Question**: should there be a prefix, e.g. wot/ in case the brokers are being used for messages other than for the Web of Things?
+
+The MQTT payload is essentially the same as for Web sockets except for the URI which can be omitted as it is implied by the _THING ID_. 
+
+**Question**: would it be better to use a topic for the server ID rather than for the thing ID? The latter would include the thing ID as part of the message payload. This would increase the amount of code in common with Web Sockets, and potentially, might reduce the memory demands compared with one topic per thing.
 
 
 

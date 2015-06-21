@@ -88,3 +88,29 @@ As for CoAP, binary encodings of JSON and XML could be used to compress message 
 ### Extensible Messaging and Presence Protol (XMPP)
 
 [XMPP](http://xmpp.org) is a widely used pub-sub protocol based upon XML and TCP/IP. It is defined by a suite of IETF RFCs. If you're an XMPP expert and would like to help us add support for XMPP, please get involved.
+
+### Advanced Message Queuing Protocol (AMQP)
+
+AMQP is a pub-sub protocol that is based on TCP/IP, and which focuses on not losing messages regardless of failures and reboots.  This characteristic makes AMQP attractive for robust IoT applications. If you are an AMQP expert and would like to help us add support for AMQP, please get involved.
+
+## Discovery
+
+Discovery for the Web of Things involves a mix of techniques. These include mDNS and UPnP for local area networks, involving a combination of multicast datagrams and caching of messages.  Bluetooth and ZigBee feature discovery and pairing of devices. Bluetooth Smart (aka BLE) supports beacons that broadcast their presence to nearby devices. NFC and barcodes provide further ways to discover services. 
+
+Another approach involves devices registering themselves with brokers that can be queried for available services. The broker can be a local device such as a home hub on a local area network, or it could be a server on the public Internet. The query service can be subject to access control policies to protect the owner's privacy.
+
+Discovery can be based upon social relationships between people, and between people and devices.  This could be based upon centralised social networks, or distributed approaches. One idea involves _personal zones_ that enable people to manage their devices and services, and to set access control policies for sharing these with their social contacts. Your personal zone is associated with a URI that can be used to access it.
+
+### Abstraction Layer for Discovery
+
+We're looking to simplify discovery by decoupling scripts from the details of the underlying mechanisms outlined above. The idea is to provide a unified query API that can be configured to use a local or remote broker or some combination thereof. We want to evolve this approach through practical implementation experience with a wide variety of use cases and contexts.
+
+## Security, Privacy and Resilience
+
+Security will be very important to the growth of the IoT, and we are looking for help. For an indication of what we're considering, please see the list of topics for security metadata earlier in this document.
+
+In essence, we need good security practices to protect the Web of Things from unauthorised monitoring and attacks.  This will involve a layered approach depending upon the need. For example, it may be appropriate to encrypt different kinds of data with different keys, despite running on top of the encryption offered by transport level security (TLS).
+
+Reslience is about system level robustness. The large number of IoT devices will make hardware and software faults inevitable. How to detect and work around these faults. Likewise for how to detect and graceully work around cyberattacks, or even unpexpected spikes in demand for services. This suggests the need for monitoring the system behaviour and raising alerts, and for policies for adapting to changes.
+
+Privacy can be approached in terms of access control mechanisms based on rules or capability tokens, and terms and conditions that define a business relatonship between the suppliers and consumers of services.
