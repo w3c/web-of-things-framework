@@ -3,7 +3,7 @@
 
 var exports = module.exports = {}
 
-var os = require('os'), hostname = os.hostname();
+var settings = require('./config'), hostname = settings.server.fqdn;
    
 var url = require('url');
 
@@ -94,7 +94,7 @@ function connect(host, succeed, fail) {
             connections[host] = ws;
             // now let other server know our hostname
             ws.send(JSON.stringify({
-                host: os.hostname()
+                host: settings.server.fdqn
             }));
             succeed(ws);
         });

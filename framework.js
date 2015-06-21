@@ -2,6 +2,7 @@
 var exports = module.exports = {};
 
 var assert = require('assert');
+var settings = require('./config');
 var os = require('os');
 var fs = require('fs');
 var url = require('url');
@@ -16,7 +17,7 @@ var registry = {};
 
 httpd.set_registry(registry); // pass reference to http server so it can serve up models
 wsd.register_base_uri(base_uri);
-console.log("this server thinks its hostname is " + os.hostname());
+console.log("this server thinks its hostname is " + settings.server.fqdn);
 
 // create new thing given its unique name, model and implementation
 function thing(name, model, implementation) {
@@ -67,7 +68,7 @@ function register_proxy(uri, succeed, fail) {
     var base = url.parse(base_uri);
     
     if ((options.hostname === base.hostname ||
-    		options.hostname === os.hostname()) &&
+    		options.hostname === settings.server.fqdn) &&
     	options.port == base.port) {
         console.log('for this server so use local thing: ' + uri);
         var thing = registry[options.href];
