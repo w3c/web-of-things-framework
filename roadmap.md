@@ -111,6 +111,6 @@ Security will be very important to the growth of the IoT, and we are looking for
 
 In essence, we need good security practices to protect the Web of Things from unauthorised monitoring and attacks.  This will involve a layered approach depending upon the need. For example, it may be appropriate to encrypt different kinds of data with different keys, despite running on top of the encryption offered by transport level security (TLS).
 
-Reslience is about system level robustness. The large number of IoT devices will make hardware and software faults inevitable. How to detect and work around these faults. Likewise for how to detect and graceully work around cyberattacks, or even unpexpected spikes in demand for services. This suggests the need for monitoring the system behaviour and raising alerts, and for policies for adapting to changes.
+Reslience is about system level robustness. The large number of IoT devices will make hardware and software faults inevitable. How to detect and work around these faults. Likewise for how to detect and gracefully work around cyberattacks, or even unpexpected spikes in demand for services. This suggests the need for monitoring the system behaviour and raising alerts, and for policies for adapting to changes.
 
 Privacy can be approached in terms of access control mechanisms based on rules or capability tokens, and terms and conditions that define a business relatonship between the suppliers and consumers of services.
