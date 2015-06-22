@@ -79,6 +79,14 @@ There are also plenty of areas where you could contribute that don’t involve p
 
 Please see the other project documentation (*.md), e.g. [protocol bindings](https://github.com/w3c/web-of-things-framework/blob/master/bindings.md) and also the list of project issues where we are looking for help, including design topics and bugs.
 
+### Related Projects
+
+These are not as far advanced as the NodeJS project, and your help is welcomed.
+
+* [Web of Things server for the Arduino microcontroller](https://github.com/w3c/wot-arduino)
+* [Web of Things server for the ESP8266 microcontroller](https://github.com/w3c/wot-esp8266)
+* [Web of Things server for the Go programming language](https://github.com/w3c/wot-go)
+
 ## License
 
 (The MIT License)
