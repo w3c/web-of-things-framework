@@ -101,6 +101,8 @@ Another approach involves devices registering themselves with brokers that can b
 
 Discovery can be based upon social relationships between people, and between people and devices.  This could be based upon centralised social networks, or distributed approaches. One idea involves _personal zones_ that enable people to manage their devices and services, and to set access control policies for sharing these with their social contacts. Your personal zone is associated with a URI that can be used to access it.
 
+The relationship between things provides a further basis for discovery. The relationships are defined through the models for things, where a thing has properties whose values are other things. Search engines can thus discover new things by examining the models for things they already know. This is analogous to how search engines discover web sites by examining the HTML for the pages of sites they already know.
+
 ### Abstraction Layer for Discovery
 
 We're looking to simplify discovery by decoupling scripts from the details of the underlying mechanisms outlined above. The idea is to provide a unified query API that can be configured to use a local or remote broker or some combination thereof. We want to evolve this approach through practical implementation experience with a wide variety of use cases and contexts.
