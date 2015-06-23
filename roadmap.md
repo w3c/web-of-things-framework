@@ -105,7 +105,9 @@ The relationship between things provides a further basis for discovery. The rela
 
 ### Abstraction Layer for Discovery
 
-We're looking to simplify discovery by decoupling scripts from the details of the underlying mechanisms outlined above. The idea is to provide a unified query API that can be configured to use a local or remote broker or some combination thereof. We want to evolve this approach through practical implementation experience with a wide variety of use cases and contexts.
+We're looking to simplify discovery by decoupling scripts from the details of the underlying mechanisms outlined above. The idea is to provide a unified query API that can be configured to use a local or remote broker or some combination thereof. We want to evolve this approach through practical implementation experience with a wide variety of use cases and contexts. Some obvious questions include: what information needs to be passed to the query API to specify the context for the search? Can the range of mechanisms used for satisfying queries be described by a policy of some kind? The discovery agent integrated as part of a Web of Things server could talk to other agents to expand its effectiveness. The aim is to simplify discovery for regular script writers by handing the difficult work over to system programmers and a distributed network of discovery agents. Discovery is tightly coupled to privacy, authentication and access control.
+
+**We need your help to collect relevant use cases!**
 
 ## Security, Privacy and Resilience
 
