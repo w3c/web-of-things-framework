@@ -3,9 +3,9 @@ var wot = require('./framework.js'); // launch the servers
 // define the things for the door, light and agent
 
 wot.thing("agent12", {
-    "@dependencies": {
-        "door": "door12",
-        "light": "switch12"
+    "@properties": {
+        "door": { "type" : "thing", "uri" : "door12" },
+        "light": { "type" : "thing", "uri" : "switch12" }
     }
 }, {
     start: function(thing) {

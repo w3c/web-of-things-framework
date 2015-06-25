@@ -271,11 +271,18 @@ function resolve_dependency(thing, property, dependee, start) {
 // a given dependency must only be given once
 function init_dependencies(thing) {
     var dependencies = thing._model["@dependencies"];
+    var properties = thing._model["@properties"];
     var name, count = 0;
 
     // first count the number of dependencies
     for (name in dependencies) {
         if (dependencies.hasOwnProperty(name))
+            ++count;
+    }
+
+    for (name in properties) {
+        if (properties.hasOwnProperty(name) &&
+        		properties[name].type === "thing")
             ++count;
     }
 
@@ -309,6 +316,37 @@ function init_dependencies(thing) {
             }
         }
     }
+    
+    for (name in properties) {
+        if (properties.hasOwnProperty(name) &&
+        		properties[name].type === "thing") {
+            var uri = properties[name].uri;
+
+            // *** fix me - handle error on malformed uri ***
+            uri = url.parse(url.resolve(thing._uri, uri)).href;
+
+            var entry = registry[uri];
+
+            if (entry)
+                resolve_dependency(thing, name, entry.thing, false);
+            else {
+                var target = url.resolve(base_uri, uri);
+                record_dependency(thing, name, target);
+
+                // create proxy if uri is for a remote thing
+                var options = url.parse(uri);
+                if (options.hostname !== 'localhost') {
+                    register_proxy(uri, function(dependee) {
+                        // nothing to do here
+                        },
+                        function(err) {
+                            console.log(err);
+                        });
+                }
+            }
+        }
+    }
+
 }
 
 function init_events(thing) {
@@ -388,7 +426,8 @@ function init_properties(thing, ws) {
 
     if (ws) {
         for (var prop in properties) {
-            if (properties.hasOwnProperty(prop)) {
+            if (properties.hasOwnProperty(prop) &&
+                !properties[prop].type === "thing") {
                 thing._properties[prop] = null;
 
                 (function(property) {
@@ -414,7 +453,8 @@ function init_properties(thing, ws) {
     } else // local thing so notify all of its proxies
     {
         for (var prop in properties) {
-            if (properties.hasOwnProperty(prop)) {
+            if (properties.hasOwnProperty(prop) &&
+                !properties[prop].type === "thing") {
                 thing._properties[prop] = null;
                 (function(property) {
                     Object.defineProperty(thing, property, {

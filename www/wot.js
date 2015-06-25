@@ -87,6 +87,7 @@ var wot = {
     },
 
     // initialise thing with its uri and parsed JSON-LD model
+    // *** fix me to work with dependencies on other things ***
     init_proxy: function(thing, uri, model) {
         var events = model["@events"];
         var properties = model["@properties"];
@@ -154,7 +155,8 @@ var wot = {
         // it also assumes all properties are writable (bad!)
         // *** fix me to honor writable meta-property ***
         for (var prop in properties) {
-            if (properties.hasOwnProperty(prop)) {
+            if (properties.hasOwnProperty(prop) &&
+                !properties[prop].type === "thing") {
                 thing._properties[prop] = null;
 
                 (function(property) {
