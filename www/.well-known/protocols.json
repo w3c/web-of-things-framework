@@ -1,0 +1,5 @@
+{
+  "ws": {
+    "uri": "ws://localhost:8080/webofthings"
+  }
+}

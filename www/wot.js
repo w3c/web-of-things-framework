@@ -1,5 +1,6 @@
 var wot = {
     things: {},
+    protocols: {},
 
     start: function() {
         // same origin policy restricts this library to connecting to
@@ -9,41 +10,61 @@ var wot = {
         // initialise web socket connection for thing messages
         // use single connection for all things on the server
 
-        var host = window.document.location.host.replace(/:.*/, '');
-        this.ws = new WebSocket('ws://' + host + ':8080/webofthings');
-        console.log("websocket connection opening ...");
-
-        this.ws.onopen = function() {
-            console.log("websocket connection opened");
-
-            wot.get("/wot/door12", function(door) {
-                console.log("door is ready");
-                door.unlock();
-            });
-
-            wot.get("/wot/switch12", function(light) {
-                console.log("light is ready");
-                light.on = true;
-            });
-        };
-
-        this.ws.onclose = function() {
-            console.log("websocket connection closed");
-        };
-
-        this.ws.onerror = function() {
-            console.log("websocket connection error");
-        };
-
-        this.ws.onmessage = function(message) {
-            console.log("received message: " + message.data);
-            try {
-                var msg = JSON.parse(message.data);
-                wot.dispatch_message(msg);
-            } catch (e) {
-                console.log("JSON syntax error in " + message.data);
+        this.fetch_well_known_protocols(undefined, function(err, protocols) {
+            if (!err && typeof protocols.ws !== "undefined") {
+              wot.protocols.ws = new WebSocket(protocols.ws.uri);
             }
-        };
+            else {
+              // fallback to default host if well know protocols files not found
+              var host = window.document.location.host.replace(/:.*/, '');
+              wot.protocols.ws = new WebSocket('ws://' + host + ':8080/webofthings');
+            }
+
+            console.log("websocket connection opening ...");
+
+            wot.protocols.ws.onopen = function() {
+                console.log("websocket connection opened");
+
+                wot.get("/wot/door12", function(door) {
+                    console.log("door is ready");
+                    door.unlock();
+                });
+
+                wot.get("/wot/switch12", function(light) {
+                    console.log("light is ready");
+                    light.on = true;
+                });
+            };
+
+            wot.protocols.ws.onclose = function() {
+                console.log("websocket connection closed");
+            };
+
+            wot.protocols.ws.onerror = function() {
+                console.log("websocket connection error");
+            };
+
+            wot.protocols.ws.onmessage = function(message) {
+                console.log("received message: " + message.data);
+                try {
+                    var msg = JSON.parse(message.data);
+                    wot.dispatch_message(msg);
+                } catch (e) {
+                    console.log("JSON syntax error in " + message.data);
+                }
+            };
+        });
+    },
+
+    // fetch well know protocols file
+    fetch_well_known_protocols: function(path, handler) {
+        // default path on server is /.well-known/protocols.json
+        // use path parameter to override
+
+        path = path || "/.well-known/protocols.json";
+        wot.getJSON(path, function(err, response) {
+            handler(err, response);
+        });
     },
 
     // dispatch message from web socket connection
@@ -61,7 +82,7 @@ var wot = {
 
             for (var i = 0; i < observers.length; ++i)
                 observers[i](message.name, message.data);
-        } else if (message.state) // update all properties on proxy 
+        } else if (message.state) // update all properties on proxy
         {
             var obj = message.state;
 
@@ -173,8 +194,8 @@ var wot = {
                                 patch: property,
                                 data: value
                             };
-                            
-                            wot.ws.send(JSON.stringify(message));
+
+                            wot.protocols.ws.send(JSON.stringify(message));
                         }
                     });
 
@@ -197,7 +218,7 @@ var wot = {
                         message.uri = thing._uri;
                         message.action = action;
                         message.data = data;
-                        wot.ws.send(JSON.stringify(message));
+                        wot.protocols.ws.send(JSON.stringify(message));
                     };
                 })(act);
             }
@@ -209,7 +230,7 @@ var wot = {
             proxy: uri
         };
 
-        wot.ws.send(JSON.stringify(message));
+        wot.protocols.ws.send(JSON.stringify(message));
         this.things[uri] = thing;
         console.log("registered: " + uri);
     },
@@ -225,29 +246,49 @@ var wot = {
         alert(s);
     },
 
-    get: function(path, handler) {
+    _get: function(path, content_type, callback) {
         var req = new XMLHttpRequest();
         req.open("GET", path, true);
         req.setRequestHeader("Pragma", "no-cache");
         req.setRequestHeader("Cache-Control", "no-cache");
-        req.setRequestHeader("Content-Type", "text/plain");
+        req.setRequestHeader("Content-Type", content_type);
         req.onreadystatechange = function(evt) {
             if (req.readyState == 4) {
                 if (req.status == 200) {
                     console.log(req.status + " Okay, " + req.responseText);
-
-                    handler(new function() {
-                        wot.init_proxy(this, path, JSON.parse(req.responseText));
-                    });
-                } else {
+                    callback(false, req.responseText);
+                }
+                else {
                     console.log(req.status + " Error, " + req.responseText);
+                    callback(req.status, req.responseText);
                 }
             }
         };
 
         req.send();
-    }
+    },
 
+    get: function(path, handler) {
+      wot._get(path, "text/plain", function(err, response) {
+        if (!err) {
+            handler(new function() {
+                wot.init_proxy(this, path, JSON.parse(response));
+            });
+        }
+      });
+    },
+
+
+    getJSON: function(path, handler) {
+      wot._get(path, "application/javascript", function(err, response) {
+        if (!err) {
+          handler(err, JSON.parse(response));
+        }
+        else {
+          handler(err, response);
+        }
+      });
+    }
 
 };
 
