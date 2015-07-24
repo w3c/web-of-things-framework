@@ -13,4 +13,5 @@ obj/
 *.njsproj
 *.suo
 *.sln
+logs/
 
