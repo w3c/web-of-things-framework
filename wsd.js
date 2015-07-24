@@ -4,7 +4,7 @@
 var exports = module.exports = {}
 
 var settings = require('./config'), hostname = settings.server.fqdn;
-   
+var logger = require('./logger');
 var url = require('url');
 
 var base_uri;
@@ -21,12 +21,13 @@ var WebSocket = require('ws'),
         path: '/webofthings'
     });
 
-console.log('started web sockets server on port 8080');
+logger.info('started web sockets server on port 8080');
 
 var things = {};  // 
 var proxies = {};
 var connections = {};
 var pending = {};
+
 
 function register_continuation(uri, method, context) {
   if (!pending[uri])
@@ -39,7 +40,7 @@ function register_continuation(uri, method, context) {
 function register_thing(thing) {
     var context, continuation, continuations = pending[thing._uri];
     
-    console.log('wsd: registering thing ' + thing._uri);
+    logger.debug('wsd: registering thing ' + thing._uri);
     things[thing._uri] = thing;
     
     if (continuations) {
@@ -54,7 +55,7 @@ function register_thing(thing) {
 
 function register_proxy(uri, ws) {
     uri = typeof uri == 'string' ? uri : uri.href;
-    console.log("wsd: registering proxy: " + uri);
+    logger.debug("wsd: registering proxy: " + uri);
     if (!proxies[uri])
         proxies[uri] = [];
 
@@ -86,11 +87,11 @@ function connect(host, succeed, fail) {
         succeed(ws); // reuse existing connection
     } else // create new connection
     {
-        console.log('opening web socket connection with ' + host);
+        logger.debug('opening web socket connection with ' + host);
         ws = new WebSocket('ws://' + host + ':8080/webofthings');
 
         ws.on('open', function() {
-            console.log('opened web socket connection with ' + host);
+            logger.debug('opened web socket connection with ' + host);
             connections[host] = ws;
             // now let other server know our hostname
             ws.send(JSON.stringify({
@@ -104,12 +105,12 @@ function connect(host, succeed, fail) {
         });
 
         ws.on('message', function(message, flags) {
-            console.log("received message from server: " + host + " " + message);
+            logger.debug("received message from server: " + host + " " + message);
             try {
                 var obj = JSON.parse(message);
                 dispatch(ws, obj);
             } catch (e) {
-                console.log("Error in handling" + message);
+                logger.error("Error in handling" + message);
             }
         });
 
@@ -123,14 +124,14 @@ wss.on('connection', function(ws) {
     var host = null;
 
     ws.on('message', function(message) {
-        console.log('received: ' + message);
+        logger.debug('received: ' + message);
 
         try {
             var obj = JSON.parse(message);
-            console.log("JSON parsed without error");
+            logger.debug("JSON parsed without error");
             dispatch(ws, obj);
         } catch (e) {
-            console.log("Error in handling " + message);
+            logger.error("Error in handling " + message);
         }
     });
 
@@ -140,9 +141,9 @@ wss.on('connection', function(ws) {
 });
 
 function dispatch(ws, message) {
-    console.log('received: ' + JSON.stringify(message));
+    logger.debug('received: ' + JSON.stringify(message));
     if (message.host) {
-    	console.log('connection from host ' + message.host);
+        logger.debug('connection from host ' + message.host);
         var host = message.host;
         connections[host] = ws;
     } else if (message.proxy) {
@@ -192,9 +193,9 @@ function dispatch(ws, message) {
         	}
         });
     } else if (message.error) {
-        console.log("received error message: " + error);
+        logger.error("received error message: " + error);
     } else {
-        console.log("unknown message type: " + JSON.stringify(message));
+        logger.debug("unknown message type: " + JSON.stringify(message));
         var response = {
             error: "unknown message type"
         };
@@ -218,7 +219,7 @@ function notify(message, client) {
                     continue;
             }
 
-            console.log("sending: " + notification);
+            logger.debug("sending: " + notification);
             ws.send(notification);
         }
     }

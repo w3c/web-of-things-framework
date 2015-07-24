@@ -3,6 +3,8 @@ var exports = module.exports = {};
 
 var assert = require('assert');
 var settings = require('./config');
+var logger = require('./logger');
+
 var os = require('os');
 var fs = require('fs');
 var url = require('url');
@@ -13,15 +15,14 @@ var base_uri = 'http://localhost:8888/wot/'; // base URI for models on this serv
 var pending = {}; // mapping from uri to list of things with unresolved dependencies
 
 // registry of locally hosted things with mapping from thing id to model, implementation and status
-var registry = {};
+var registry = require('./libs/lists/registry.js');
 
-httpd.set_registry(registry); // pass reference to http server so it can serve up models
 wsd.register_base_uri(base_uri);
-console.log("this server thinks its hostname is " + settings.server.fqdn);
+logger.info("this server thinks its hostname is " + settings.server.fqdn);
 
 // create new thing given its unique name, model and implementation
 function thing(name, model, implementation) {
-    console.log("creating: " + name);
+    logger.debug("creating: " + name);
     var options = url.parse(url.resolve(base_uri, name));
 
     var thing = new function Thing() {
@@ -46,14 +47,14 @@ function thing(name, model, implementation) {
 
     if (thing._unresolved <= 0) {
         if (!thing._running) {
-            console.log("starting1 " + name);
+            logger.debug("starting1 " + name);
             thing._running = true;
             implementation.start(thing);
             flush_queue(thing);
         } else
-            console.log(name + ' is already running');
+            logger.debug(name + ' is already running');
     } else
-        console.log("deferring start of " + name + " until its dependencies are resolved");
+        logger.debug("deferring start of " + name + " until its dependencies are resolved");
 
 
     // some things may be waiting for this thing
@@ -70,27 +71,27 @@ function register_proxy(uri, succeed, fail) {
     if ((options.hostname === base.hostname ||
     		options.hostname === settings.server.fqdn) &&
     	options.port == base.port) {
-        console.log('for this server so use local thing: ' + uri);
+        logger.debug('for this server so use local thing: ' + uri);
         var thing = registry[options.href];
 
         if (thing)
             succeed(thing.thing);
         else // not yet created
         {
-            console.log('waiting for ' + uri + ' to be created');
+            logger.debug('waiting for ' + uri + ' to be created');
             record_handler(uri, succeed);
         }
     }
     else // assume remote host
     {
         // remote host so find proxy
-        console.log(options.href + " is another server");
+        logger.debug(options.href + " is another server");
         launch_proxy(options.href, succeed, fail);
     }
 }
 
 function register_thing(model, thing) {
-    console.log('registering ' + thing._uri);
+    logger.debug('registering ' + thing._uri);
     registry[thing._uri] = {
         model: model,
         thing: thing
@@ -101,7 +102,7 @@ function register_thing(model, thing) {
 
 function launch_proxy(uri, succeed, fail) {
     // use HTTP to retrieve model
-    console.log('connecting to ' + uri);
+    logger.debug('connecting to ' + uri);
 
     var request = http.request(uri, function(response) {
         var body = '';
@@ -135,13 +136,13 @@ function launch_proxy(uri, succeed, fail) {
 
 function unregister_proxy(uri) {
     // *** implement me *** needs to remove proxy from list of proxies for given uri
-    console.log("*** unregister_proxy isn't implemented");
+    logger.debug("*** unregister_proxy isn't implemented");
 }
 
 function create_proxy(uri, model, ws, handler) {
     var options = url.parse(url.resolve(base_uri, uri));
 
-    console.log("wot.register proxy: " + options.href);
+    logger.debug("wot.register proxy: " + options.href);
     assert(options.hostname !== 'localhost', 'trying to register proxy for localhost');
 
     var thing = new function Proxy() {
@@ -173,7 +174,7 @@ function create_proxy(uri, model, ws, handler) {
     ws.send(JSON.stringify(message));
     handler(thing);
 
-    console.log("registered: " + thing._uri);
+    logger.debug("registered: " + thing._uri);
 
     // some things may be waiting for this thing
     notify_dependents(thing);
@@ -210,7 +211,7 @@ function notify_dependents(dependee) {
     var dependents = pending[dependee._uri];
     
     if (dependents) {
-        console.log('resolving dependencies on ' + dependee._name);
+        logger.debug('resolving dependencies on ' + dependee._name);
         for (var i = 0; i < dependents.length; ++i) {
             var dependency = dependents[i];
 
@@ -230,7 +231,7 @@ function notify_dependents(dependee) {
 // someone wants to use a handler for a local
 // thing that has yet to be created
 function record_handler(dependee, handler) {
-    console.log('recording handler for ' + dependee);
+    logger.debug('recording handler for ' + dependee);
     if (!pending[dependee])
         pending[dependee] = [];
 
@@ -245,7 +246,7 @@ function record_dependency(dependent, property, dependee) {
     if (!pending[dependee])
         pending[dependee] = [];
 
-    console.log(dependent._name + ' depends on ' + dependee);
+    logger.debug(dependent._name + ' depends on ' + dependee);
     pending[dependee].push({
         property: property,
         dependent: dependent
@@ -253,12 +254,12 @@ function record_dependency(dependent, property, dependee) {
 }
 
 function resolve_dependency(thing, property, dependee, start) {
-    console.log('setting ' + thing._name + "'s " + property + " to " + dependee._name);
+    logger.debug('setting ' + thing._name + "'s " + property + " to " + dependee._name);
     thing[property] = dependee;
     thing._unresolved--;
 
     if (start && thing._unresolved <= 0 && thing._implementation && !thing._running) {
-        console.log('starting2 ' + thing._name);
+        logger.debug('starting2 ' + thing._name);
         thing._running = true;
         thing._implementation.start(thing);
         flush_queue(thing);
@@ -310,7 +311,7 @@ function init_dependencies(thing) {
                         // nothing to do here
                         },
                         function(err) {
-                            console.log(err);
+                            logger.error(err);
                         });
                 }
             }
@@ -340,7 +341,7 @@ function init_dependencies(thing) {
                         // nothing to do here
                         },
                         function(err) {
-                            console.log(err);
+                            logger.error(err);
                         });
                 }
             }
@@ -464,7 +465,7 @@ function init_properties(thing, ws) {
                         
                         set: function (value) {
                             if (thing._running) {
-                                console.log("setting " + thing._name + "." + property + " = " + value);
+                                logger.debug("setting " + thing._name + "." + property + " = " + value);
                                 thing._values[property] = value;
                             } else
                                 queue_update(thing, property, value);
@@ -521,7 +522,7 @@ function init_actions(thing, ws) {
                 (function(action) {
                     thing[action] = function (data) {
                         if (thing._running) {
-                            console.log('invoking action: ' + thing._name + '.' + action + '()');
+                            logger.debug('invoking action: ' + thing._name + '.' + action + '()');
                             thing._implementation[action](thing, data);
                         } else
                             queue_act(thing, action, data);

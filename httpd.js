@@ -1,123 +1,79 @@
-// simple HTTP server - put static resources in ./www/
-// only supports a limited set of file extensions
-// could be easily extended to handle request body
+﻿var path = require('path');
+var express = require('express');
+var bodyParser = require('body-parser');
+var cookieParser = require('cookie-parser');
+var exphbs = require('express-handlebars');
+var routes = require('./routes/index');
+var wotroute = require('./routes/wot');
+var applog = require('./logger'); // the logger name is used by express internally so call here the log obj "applog"
 
-var port = 8888;
-var base = 'http://localhost:' + port + '/'; // base URI for models on this server
+var registry = require('./libs/lists/registry.js'); // mapping from id to model and thing
 
-var http = require("http");
-var url = require('url');
-var path = require('path');
-var fs = require('fs');
+applog.info("WoT Express server start");
 
-var mime_types = {
-    "html": "text/html",
-    "txt": "text/plain",
-    "js": "text/javascript",
-    "json": "application/json",
-    "css": "text/css",
-    "jpeg": "image/jpeg",
-    "jpg": "image/jpeg",
-    "png": "image/png",
-    "gif": "image/gif",
-    "ico": "image/x-icon"
-};
+//  init the express app
+var app = express();
 
-var registry; // mapping from id to model and thing
+// view engine setup
+app.set('views', path.join(__dirname, 'views'));
+//app.set('view engine', 'ejs');
+app.engine('handlebars', exphbs({
+    defaultLayout: 'main',
+    helpers: {
+        section: function (name, options) {
+            if (!this._sections) this._sections = {};
+            this._sections[name] = options.fn(this);
+            return null;
+        }
+    }
+}));
 
-function set_registry(map) {
-    registry = map;
+app.set('view engine', 'handlebars');
+
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(cookieParser());
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.use('/', routes);
+
+// catch 404 and forward to error handler
+app.use(function (req, res, next) {
+    var err = new Error('Not Found');
+    err.status = 404;
+    next(err);
+});
+
+// error handlers
+
+// development error handler
+// will print stacktrace
+if (app.get('env') === 'development') {
+    app.use(function (err, req, res, next) {
+        res.status(err.status || 500);
+        res.render('error', {
+            message: err.message,
+            error: err
+        });
+    });
 }
 
-http.createServer(function(request, response) {
-    console.log('http request');
-    var uri = url.parse(url.resolve(base, request.url));
+// production error handler
+// no stacktraces leaked to user
+app.use(function (err, req, res, next) {
+    res.status(err.status || 500);
+    res.render('error', {
+        message: err.message,
+        error: {}
+    });
+});
 
-    console.log('HTTP request: ' + request.method + ' ' + uri.path);
+module.exports = app;
 
-    if (request.method === "GET" || request.method === 'HEAD') {
-        if (/^\/wot\/.+/.test(uri.path)) {
-            var id = uri.href;
-            console.log('found id: ' + id);
-            var entry = registry[id];
-            var body;
+var port = 8888;
+app.set('port', port);
 
-            console.log('entry for: ' + id + ' = ' + JSON.stringify(entry));
+var server = app.listen(app.get('port'), function () {
+    applog.info('WoT Express server listening on port ' + server.address().port);
+});
 
-            if (entry && entry.model) {
-                body = JSON.stringify(entry.model);
-
-                response.writeHead(200, {
-                    'Content-Type': mime_types.json,
-                    'Pragma': 'no-cache',
-                    'Cache-Control': 'no-cache',
-                    'Content-Length': body.length
-                });
-            } else {
-                body = "404 not found: " + request.url;
-                response.writeHead(404, {
-                    'Content-Type': 'text/plain',
-                    'Content-Length': body.length
-                });
-            }
-
-            if (request.method === "GET")
-                response.write(body);
-
-            response.end();
-            return;
-        }
-
-        if (uri.path === '/')
-            uri.path = '/index.html';
-
-        var filename = './www' + uri.path;
-
-        fs.stat(filename, function(error, stat) {
-            var ext = path.extname(filename);
-            var mime = null;
-
-            if (ext.length > 1)
-                mime = mime_types[ext.split(".")[1]];
-
-            if (error || !mime) {
-                var body = "404 not found: " + request.url;
-                response.writeHead(404, {
-                    'Content-Type': 'text/plain',
-                    'Content-Length': body.length
-                });
-
-                if (request.method === "GET")
-                    response.write(body);
-
-                response.end();
-            } else {
-                response.writeHead(200, {
-                    'Content-Type': mime,
-                    'Pragma': 'no-cache',
-                    'Cache-Control': 'no-cache',
-                    'Content-Length': stat.size
-                });
-
-                if (request.method === "GET") {
-                    var stream = fs.createReadStream(filename);
-                    stream.pipe(response);
-                } else
-                    response.end();
-            }
-        });
-    } else // unimplemented HTTP Method
-    {
-        var body = "501: not implemented " + request.method + " " + request.url;
-        response.writeHead(501, {
-            'Content-Type': 'text/plain',
-            'Content-Length': body.length
-        });
-        response.write(body);
-        response.end();
-    }
-}).listen(port);
-
-console.log('started http server on port ' + port);
-
-exports.set_registry = set_registry;
