@@ -225,32 +225,21 @@ var wot = {
         alert(s);
     },
 
-    get: function(path, handler) {
-        var req = new XMLHttpRequest();
-        req.open("GET", path, true);
-        req.setRequestHeader("Pragma", "no-cache");
-        req.setRequestHeader("Cache-Control", "no-cache");
-        req.setRequestHeader("Content-Type", "text/plain");
-        req.onreadystatechange = function(evt) {
-            if (req.readyState == 4) {
-                if (req.status == 200) {
-                    console.log(req.status + " Okay, " + req.responseText);
+    get: function (path, handler) {        
+        $.ajax({
+            url: path, 
+            type: "GET",
+            dataType: "json",
+            contentType: "application/json"
+        }).done(function (result) {
+            console.log("Okay, " + JSON.stringify(result));
+            
+            handler(new function () {
+                wot.init_proxy(this, path, result);
+            });
 
-                    handler(new function() {
-                        wot.init_proxy(this, path, JSON.parse(req.responseText));
-                    });
-                } else {
-                    console.log(req.status + " Error, " + req.responseText);
-                }
-            }
-        };
-
-        req.send();
+        }).fail(function (jqXHR, textStatus) {
+            console.log(textStatus + " Error, " + jqXHR.responseText);
+        });
     }
-
-
 };
-
-window.addEventListener("load", function() {
-    wot.start();
-}, false);

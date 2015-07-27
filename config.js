@@ -1,7 +1,20 @@
 /* config.js - JSON server configuration file */
 
-var server = {
-  fqdn: 'example.com'  // this server's fully qualified domain name
+var config = {
+    server: {
+        fqdn: 'example.com'  // this server's fully qualified domain name
+    },
+    /*
+        Log levels are 
+        error
+        info
+        debug
+     
+        Use debug to log all levels and get detailed logs in the log file
+     */
+    log: {
+        level: "debug" 
+    }
 };
 
-exports.server = server;
+module.exports = config;
