@@ -1,11 +1,11 @@
-﻿var path = require('path');
+﻿var applog = require('./logger'); // the logger name is used by express internally so call here the log obj "applog"
+var path = require('path');
 var express = require('express');
 var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser');
 var exphbs = require('express-handlebars');
 var routes = require('./routes/index');
 var wotroute = require('./routes/wot');
-var applog = require('./logger'); // the logger name is used by express internally so call here the log obj "applog"
 
 var registry = require('./libs/lists/registry.js'); // mapping from id to model and thing
 
