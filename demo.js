@@ -1,6 +1,8 @@
 var logger = require('./logger');
 var wot = require('./framework.js'); // launch the servers
 
+logger.info("start demo application");
+
 // define the things for the door, light and agent
 
 wot.thing("agent12", {
