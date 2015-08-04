@@ -92,6 +92,7 @@ wot.register_proxy("http://localhost:8888/wot/switch12", function(thing) {
         logger.error(err);
     });
 
+// this will result in an error if there isn’t a web of things server on port 9999
 wot.register_proxy("http://localhost:9999/wot/switch12", function(thing) {
         logger.info('got proxy for switch12');
     },
@@ -99,6 +100,7 @@ wot.register_proxy("http://localhost:9999/wot/switch12", function(thing) {
         logger.error(err);
     });
 
+// this will result in an error if there isn’t a web of things server at this location
 wot.register_proxy("http://akira.w3.org:8888/wot/switch12", function(thing) {
         logger.info('got proxy for switch12');
     },
