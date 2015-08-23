@@ -67,13 +67,14 @@ function find_thing(uri, method, context) {
     var uri = url.resolve(base_uri, uri);
     var options = url.parse(uri);
     var uri = options.href;
-        
+    
     // is it already registered?
-    if (things[uri] && things[uri].thing) {
-        method(things[uri].thing, context);
+    if (things[uri]) {
+        method(things[uri], context);
     }
     else // it is not yet registered
     {
+    	console.log("thing for uri " + uri + " isn't yet registered");
         options.hostname = 'localhost';
         uri = url.format(options);
         register_continuation(uri, method, context);
@@ -141,7 +142,7 @@ wss.on('connection', function(ws) {
 });
 
 function dispatch(ws, message) {
-    logger.debug('received: ' + JSON.stringify(message));
+    logger.debug('dispatching: ' + JSON.stringify(message));
     if (message.host) {
         logger.debug('connection from host ' + message.host);
         var host = message.host;
@@ -182,6 +183,7 @@ function dispatch(ws, message) {
     } else if (message.action) {
     	var uri = url.resolve(base_uri, message.uri);
         find_thing(uri, function (thing) {
+        	console.log("invoking " + message.action + " action");
         	var result = thing[message.action](message.data);
 
         	if (result && message.call) {

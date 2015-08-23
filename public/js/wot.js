@@ -4,7 +4,8 @@ var wot = {
     start: function() {
         // same origin policy restricts this library to connecting to
         // HTTP and WebSockets servers with same origin as web page.
-        // does XHR resolve relative URLs with respect to page origin?
+        // However, CORS headers provide a controlled way to relax this
+        // Does XHR resolve relative URLs with respect to page origin?
 
         // initialise web socket connection for thing messages
         // use single connection for all things on the server
@@ -57,6 +58,7 @@ var wot = {
 
         if (message.event) // notify event to proxy
         {
+            console.log("event " + message.event);
             var observers = thing._observers[message.event];
 
             for (var i = 0; i < observers.length; ++i)
@@ -73,6 +75,7 @@ var wot = {
         } else if (message.patch) // update named property on proxy
         {
             thing[message.patch] = message.data;
+            console.log("setting " + message.patch + " to " + message.data);
         } else
             console.log("unknown message type: " + JSON.stringify(message));
     },
@@ -89,6 +92,7 @@ var wot = {
     // initialise thing with its uri and parsed JSON-LD model
     // *** fix me to work with dependencies on other things ***
     init_proxy: function(thing, uri, model) {
+        console.log("setting up proxy for " + uri);
         var events = model["@events"];
         var properties = model["@properties"];
         var actions = model["@actions"];
@@ -193,6 +197,7 @@ var wot = {
                 (function(action) {
                     thing[action] = function (data) {
                         // invoke action on proxied thing
+                        console.log("invoking " + action + " action");
                         var message = {};
                         message.uri = thing._uri;
                         message.action = action;
