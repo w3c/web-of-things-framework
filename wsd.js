@@ -74,7 +74,7 @@ function find_thing(uri, method, context) {
     }
     else // it is not yet registered
     {
-    	console.log("thing for uri " + uri + " isn't yet registered");
+    	logger.debug("thing for uri " + uri + " isn't yet registered");
         options.hostname = 'localhost';
         uri = url.format(options);
         register_continuation(uri, method, context);
@@ -183,7 +183,7 @@ function dispatch(ws, message) {
     } else if (message.action) {
     	var uri = url.resolve(base_uri, message.uri);
         find_thing(uri, function (thing) {
-        	console.log("invoking " + message.action + " action");
+        	logger.debug("invoking " + message.action + " action");
         	var result = thing[message.action](message.data);
 
         	if (result && message.call) {
