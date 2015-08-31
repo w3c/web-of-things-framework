@@ -52,8 +52,10 @@ function start(settings) {
         });
         
         ws.on('close', function () {
-            logger.debug("--- ws closed ---");
             var id = ws.clientid;
+
+            logger.debug("--- ws closed for client id " + id);
+            
             // TODO remove from the proxies list
             for (name in proxies) {
                 var collection = proxies[name];
