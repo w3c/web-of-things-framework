@@ -46,7 +46,7 @@ Install the node web socket module (and other dependencies):
 To start the server use the following command from a terminal shell:
 
 ```
-  node demo.js
+  node framework.js
 ```
 
 To load the demo web page point your web browser to
