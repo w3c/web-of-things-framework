@@ -73,10 +73,11 @@ app.use(function (err, req, res, next) {
 
 module.exports = app;
 
-var port = config.servers.web.http_port;
+var port = config.servers.web.port;
 app.set('port', port);
 
 var server = app.listen(app.get('port'), function () {
     applog.info('WoT Express server listening on port ' + server.address().port);
 });
+
 
