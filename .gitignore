@@ -8,6 +8,7 @@ notes
 
 # don't sync Visual Studio files
 .ntvs_analysis.dat
+.ntvs_analysis.dat.tmp
 bin/
 obj/
 *.njsproj

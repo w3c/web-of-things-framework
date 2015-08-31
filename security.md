@@ -16,35 +16,12 @@ The lack of security for IoT devices indicates that security is treated as a kin
 More and more homes are exposed to security threats via Internet of Things devices. The simplest and most common forms of that are the various Internet connected home monitoring video cameras and baby monitors which often connect to RTMP servers run by companies with unknown security policies and using the default user name "admin" and blank password for authentication. No wonder there were already hacking events where hackers could compromise home video cameras on the scale of thousands of devices.
 There is no workaround for the need of addressing security requirements. Security must be the primary concern for Internet of Things applications and framework such as Web of Things. 
 
-### Security threats
+Security on device booting, low level device resources and peripherals are not in the scope for this document. Security implementations such as ARM Trust Zone address those requirements and this document aims to instead define security guidelines for higher application layers.
 
-As more embedded systems are connected to the Internet, the potential damage from hardware and software level security attacks scale up dramatically. Hardware level attacks such as shack attacks, lab attacks and fab attacks are not in scope for this document. Software related threats that the Web of Things system must address are the following:
-
-##### Capture attacks
-Capture attacks typically target the system or the information. Both the system and information capture allows the attacker to disrupt, degrade, destroy and manipulate the resources. The capture of the system likely results in the capture of information and data to which that system has access to. A successful capture attack enables the attacker to limit the access to the device (disrupt), disable functionalities in the system (degrade) or delete entire modules from the software stack (destroy). The manipulation of the system and device could come in many forms, including but not limited to triggering false alarms in a security system to redirect the resources to a particular area or returning an incorrect data from a temperature sensor to the cooler device to causing overheating and explosion.
-
-##### Facilitating attacks on other systems
-The Internet of Things devices typically connect to other devices. In an automated home often dozens of devices operate and as such provides attackers with ample opportunities to create sophisticated interconnected attacks. For example a compromised Internet of Things gateway device could be used to launch a denial of service attack.
-
-##### Creating safety risks
-Unauthorized persons might exploit security vulnerabilities to create risks to physical safety in some cases. The attacker could hack remotely into internet connected medical devices such as insulin pumps and change their settings so that they no longer delivered medicine. Unauthorized access to Internet-connected cameras or baby monitors also raises potential physical safety concerns. There can be safety risk via obtaining unauthorized access to IoT data and then performing data analysis and data mining. Data collected by fitness and other devices that track consumers’ location over time could endanger consumers’ physical safety. A data thief could remotely access data about energy usage from smart meters to determine whether a homeowner is away from home.
-
-##### Noninvasive attacks
-Embedded systems are especially susceptible to a type of noninvasive attack called a side-channel attack. Non-invasive techniques are usually performed via software attacks using viruses and malicious software code, the attacks are often based on the statistical analysis of operational characteristics of the device to capture and extract confidential information. The attacker aims to gain access to the data handled by the device and try to put the system out of order.
-
-##### Network attacks
-The attacks on the communication network could compromise Internet of Things device security, particularly data integrity. The resist replay attack is a form of network attack in which a valid data transmission is manipulated, typically maliciously or fraudulently repeated or delayed. The attack is carried out either by the originator or by an adversary who intercepts the data and retransmits it, possibly as part of a masquerade attack by IP packet substitution. The man-in-the-middle attacks is an attack where the attacker secretly relays and possibly alters the communication between two parties who believe they are directly communicating with each other.
-
-Apart from the aforementioned attacks, the rapid growth of IoT devices leads to a variety of potential risks concerning information security and both privacy, data protection and device usage, which must be considered. There are previously unknown risks appearing such as user lock-in. There is an increased risk of consumers being locked-in a specific IoT service provider, making it difficult for them to migrate from one provider to the other. Such a dependency would be detrimental for users having control over their data and the right to choose providers (this underlines the importance of open standards which presumably lowers the risk of one provider gaining market dominance).
-
-### Web of Things Security
-The Web of Things security primarily addresses four areas of concern to handle security threats:
+There are three areas that must be addressed by the security:
 *	Authentication. To manage who can connect, view and control Internet of Things devices. 
 *	Access control. To manage what the connected entity (human or machine) can do on the Internet of Things device. 
 *	Data integrity. To ensure the data between connected parties is not compromised.
-*	Device provisioning. Orchestrates authentication, access control and data integrity services to provide IoT services to users.
-
-(Security on device booting, low level device resources and peripherals are not in the scope for this document. Security implementations such as ARM Trust Zone address those requirements and this document aims to instead define security guidelines for higher application layers.)
 
 To manage those tasks a security agent software module is implemented which orchestrates the security between devices and end-users. 
 
@@ -57,18 +34,3 @@ The security agent performs public private key infrastructure based authenticati
 The system implements access control management functions. All Internet-of-Things devices on the system are accessible from the network (because they are on the Internet), but not necessarily all functions are exposed to all entities. From an access control policy viewpoint there must be differentiated control over the devices. For example an ECG wireless sensor that publishes its heart rate and ECG data via the Web of Things framework, makes its heart rate data available for public databases for research reasons, but the ECG data is only accessible to the cardiologists of the individual wearing the device. The system allows users to define complex access control rules.  This function is particularly important for home and building automation systems, e.g. who can open which door in the building. The implementation typically will consist of a lookup collection (linked list, map, etc) to store the public key of clients together with the access rights of the users. The look up collection is maintained by the security agent module either by long pulling the security settings from the Web of Things server or providing an event driven interface that can be called by the connected entities to refresh the security settings.
 
 There are interfaces for existing authorization standards such as OAuth and protocols like CoAP, and then implementations can be rolled out to connect to the Web of Things security from web end user to device and device to web end user respectively.
-
-#### Using existing standards
-The Web of Things security uses existing open standards. 
-
-The open standard security token format JSON Web Token (JWT), the encrypted content open standard JSON Web Encryption (JWE), the JSON Web Algorithms (JWA) open standard specification that registers cryptographic algorithms and identifiers and the JSON Web Signature (JWS) open standard that represents content secured with digital signatures or Message Authentication Codes (MACs) using JSON-based data structures will be utilized in Web of Things security.
-
-WoT security utilize the Authentication and Authorization for Constrained Environments (ACE) to manage authentication and authorization and the JSON Object Signing and Encryption (JOSE) for secure object format encoding.
-
-The cryptographic keys are represented in WoT security by the JSON Web Key (JWK) standard that is a JavaScript Object Notation (JSON) data structure. 
-
-
-
-### Implementation and design details
-
-
