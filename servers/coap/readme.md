@@ -1,1 +1,0 @@
-﻿# CoAP server implementation
