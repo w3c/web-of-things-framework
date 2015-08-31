@@ -1,23 +1,8 @@
 /* config.js - JSON server configuration file */
 
 var config = {
-    framework: {
-        //  framework related settings
-        action_timeout: 30000,      // default action timeout in milliseconds
-        property_timeout: 30000     // default property timeout in milliseconds
-    },
-    servers: {
-        web: {
-            http_port: 8888,
-            ws_port: 8080,
-            base_uri: 'http://localhost:8888/wot/'
-        },
-        restapi: {
-        },
-        coap: {
-        },
-        mqtt: {
-        }
+    server: {
+        fqdn: 'example.com'  // this server's fully qualified domain name
     },
     /*
         Log levels are 
@@ -29,25 +14,6 @@ var config = {
      */
     log: {
         level: "debug" 
-    },
-    things: {
-        //  register the things from a local config file, database or web service
-        //  the value of the "proc" config settings is the name of the ./libs/things.registry function 
-        //  that is called to initialize things upon application start
-        register: {
-            proc: 'localreg',
-            param: ''  
-        }
-        /*
-        register: {
-            proc: 'databasereg',
-            param: 'the database connection parameters e.g. PostgreSQL connection string ...'
-        },
-        register: {
-            proc: 'webservicereg',
-            param: 'web service connection parameters'
-        }  
-        */      
     }
 };
 

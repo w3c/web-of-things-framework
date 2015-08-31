@@ -1,7 +1,7 @@
 ﻿
 /*
     Use this object to maintain the eregisteres things list. This object is accessible from all decoupled components such as the routers
-    and can be extended into a persistent store on a load balanced implementation that will address high availability requirements
+    and can be extended into a persistent store on a load balanced implementation that wikk address availability requirements
 */
 
 var registry;
