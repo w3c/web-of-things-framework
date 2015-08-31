@@ -12,6 +12,7 @@ if (!thing_reg_config || !thing_reg_config.proc || thing_reg_config.param == nul
     return logger.error("Invalid thing initialization configuration settings. things.register settings must exists in the configuration file to run the application");
 }
 
+//  call the thing handler to start handling the things
 thing_handler[thing_reg_config.proc](thing_reg_config.param);
 
 // start the servers
