@@ -1,0 +1,21 @@
+{
+    "name": "knockout-postbox",
+    "version": "0.5.2",
+    "main": "build/knockout-postbox.min.js",
+    "dependencies": {
+        "knockout": ">= 2.0"
+    },
+    "publishConfig": {
+        "registry": "https://registry.npmjs.org"
+    },
+    "ignore": [
+        "examples",
+        "ext",
+        "reports",
+        "spec",
+        "src",
+        "Gruntfile.js",
+        "package.json",
+        ".gitignore"
+    ]
+}
