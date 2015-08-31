@@ -50,7 +50,7 @@
         </div>
         <div>
             <div class="pull-left" style="width:100px">IsWritable: </div>
-            <div class="pull-left"><span data-bind="text: iswritable"></span></div>
+            <div class="pull-left"><span data-bind="text: iswriteable"></span></div>
             <div style="clear:both"></div>
         </div>
         <div>
@@ -62,16 +62,20 @@
 </script>
 
 <script type="text/html" id="action-template">
-    <div class="thing_action_item">
-        <div>
-            <div class="pull-left" style="width:70px">Action: </div>
-            <div class="pull-left" style="width:70px"><span data-bind="text: action"></span></div>
-            <div class="pull-left">
-                <button data-bind="click: handler">Invoke Action</button>
-            </div>
-            <div style="clear:both"></div>
-        </div>
+    <div data-bind="template: template_name" class="thing_action_item">
     </div>
+</script>
+
+<script type="text/html" id="unlock-action-template">
+    <div>
+        <button data-bind="click: handler">Unlock</button>
+    </div>        
+</script>
+
+<script type="text/html" id="lock-action-template">
+    <div>
+        <button data-bind="click: handler">Lock</button>
+    </div>       
 </script>
 
 

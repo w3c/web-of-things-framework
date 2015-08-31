@@ -4,7 +4,7 @@ WoT.ViewModels.ThingProperty = function (_property, _prop, _on_propertychanged) 
     var viewModel = {
         property: ko.observable(_property),
         type: ko.observable(_prop.type),
-        iswritable: ko.observable(_prop.iswritable ? false : true),       
+        iswriteable: ko.observable((_prop.writeable && _prop.writeable == true) ? true : false),       
         data: ko.observable(_prop.value),
         on_propertychanged: _on_propertychanged,
 
@@ -18,7 +18,7 @@ WoT.ViewModels.ThingProperty = function (_property, _prop, _on_propertychanged) 
         }
     };
     
-    if (viewModel.iswritable()) {
+    if (viewModel.iswriteable()) {
         viewModel.data.subscribe(function (newValue) {
             if (viewModel.setbyserver ==  false) {
                 console.log(viewModel.property() + ' property has changed');
@@ -36,6 +36,7 @@ WoT.ViewModels.ThingProperty = function (_property, _prop, _on_propertychanged) 
 
 WoT.ViewModels.ThingAction = function (_action, _on_actioninvoked) {
     var viewModel = {
+        template_name: ko.observable(_action + '-action-template'),
         action: ko.observable(_action),
         on_actioninvoked: _on_actioninvoked,
 

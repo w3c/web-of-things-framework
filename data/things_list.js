@@ -56,7 +56,7 @@ var things = [
         "implementation": {
             start: function(thing) {
                 thing.on = true;
-                thing.power_consumption = 45; // watt, some dummy data for now
+                thing.power_consumption = 23.5; // watt, some dummy data for now
             },
             stop: function(thing) {},
         }
