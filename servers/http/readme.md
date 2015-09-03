@@ -1,0 +1,1 @@
+﻿# HTTP server implementation to provide HTTP end port for inter server communication
