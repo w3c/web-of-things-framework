@@ -153,3 +153,29 @@
     };
 
 })($, ko);
+
+
+ko.bindingHandlers.bellring = {
+    init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
+        
+    },
+    update: function (element, valueAccessor, allBindingsAccessor) {
+        try {
+            var allBindings = allBindingsAccessor();
+            var interval = allBindings.interval || 5000;
+            var obj = valueAccessor();
+            var signalled = ko.utils.unwrapObservable(obj);
+            if (signalled) {
+                $(element).show();
+                setTimeout(function () {
+                    $(element).hide();
+                    obj(false);
+                }, interval);
+            }
+            else {
+                $(element).hide();
+            }
+        }
+        catch (e) { }
+    }
+};

@@ -53,7 +53,7 @@ var door = {
     "model": {
         "events": {
             "bell": function () {
-                //  Demonstrates to raise an event from the device.
+                //  Demonstrates to raise an event from the device by ringing the bell in every 30 seconds.
                 //  This implementation emits an event to the WoT listner. This will be most likely an HTTP end point call 
                 //  from the device to the WoT listener in real world applications, but for this demo example we just emit an event
                 var ringbell = function () {
@@ -69,7 +69,7 @@ var door = {
                         }
                     );
                 };
-                setInterval(ringbell, 60000);
+                setInterval(ringbell, 30000);
             },
         },
         // for patch include the writable properties from the data/dbs/file/db.js file
