@@ -24,6 +24,7 @@
                     
             </div>
         </div>
+        <!-- ko if: actions().length > 0 -->
         <div class="thing_actions">
             <h5>
                 Actions
@@ -32,6 +33,17 @@
 
             </div>
         </div>
+        <!-- /ko -->
+        <!-- ko if: events().length > 0 -->
+        <div class="thing_actions">
+            <h5>
+                Events
+            </h5>
+            <div data-bind="template: { name: 'event-template', foreach: events }">
+
+            </div>
+        </div>
+        <!-- /ko -->
     </div>       
 </script>
 
@@ -42,6 +54,12 @@
 </script>
 
 <script type="text/html" id="action-template">
+    <div data-bind="template: template_name" class="thing_action_item">
+    </div>
+</script>
+
+
+<script type="text/html" id="event-template">
     <div data-bind="template: template_name" class="thing_action_item">
     </div>
 </script>
@@ -137,6 +155,13 @@
 <script type="text/html" id="power_consumption-property-template">
     <div>
         Power consumption:  <span data-bind="text: data"></span> watts
+    </div>
+</script>
+
+
+<script type="text/html" id="bell-event-template">
+    <div>
+        Door Bell. Event timestamp:  <span data-bind="text: timestamp"></span>
     </div>
 </script>
 

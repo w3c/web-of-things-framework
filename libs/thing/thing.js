@@ -36,66 +36,9 @@ var Thing = exports.Thing = function Thing(name, transport, model, implementatio
         var events = thing.model["@events"];
         
         thing.raise_event = function (event_name, data) {
-            var message = {
-                name: thing.name,
-                event: event_name,
-                data: data
-            }
-            
-            self._wsd.notify(message);
-            //thing.emit('event', Thing, message);
-        };
-        
-        for (var ev in events) {
-            if (events.hasOwnProperty(ev))
-                thing.observers[ev] = [];
-        }
-        
-        thing.observe = function (name, handler) {
-            var observers = thing.observers[name];
-            
-            // check handler is a function
-            
-            if (!(handler && getClass.call(handler) == '[object Function]'))
-                throw ("event handler is not a function");
-            
-            // if observers is null, an illegal event name
-            
-            if (!observers)
-                throw ("undefined event name");
-            
-            // check if self handler is already defined
-            
-            for (var i = 0; i < observers.length; ++i) {
-                if (observers[i] == handler)
-                    return;
-            }
-            
-            observers.push(handler);
-        };
-        
-        thing.unobserve = function (name, handler) {
-            var observers = thing.observers[name];
-            
-            // check handler is a function
-            
-            if (!(handler && getClass.call(handler) == '[object Function]'))
-                throw ("event handler is not a function");
-            
-            // if observers is null, an illegal event name
-            
-            if (!observers)
-                throw ("undefined event name");
-            
-            // search for self handler
-            
-            for (var i = 0; i < observers.length; ++i) {
-                if (observers[i] == handler) {
-                    delete observers[i];
-                    return;
-                }
-            }
-        };
+            // signal the event handler that the propery has changed
+            thingevents.onEventSignalled(thing.name, event_name, data);
+        };        
     }
     
     // initialise thing's getters and setters

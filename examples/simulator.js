@@ -53,6 +53,23 @@ var door = {
     "model": {
         "events": {
             "bell": function () {
+                //  Demonstrates to raise an event from the device.
+                //  This implementation emits an event to the WoT listner. This will be most likely an HTTP end point call 
+                //  from the device to the WoT listener in real world applications, but for this demo example we just emit an event
+                var ringbell = function () {
+                    eventh.emit(
+                        'device_event_signalled', 
+                        {
+                            id: 'door12',
+                            event: 'bell',
+                            data: {
+                                // this will be some relevant device data instead of this demo timestamp value
+                                timestamp: Math.floor(Date.now() / 1000)
+                            }
+                        }
+                    );
+                };
+                setInterval(ringbell, 60000);
             },
         },
         // for patch include the writable properties from the data/dbs/file/db.js file
@@ -154,6 +171,7 @@ var lightswitch = {
 exports.start = function start() {
     var door_device = new simulator(door);
     door.model.properties.battery_value();
+    door.model.events.bell();
     
     var switch_device = new simulator(lightswitch);
     lightswitch.model.properties.power_consumption();

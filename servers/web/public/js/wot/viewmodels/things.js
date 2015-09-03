@@ -12,13 +12,18 @@ WoT.ViewModels.ThingsHandlerViewModel = function () {
             return WoT.App.ShowError("Invalid thing name at web socket dispatch_message()");;
         }
 
-        if (thing) {
-            
-        }
 
         if (message.event) // notify event to proxy
         {
-            // TODO
+            // find the thing in the things list
+            for (var i = 0; i < self.things().length; i++) {
+                var thing = self.things()[i];
+                var name = thing.name();
+                if (thing_name == name) {
+                    thing.signal_event(message.event, message.data);
+                    break;
+                }
+            }
         } 
         else if (message.state) // update all properties on proxy
         {

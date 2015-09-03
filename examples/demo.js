@@ -26,8 +26,19 @@ var device = function () {
         });
     };
     
-    self.onEvent = function (callback) {
-
+    self.onEvent = function (id, callback) {
+        simulator.emitter.on('device_event_signalled', function (msg) {
+            try {
+                if (!msg || !msg.id || msg.id != id) {
+                    return;
+                }
+                
+                callback(null, msg.event, msg.data);
+            }
+            catch (e) {
+                logger.error(e);
+            }
+        });
     };
     
     self.setProperty = function (id, property, value) {
@@ -96,11 +107,19 @@ var things = [
                 //  the device simulator will emit an event when any property change
                 //  and this listener will be notified
                 d.onProperty("door12", function (err, property, value) {
+                    if (err) {
+                        return logger.error("thing implementation onProperty error: " + err);
+                    }
+
                     thing[property] = value;
                 });
                 
-                d.onEvent(function (err, event, data) {
-                    
+                d.onEvent("door12", function (err, event, data) {
+                    if (err) {
+                        return logger.error("thing implementation onEvent error: " + err);
+                    }
+
+                    thing.raise_event(event, data);
                 });
                 
                 //  just for the demo set the camera state is "ON" (true)

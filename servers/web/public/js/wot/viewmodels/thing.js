@@ -44,7 +44,29 @@ WoT.ViewModels.ThingAction = function (_action, _on_actioninvoked) {
 }
 
 
-WoT.ViewModels.ThingEvent = function (_event) {
+WoT.ViewModels.ThingEvent = function (_event, fieldsdef) {
+    var viewModel = {
+        event: ko.observable(_event),
+        template_name: ko.observable(_event + '-event-template'),
+        signalled: ko.observable(),
+        handler: function (data) {
+            if (data) {
+                for (field in data) {
+                    var val = data[field];
+                    viewModel[field](val);
+                }   
+            }            
+        }
+    };
+    
+    if (fieldsdef && fieldsdef.fields) {
+        var fields = fieldsdef.fields;
+        for (i = 0; i < fields.length; i++) {
+            viewModel[fields[i]] = ko.observable();
+        }
+    }
+    
+    return viewModel;
 }
 
 
@@ -61,6 +83,7 @@ WoT.ViewModels.ThingViewModel = function (_name, _id, _wssendproc) {
     self.properties = ko.observableArray([]);
     self.actions = ko.observableArray([]);
     self.observers = ko.observableArray([]);
+    self.events = ko.observableArray([]);
     
     self.set_property = function (property, value) {
         for (var i = 0; i < self.properties().length; i++) {
@@ -68,6 +91,17 @@ WoT.ViewModels.ThingViewModel = function (_name, _id, _wssendproc) {
             var prop_name = prop.property();
             if (prop_name == property) {
                 prop.set_value(value);
+                break;
+            }
+        }
+    }
+    
+    self.signal_event = function (event, data) {
+        for (var i = 0; i < self.events().length; i++) {
+            var eventobj = self.events()[i];
+            var event_name = eventobj.event();
+            if (event_name == event) {
+                eventobj.handler(data);
                 break;
             }
         }
@@ -105,16 +139,13 @@ WoT.ViewModels.ThingViewModel = function (_name, _id, _wssendproc) {
         var properties = model["@properties"];
         var actions = model["@actions"];        
         
-        //for (var ev in events) {
-        //    if (events.hasOwnProperty(ev)) {
-        //        self.observers[ev] = [];
-        //        self.observers[ev].push( 
-        //            (function (name, data) {
-        //                console.log('event name: ' + name + ', data: ' + data);
-        //            })
-        //        );
-        //    }
-        //}        
+        // initialise events viewmodels
+        var events_array = [];
+        for (var ev in events) {
+            var eventvm = new WoT.ViewModels.ThingEvent(ev, events[ev]);
+            events_array.push(eventvm);            
+        }
+        self.events(events_array); 
         
         // initialise properties viewmodels
         var properties_array = [];

@@ -189,6 +189,24 @@ function start(settings) {
             logger.error("property_changed error: " + e.message);
         }
     });
+
+    thingevents.emitter.on('event_signalled', function (payload) {
+        try {
+            var thing = payload.thing;
+            var connections = proxies[thing];
+            
+            var notification = JSON.stringify(payload);
+            
+            for (var conn in connections) {
+                //logger.debug("sending: " + notification);
+                var ws = connections[conn];
+                ws.send(notification);
+            }
+        }
+        catch (e) {
+            logger.error("property_changed error: " + e.message);
+        }
+    });
 }
 
 

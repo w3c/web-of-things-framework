@@ -13,7 +13,11 @@ definitions.push(
         },      
         "model": {
             "@events": {
-                "bell": null,
+                "bell": {
+                    fields: [
+                        "timestamp"
+                    ]
+                },
             },
             "@properties": {
                 "is_open": {
