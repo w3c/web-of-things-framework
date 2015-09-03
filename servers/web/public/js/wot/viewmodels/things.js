@@ -118,7 +118,7 @@ WoT.ViewModels.ThingsHandlerViewModel = function () {
             // the web socket is created, get the things collection
             // get the list of things from the server
             $.ajax({
-                url: 'api/things_list',
+                url: 'api/things/list',
                 type: "POST",
                 dataType: "json",
                 contentType: "application/json"

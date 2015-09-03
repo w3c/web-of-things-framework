@@ -180,7 +180,7 @@ WoT.ViewModels.ThingViewModel = function (_name, _id, _wssendproc) {
     self.init = function () {
         var data = { thing: self.name() };
         $.ajax({
-            url: 'api/get_thing_model',
+            url: 'api/thing/model',
             type: "POST",
             dataType: "json",
             contentType: "application/json",
