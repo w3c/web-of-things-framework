@@ -46,14 +46,20 @@ Install the node web socket module (and other dependencies):
 To start the server use the following command from a terminal shell:
 
 ```
-  node framework.js
+  cd examples
+  node demo.js
 ```
 
 To load the demo web page point your web browser to
 
   http://localhost:8888/
   
-and open the browser console to view the log
+and open the browser console to view the log.
+
+Click on the Things menu item in the browser to view the loaded things.
+
+Open other browser instance at http://localhost:8888/ and invoke actions and writable properties, the framework should send data to both browser sessions.
+ 
 
 1. <a name="1">http://www.w3.org/blog/2015/05/building-the-web-of-things</a>
 2. <a name="1">http://www.w3.org/2015/05/wot-framework.pdf</a>
