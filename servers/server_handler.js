@@ -18,7 +18,6 @@ function initialize_server(server, settings) {
 function initialize_servers() {
     try {
         var server_config = config.servers;
-        //should be an array
         if (!server_config) {
             throw new Error("Error in populating servers config settings. The servers config settings does not exists");
         }
@@ -36,5 +35,5 @@ function initialize_servers() {
 }
 
 module.exports = {
-    initialize: initialize_servers
+    init: initialize_servers
 };

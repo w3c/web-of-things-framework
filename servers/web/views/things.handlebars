@@ -37,7 +37,33 @@
 
 
 <script type="text/html" id="property-template">
-    <div class="thing_property_item">
+    <div data-bind="template: template_name" class="thing_property_item">
+    </div>
+</script>
+
+<script type="text/html" id="action-template">
+    <div data-bind="template: template_name" class="thing_action_item">
+    </div>
+</script>
+
+<script type="text/html" id="unlock-action-template">
+    <div>
+        <button data-bind="click: handler">Unlock</button>
+    </div>        
+</script>
+
+<script type="text/html" id="lock-action-template">
+    <div>
+        <button data-bind="click: handler">Lock</button>
+    </div>       
+</script>
+
+
+<script type="text/html" id="is_open-property-template">
+    <div style="color:#aaa;font-size:12px">
+        <i>(This demonstrates using a template to print detailed information for a read-only property)</i>
+    </div>
+    <div>
         <div>
             <div class="pull-left" style="width:100px">Property: </div>
             <div class="pull-left"><span data-bind="text: property"></span></div>
@@ -61,21 +87,57 @@
     </div>
 </script>
 
-<script type="text/html" id="action-template">
-    <div data-bind="template: template_name" class="thing_action_item">
+<script type="text/html" id="battery_value-property-template">
+    <div>
+        Battery:  <span data-bind="text: data"></span> Volt
     </div>
 </script>
 
-<script type="text/html" id="unlock-action-template">
+<script type="text/html" id="is_camera_on-property-template">
     <div>
-        <button data-bind="click: handler">Unlock</button>
-    </div>        
+        <div>
+            <div class="pull-left" style="margin-right:10px">Turn the camera ON </div>
+            <div class="pull-left" style="padding-top:0"><input type="checkbox" data-bind="checked: data" /></div>
+            <div style="clear:both"></div>
+        </div>
+    </div>
 </script>
 
-<script type="text/html" id="lock-action-template">
+
+<script type="text/html" id="on-property-template">
+    <div style="color:#aaa;font-size:12px">
+        <i>(This demonstrates using a template to print detailed information for a read-only property)</i>
+    </div>
     <div>
-        <button data-bind="click: handler">Lock</button>
-    </div>       
+        <div>
+            <div class="pull-left" style="width:100px">Property: </div>
+            <div class="pull-left"><span data-bind="text: property"></span></div>
+            <div style="clear:both"></div>
+        </div>
+        <div>
+            <div class="pull-left" style="width:100px">Type: </div>
+            <div class="pull-left"><span data-bind="text: type"></span></div>
+            <div style="clear:both"></div>
+        </div>
+        <div>
+            <div class="pull-left" style="width:100px">IsWritable: </div>
+            <div class="pull-left"><span data-bind="text: iswriteable"></span></div>
+            <div style="clear:both"></div>
+        </div>
+        <div>
+            <div class="pull-left" style="width:100px">Value: </div>
+            <div class="pull-left"><span data-bind="text: data"></span></div>
+            <div style="clear:both"></div>
+        </div>
+    </div>
+</script>
+
+
+
+<script type="text/html" id="power_consumption-property-template">
+    <div>
+        Power consumption:  <span data-bind="text: data"></span> watts
+    </div>
 </script>
 
 

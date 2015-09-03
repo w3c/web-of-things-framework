@@ -2,12 +2,12 @@
 var config = require('../../config');
 var thingevents = require('../events/thingevents');
 
-var Thing = exports.Thing = function Thing(name, protocol, model, implementation) {
+var Thing = exports.Thing = function Thing(name, transport, model, implementation) {
     if (!name) {
         throw new Error("Error in creating Thing object, invalid thing name.");
     }
-    if (!protocol) {
-        throw new Error("Error in creating Thing object, invalid protocol name.");
+    if (!transport) {
+        throw new Error("Error in creating Thing object, invalid transport.");
     }
     if (!model) {
         throw new Error("Error in creating Thing object, invalid model.");
@@ -22,7 +22,7 @@ var Thing = exports.Thing = function Thing(name, protocol, model, implementation
     
     this.running = false;
     this.name = name;
-    this.protocol = protocol;
+    this.transport = transport;
     this.model = model;
     this.observers = {};
     this.properties = {};
@@ -121,7 +121,7 @@ var Thing = exports.Thing = function Thing(name, protocol, model, implementation
                         
                         set: function (value) {
                             if (thing.running) {
-                                logger.debug("setting " + thing.name + "." + property + " = " + value);
+                                //logger.debug("setting " + thing.name + "." + property + " = " + value);
                                 thing.values[property] = value;
                             }
                             
@@ -164,6 +164,23 @@ var Thing = exports.Thing = function Thing(name, protocol, model, implementation
                 })(act);
             }
         }
+    }
+    
+    // initialise thing's patch handler
+    this.init_patch = function () {
+        var thing = self;
+        (function () {
+            thing.patch = function (property, data) {
+                if (thing.running) {
+                    logger.debug('Invoking patch handler. thing: ' + thing.name + ' property:' + property + '()');
+                    thing.implementation.patch(thing, property, data);
+                } 
+                else {
+                    // TODO
+                    logger.debug('unable to invoke patch handler: ' + thing.name + ' - the thing is not running');
+                }
+            }
+        })();        
     }
     
     // resolve all dependencies for this thing
@@ -277,7 +294,7 @@ var Thing = exports.Thing = function Thing(name, protocol, model, implementation
     
     this.resolve_dependency = function ( property, dependee, start) {
         var thing = self;
-        logger.debug('setting ' + thing._name + "'s " + property + " to " + dependee._name);
+        //logger.debug('setting ' + thing._name + "'s " + property + " to " + dependee._name);
         
         //  TODO
         //  resolve the dependency
@@ -287,6 +304,7 @@ var Thing = exports.Thing = function Thing(name, protocol, model, implementation
     this.init_properties();
     this.init_actions();
     this.init_dependencies();
+    this.init_patch();
 
     if (this.unresolved <= 0) {
         if (!this.running) {
@@ -300,22 +318,6 @@ var Thing = exports.Thing = function Thing(name, protocol, model, implementation
     } 
     else {
         logger.debug("deferring start of " + name + " until its dependencies are resolved");
-    }
-}
-
-Thing.prototype.start = function () {
-    var self = this;
-    if (!self.running && self.implementation && self.implementation.start) {
-        self.implementation.start(self);
-        self.running = true;
-    }
-}
-
-Thing.prototype.stop = function () {
-    var self = this;
-    if (self.running && self.implementation && self.implementation.stop) {
-        self.implementation.stop(self);
-        self.running = false;
     }
 }
 

@@ -136,20 +136,15 @@ function start(settings) {
             });
 
         } 
-    //  TODO the patch handling (property change must) be reviewed as the client 
-    //  send this message when it changes a property, so first the property must change on 
-    //  the device and then the device will notify the transport about the change so from here
-    //  probably no need to notify other proxies of the ws server
-    //else if (message.patch) {
-    //    thing_handler.get_thing_async(message.thing, function (err, thing) {
-    //    	thing[message.patch] = message.data;
-
-    //    	// update other proxies for this thing
-    //    	notify(message, ws);
-    //    });
-    //} 
+        else if (message.patch) {
+            var thing_name = message.thing;
+            thing_handler.get_thing_async(thing_name, function (err, thing) {
+                thing.patch(message.patch, message.data);
+            });
+        } 
         else if (message.action) {
-            thing_handler.get_thing_async(message.thing, function (err, thing) {
+            var thing_name = message.thing;
+            thing_handler.get_thing_async(thing_name, function (err, thing) {
                 if (err) {
                     send_error(ws, err);
                 }
@@ -160,7 +155,7 @@ function start(settings) {
                     try {
                         thing[message.action](message.data);
                     }
-                catch (e) {
+                    catch (e) {
                         send_error(ws, e.message);
                     }
                 }
@@ -185,12 +180,12 @@ function start(settings) {
             var notification = JSON.stringify(payload);
             
             for (var conn in connections) {
-                logger.debug("sending: " + notification);
+                //logger.debug("sending: " + notification);
                 var ws = connections[conn];
                 ws.send(notification);
             }
         }
-    catch (e) {
+        catch (e) {
             logger.error("property_changed error: " + e.message);
         }
     });

@@ -6,13 +6,14 @@ var definitions = [];
 definitions.push(
     {
         "name": "door12",
-        "protocol": "coap",
+        // WoT communicates with the device via this
+        "transport": {
+            "protocol": "http",
+            "uri": "http://127.0.0.1:11010"
+        },      
         "model": {
             "@events": {
                 "bell": null,
-                "key": {
-                    "valid": "boolean"
-                }
             },
             "@properties": {
                 "is_open": {
@@ -21,7 +22,7 @@ definitions.push(
                 "battery_value": {
                     "type": "numeric"
                 },
-                "is_alarm": {
+                "is_camera_on": {
                     "type": "boolean",
                     "writeable": true
                 },
@@ -37,7 +38,10 @@ definitions.push(
 definitions.push(
     {
         "name": "switch12",
-        "protocol": "coap",
+        "transport": {
+            "protocol": "http",
+            "uri": "http://127.0.0.1:11011"
+        },
         "model": {
             "@properties": {
                 "on": {

@@ -2,6 +2,7 @@
 
 WoT.ViewModels.ThingProperty = function (_property, _prop, _on_propertychanged) {
     var viewModel = {
+        template_name: ko.observable(_property + '-property-template'),
         property: ko.observable(_property),
         type: ko.observable(_prop.type),
         iswriteable: ko.observable((_prop.writeable && _prop.writeable == true) ? true : false),       
@@ -13,21 +14,15 @@ WoT.ViewModels.ThingProperty = function (_property, _prop, _on_propertychanged) 
         setbyserver: false,
 
         set_value: function (val) {
-            viewModel.setbyserver = true;
             viewModel.data(val);
         }
     };
     
     if (viewModel.iswriteable()) {
         viewModel.data.subscribe(function (newValue) {
-            if (viewModel.setbyserver ==  false) {
-                console.log(viewModel.property() + ' property has changed');
-                viewModel.on_propertychanged(viewModel.property(), newValue);
-            }
-            else {
-                // reset the flag that tracks server/local changes
-                viewModel.setbyserver = false;
-            }
+            var propname = viewModel.property();
+            console.log('writeable property ' + propname + ' has changed to ' + newValue);
+            viewModel.on_propertychanged(propname, newValue);
         });
     }
 
@@ -79,10 +74,9 @@ WoT.ViewModels.ThingViewModel = function (_name, _id, _wssendproc) {
     }
 
     self.on_propertychanged = function (property, value) {
-        console.log("setting " + property + " = " + value);
-        self.property_values[property] = value;
+        console.log("sending to WoT new property value for " + property + " = " + value);
         var message = {
-            name: self.name(),
+            thing: self.name(),
             patch: property,
             data: value
         };

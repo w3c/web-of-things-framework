@@ -3,13 +3,24 @@
 var config = {
     framework: {
         //  framework related settings
-        action_timeout: 30000,      // default action timeout in milliseconds
-        property_timeout: 30000     // default property timeout in milliseconds
+        action_timeout: 30000,      // default action call timeout in milliseconds
+        property_timeout: 30000     // default property set timeout in milliseconds
+    },
+    /*
+        Log levels are 
+        error
+        info
+        debug
+     
+        Use debug to log all levels and get detailed logs in the log file
+     */
+    log: {
+        level: "debug" 
     },
     //  Server settings
     //  These are really protocols but since the web server settings is included here as well the setting name is "server".
     //  These servers/protocols will be exposed to the clients i.e. the clients connect to WoT via these servers/protocols
-    servers: {  
+    servers: {
         web: {
             port: 8888,         // http web server port to listen reqests from browsers
         },
@@ -26,35 +37,10 @@ var config = {
         mqtt: {
         }
     },
-    /*
-        Log levels are 
-        error
-        info
-        debug
-     
-        Use debug to log all levels and get detailed logs in the log file
-     */
-    log: {
-        level: "debug" 
-    },
-    things: {
-        //  register the things from a local config file, database or web service
-        //  the value of the "proc" config settings indicates what function of the /libs/thing/thing_handler
-        //  is called to initialize things upon application start
-        register: {
-            proc: 'localreg',
-            param: ''  
-        }
-        /*
-        register: {
-            proc: 'databasereg',
-            param: 'the database connection parameters e.g. PostgreSQL connection string ...'
-        },
-        register: {
-            proc: 'webservicereg',
-            param: 'web service connection parameters'
-        }  
-        */      
+    //  The application database configuration. The ./data/dbs directory includes the database implementations
+    //  where the db.js file implements the database functions
+    db: {
+        type: 'file'
     }
 };
 

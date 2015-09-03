@@ -25,7 +25,6 @@ function get_thing_async(name, callback) {
 }
 
 
-
 function register_thing (name, thing) {
     if (!name || !thing) {
         throw ('Error in register_thing(). The id and thing canot be null');
@@ -55,37 +54,24 @@ function get_thing_model (name, callback) {
 }
 
 
-function register_from_database() {
-    //  TODO implement this to populate the things from database 
-    throw new Error("Populating things from database is not implemented");
-}
-
-
-function register_from_webservice() {
-    //  TODO implement this to populate the things from web service 
-    throw new Error("Populating things from web service is not implemented");
-}
-
-
-function register_from_configfile(config_path) {
+function init(things) {
     try {
-        var data = require('../../data/things_list');
-        if (!data || !util.isArray(data)) {
+        if (!things || !util.isArray(things)) {
             return logger.error("Error in parsing things configuration file. Invalid data.");
         }
         
-        for (var i = 0; i < data.length; i++) {
-            var thing_def = data[i];
+        for (var i = 0; i < things.length; i++) {
+            var thing_def = things[i];
             thing_def.thing(function (err, thing){
-                var name, protocol, model, implementation;
+                var name, transport, model, implementation;
                 name = thing.name;
                 if (!name) {
                     return logger.error("Error in register_from_config. The thing name is required");
                 }
                 
-                protocol = thing.protocol;
-                if (!protocol) {
-                    return logger.error("Error in register_from_config. The thing protocol is required");
+                transport = thing.transport;
+                if (!transport) {
+                    return logger.error("Error in register_from_config. The thing transport is required");
                 }
                 
                 model = thing.model;
@@ -104,7 +90,7 @@ function register_from_configfile(config_path) {
                     return logger.error ('The thing already exists: ' + name);
                 }
                 
-                var thingobj = new Thing(name, protocol, model, implementation);
+                var thingobj = new Thing(name, transport, model, implementation);
                 register_thing(name, thingobj);
             });            
         }
@@ -116,9 +102,7 @@ function register_from_configfile(config_path) {
 
 
 module.exports = {
-    localreg: register_from_configfile,
-    webservicereg: register_from_webservice,
-    databasereg: register_from_database,
+    init: init,
     get_model: get_thing_model,
     get_thing: get_thing,
     get_thing_async: get_thing_async
