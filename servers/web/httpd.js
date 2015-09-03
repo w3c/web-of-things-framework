@@ -5,8 +5,8 @@ var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser');
 var exphbs = require('express-handlebars');
 var config = require('../../config');
-var routes = require('./routes/main_routes');
-var api_routes = require('./routes/api_routes');
+var main_routes = require('./routes/main');
+var api_routes = require('./routes/api');
 
 applog.info("WoT Express server start");
 
@@ -37,7 +37,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', routes);
+app.use('/', main_routes);
 app.use('/api', api_routes);
 
 // catch 404 and forward to error handler

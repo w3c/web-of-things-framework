@@ -48,14 +48,15 @@ WoT.ViewModels.ThingEvent = function (_event, fieldsdef) {
     var viewModel = {
         event: ko.observable(_event),
         template_name: ko.observable(_event + '-event-template'),
-        signalled: ko.observable(),
+        signalled: ko.observable(false),
         handler: function (data) {
             if (data) {
                 for (field in data) {
                     var val = data[field];
                     viewModel[field](val);
                 }   
-            }            
+            }
+            viewModel.signalled(true);
         }
     };
     
@@ -179,7 +180,7 @@ WoT.ViewModels.ThingViewModel = function (_name, _id, _wssendproc) {
     self.init = function () {
         var data = { thing: self.name() };
         $.ajax({
-            url: 'api/get_thing_model',
+            url: 'api/thing/model',
             type: "POST",
             dataType: "json",
             contentType: "application/json",

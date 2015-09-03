@@ -22,8 +22,7 @@ function handleError(err, res) {
     res.send(obj);
 }
 
-
-router.route('/get_thing_model')
+router.route('/thing/model')
     .post(function (req, res) {
     
     try {
@@ -60,7 +59,7 @@ router.route('/get_thing_model')
 });
 
 
-router.route('/things_list')
+router.route('/things/list')
     .post(function (req, res) {
     
     try {
