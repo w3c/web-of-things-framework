@@ -1,5 +1,5 @@
-﻿var logger = require('../../logger');
-var config = require('../../config');
+﻿var config = global.appconfig;
+var logger = require('../../logger');
 var thingevents = require('../events/thingevents');
 var restify = require('restify');
 
@@ -43,6 +43,28 @@ var Thing = exports.Thing = function Thing(name, model, implementation, remote) 
         };        
     }
     
+    
+    this.remote_patch = function (property, value) {
+        var client = restify.createJsonClient({
+            url: this.remoteuri,
+            version: '*'
+        });
+        
+        var params = {
+            thing: this.name,
+            patch: property,
+            value: value
+        };
+        client.post('/api/thing/patch', params, function (err, req, res, data) {
+            if (err) {
+                logger.error("/api/thing/patch error: " + err);
+            }            
+            else if (!data && !data.result) {
+                logger.error("/api/thing/patch error: invalid result");
+            }
+        });
+    };
+
     this.remote_property_get = function (property, callback) {
         var client = restify.createJsonClient({
             url: this.remoteuri,
@@ -170,7 +192,7 @@ var Thing = exports.Thing = function Thing(name, model, implementation, remote) 
                 } 
                 else {
                     //  call the remote WoT server that handles the thing
-                    
+                    thing.remote_patch(property, data);
                 }
             }
         })();        

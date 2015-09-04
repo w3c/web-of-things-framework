@@ -1,9 +1,11 @@
-﻿var events = require("events");
-var logger = require('../logger');
-var db = require('../data/db')();
-var wot = require('../framework');
+﻿// set this global config variable first
+global.appconfig = require('./config');
+var events = require("events");
+var logger = require('../../logger');
+var db = require('../../data/db')();
+var wot = require('../../framework');
 var simulator = require('./simulator');
-var eventh = require('../libs/events/thingevents');
+var eventh = require('../../libs/events/thingevents');
 
 var device = function () {
 

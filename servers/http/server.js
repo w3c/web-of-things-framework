@@ -1,9 +1,10 @@
-﻿var config = require('../../config');
-var logger = require('../../logger');
+﻿var logger = require('../../logger');
 var restify = require('restify');
 var thing_handler = require('../../libs/thing/thing_handler');
 var thingevents = require('../../libs/events/thingevents');
 var db = require('../../data/db')();
+
+var config = global.appconfig;
 
 exports.start = function start(settings) {
     logger.info('Start the HTTP REST server');
@@ -29,6 +30,39 @@ exports.start = function start(settings) {
         }
     });
     
+    server.post('/api/thing/patch', function create(req, res, next) {
+        try {
+            var request = req.params;
+            if (!request || !request.thing || !request.patch || !request.value == undefined) {
+                return next(new Error('thing patch  error: invalid parameters'));
+            }
+            var thing_name = request.thing;
+            var property = request.patch;
+            var value = request.value;
+            
+            logger.debug('/api/patch received request thing: ' + thing_name + ' property: ' + property + ' value: ' + value);
+            
+            thing_handler.get_thing_async(thing_name, function (err, thing) {
+                try {
+                    if (err) {
+                        return next(new Error('property get error: ' + err));
+                    }
+                    
+                    thing.patch(property, value);
+                    res.send(200, { result: true });
+                }
+                catch (e) {
+                    next(new Error('thing patch error: ' + e.message));
+                    logger.error("Error in /api/thing/patch " + e.message);
+                }
+            });
+        }
+        catch (e) {
+            next(new Error('thing patch error: ' + e.message));
+            logger.error("Error in /api/thing/patch " + e.message);
+        }
+    });
+
     server.post('/api/thing/property/get', function create(req, res, next) {
         try {
             var request = req.params;
@@ -92,7 +126,7 @@ exports.start = function start(settings) {
             var property = request.patch;
             var value = request.data;
 
-            logger.debug('/api/thing/propertychange received request thing: ' + thing_name + ' property: ' + property);
+            //logger.debug('/api/thing/propertychange received request thing: ' + thing_name + ' property: ' + property);
             
             thing_handler.get_thing_async(thing_name, function (err, thing) {
                 if (err) {

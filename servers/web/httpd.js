@@ -4,9 +4,10 @@ var express = require('express');
 var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser');
 var exphbs = require('express-handlebars');
-var config = require('../../config');
 var main_routes = require('./routes/main');
 var api_routes = require('./routes/api');
+
+var config = global.appconfig;
 
 applog.info("WoT Express server start");
 

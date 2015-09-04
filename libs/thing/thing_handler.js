@@ -3,9 +3,10 @@ var path = require('path');
 var util = require('util');
 var url = require('url');
 var logger = require('../../logger');
-var config = require('../../config');
 var Thing = require('./thing').Thing;
 var list_of_things = require('../lists/registry.js');
+
+var config = global.appconfig;
 
 function get_thing (name) {
     if (list_of_things.hasOwnProperty(name)) {

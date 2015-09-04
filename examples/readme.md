@@ -1,2 +1,0 @@
-﻿# WoT Framework Demo 
-

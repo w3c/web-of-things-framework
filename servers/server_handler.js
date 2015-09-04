@@ -1,7 +1,7 @@
 ﻿var util = require('util');
-var config = require('../config');
 var logger = require('../logger');
 
+var config = global.appconfig;
 
 function initialize_server(server, settings) {
     try {

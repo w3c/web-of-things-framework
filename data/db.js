@@ -1,5 +1,4 @@
-﻿var logger = require('../config');
-var config = require('../config');
+﻿var config = global.appconfig;
 
 module.exports = function () {
     var appdb = null;

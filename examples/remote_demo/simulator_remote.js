@@ -1,6 +1,6 @@
 ﻿var events = require("events");
-var logger = require('../logger');
-var eventh = require('../libs/events/thingevents');
+var logger = require('../../logger');
+var eventh = require('../../libs/events/thingevents');
 
 var simulator = function ( thing) {
     logger.debug("starting device simulator " + thing.name);

@@ -5,9 +5,10 @@ var exports = module.exports = {}
 
 var url = require('url');
 var logger = require('../../logger');
-var config = require('../../config');
 var thing_handler = require('../../libs/thing/thing_handler');
 var thingevents = require('../../libs/events/thingevents');
+
+var config = global.appconfig;
 
 // run the websocket server
 var WebSocket = require('ws');
