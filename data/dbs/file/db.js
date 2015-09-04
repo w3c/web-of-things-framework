@@ -127,3 +127,8 @@ exports.register_endpoint = function register_endpoint(thing, endpoint, callback
 
     callback(null, true);
 }
+
+
+exports.endpoint_list = function register_endpoint(thing, callback) {
+    callback(null, endpoints[thing]);
+}
