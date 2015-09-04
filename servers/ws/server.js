@@ -105,7 +105,7 @@ function start(settings) {
             // register this ws connection as a proxy so
             // we can notify events and property updates
             var thing_name = message.proxy;
-            register_proxy(thing_name, ws);
+            register_proxy(thing_name, ws);            
         } 
         else if (message.patch) {
             var thing_name = message.thing;
@@ -152,8 +152,15 @@ function start(settings) {
                 case 'propertychange':
                 case 'eventsignall':
                     var thing = payload.thing;
-                    logger.debug("http end point handler signalled for " + thing);
+                    var connections = proxies[thing];
                     
+                    var notification = JSON.stringify(payload);
+                    
+                    for (var conn in connections) {
+                        //logger.debug("sending: " + notification);
+                        var ws = connections[conn];
+                        ws.send(notification);
+                    }
                     break;
                 default:
                     logger.error("handler for " + event_name + " is not implemented");
@@ -164,7 +171,6 @@ function start(settings) {
             logger.error("thingevent error in processing " + event_name + ": " + e.message);
         }
     });
-
 }
 
 

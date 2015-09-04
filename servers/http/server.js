@@ -87,5 +87,57 @@ exports.start = function start(settings) {
     });
 
     // listen on the thing events and send it to the registered endpoints
-
+    thingevents.emitter.on('thingevent', function (event_name, payload) {
+        try {
+            switch (event_name) {
+                case 'propertychange':
+                case 'eventsignall':
+                    var thing = payload.thing;
+                    logger.debug("http end point handler signalled for " + thing);
+                    // get the endpoints from the database
+                    db.endpoint_list(thing, function (err, endpoints) {
+                        try {
+                            if (err) {
+                                return logger.error('endpoint_list error: ' + err);
+                            }
+                            
+                            if (!endpoints || !endpoints.length) {
+                                return;
+                            }
+                            
+                            for (i = 0; i < endpoints.length; i++) {
+                                var url = endpoints[i];
+                                var client = restify.createJsonClient({
+                                    url: url,
+                                    version: '*'
+                                });
+                                var path = '/api/endpoint/thingevent/' + event_name;            
+                                client.post(path, payload, function (err, req, res, data) {
+                                    if (err) {
+                                        return logger.error("Error in registering the remote proxy: " + err);
+                                    }
+                                    
+                                    if (!data || !data.result) {
+                                        logger.error("Error in registering the remote proxy");
+                                    }
+                                    else {
+                                        logger.info("Remote proxy is registered for " + self.name);
+                                    }
+                                });
+                            }                
+                        }
+                        catch (e) {
+                            logger.error("Error in sending to endpoint_list " + e.message);
+                        }                                
+                    });
+                    break;
+                default:
+                    logger.error("handler for " + event_name + " is not implemented");
+                    break;
+            }
+        }
+        catch (e) {
+            logger.error("thingevent error in processing " + event_name + ": " + e.message);
+        }
+    });
 }
