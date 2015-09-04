@@ -81,6 +81,42 @@ exports.start = function start(settings) {
             logger.error("Error in /api/property/get " + e.message);
         }
     });
+    
+    server.post('/api/thing/propertychange', function create(req, res, next) {
+        try {
+            var request = req.params;
+            if (!request || !request.thing || !request.patch || request.data == undefined) {
+                return next(new Error('/api/thing/propertychange error: invalid parameters'));
+            }
+            var thing_name = request.thing;
+            var property = request.patch;
+            var value = request.data;
+
+            logger.debug('/api/thing/propertychange received request thing: ' + thing_name + ' property: ' + property);
+            
+            thing_handler.get_thing_async(thing_name, function (err, thing) {
+                if (err) {
+                    return next(new Error('property get error: ' + err));
+                }
+                
+                thing[property] = value;
+                res.send(200, { result: true });
+            });
+
+            // register this thing and endpoint
+            db.register_endpoint(thing, endpoint, function (err, result) {
+                if (err) {
+                    return next(new Error('endpoint register error: ' + err));
+                }
+                
+                res.send(200, { result: result });
+            });
+        }
+        catch (e) {
+            next(new Error('endpoint register error: ' + e.message));
+            logger.error("Error in /api/property/get " + e.message);
+        }
+    });
 
     server.listen(port, function () {
         logger.info('HTTP REST server is listening on port ' + port);
@@ -93,7 +129,7 @@ exports.start = function start(settings) {
                 case 'propertychange':
                 case 'eventsignall':
                     var thing = payload.thing;
-                    logger.debug("http end point handler signalled for " + thing);
+                    //logger.debug("http end point handler signalled for " + thing);
                     // get the endpoints from the database
                     db.endpoint_list(thing, function (err, endpoints) {
                         try {
@@ -102,6 +138,7 @@ exports.start = function start(settings) {
                             }
                             
                             if (!endpoints || !endpoints.length) {
+                                //logger.debug("no endpoint is listening" );
                                 return;
                             }
                             
@@ -111,7 +148,7 @@ exports.start = function start(settings) {
                                     url: url,
                                     version: '*'
                                 });
-                                var path = '/api/endpoint/thingevent/' + event_name;            
+                                var path = '/api/thing/' + event_name;            
                                 client.post(path, payload, function (err, req, res, data) {
                                     if (err) {
                                         return logger.error("Error in registering the remote proxy: " + err);
@@ -121,7 +158,7 @@ exports.start = function start(settings) {
                                         logger.error("Error in registering the remote proxy");
                                     }
                                     else {
-                                        logger.info("Remote proxy is registered for " + self.name);
+                                        //logger.debug("Remote proxy " + path + " called for " + thing);
                                     }
                                 });
                             }                
