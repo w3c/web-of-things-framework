@@ -1,1 +1,1 @@
-﻿# REST API server implementation
+﻿# REST API server implementation to provide HTTP end port for WoT inter server communication

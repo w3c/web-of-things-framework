@@ -27,8 +27,12 @@ var config = {
         ws: {
             port: 8080          // web socket port
         },
-        http: {                 //  to provide end point for inter server communication
-            //port: 8899          //  end point port that listen for messages from other WoT servers
+        http: {
+            //  to provide end point for inter server communication  
+            //  pass the fqdn to other wot servers as this is the end point listener               
+            fqdn: "http://localhost:8889",
+            //  end point port that listen for messages from other WoT servers
+            port: 8889          
         },
         restapi: {
         },

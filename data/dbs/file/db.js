@@ -5,12 +5,7 @@ var definitions = [];
 
 definitions.push(
     {
-        "name": "door12",
-        // WoT communicates with the device via this
-        "transport": {
-            "protocol": "http",
-            "uri": "http://127.0.0.1:11010"
-        },      
+        "name": "door12",    
         "model": {
             "@events": {
                 "bell": {
@@ -42,10 +37,6 @@ definitions.push(
 definitions.push(
     {
         "name": "switch12",
-        "transport": {
-            "protocol": "http",
-            "uri": "http://127.0.0.1:11011"
-        },
         "model": {
             "@properties": {
                 "on": {
@@ -56,6 +47,27 @@ definitions.push(
                     "type": "numeric"
                 }
             }
+        }
+    }
+);
+
+
+definitions.push(
+    {
+        "name": "pump12",
+        "model": {
+            "@properties": {
+                "on": {
+                    "type": "boolean",
+                    "writeable": true
+                },
+                "pressure": {
+                    "type": "numeric"
+                }
+            }
+        },
+        "remote": {
+            "uri": "http://localhost:8890"
         }
     }
 );
@@ -84,6 +96,7 @@ var things = [];
 
 things.push({ name: 'door12', id: 1 });
 things.push({ name: 'switch12', id: 2 });
+things.push({ name: 'pump12', id: 3 });
 
 
 // all databases returns the data asynchronously so return from this local file asynchronously as well 
@@ -93,3 +106,24 @@ exports.things_list = function things_list( callback) {
 }
 
 
+var endpoints = {};
+
+exports.register_endpoint = function register_endpoint(thing, endpoint, callback) {
+    if (endpoints[thing] == undefined) {
+        endpoints[thing] = [];
+    }
+    
+    var endpointlist = endpoints[thing];
+    
+    // check if the endpoint for the thing is registered already
+    for (i = 0; i < endpointlist.length; i++) {
+        if (endpointlist[i] == endpoint) {
+            //  this endpoint already registered
+            return callback(null, true);
+        }
+    }
+
+    endpointlist.push(endpoint);
+
+    callback(null, true);
+}

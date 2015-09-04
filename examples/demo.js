@@ -3,18 +3,20 @@ var logger = require('../logger');
 var db = require('../data/db')();
 var wot = require('../framework');
 var simulator = require('./simulator');
-
-// start the device simulator
-simulator.start();
+var eventh = require('../libs/events/thingevents');
 
 var device = function () {
 
     var self = this;
-
-    self.onProperty = function (id, callback) {
-        simulator.emitter.on('device_property_changed', function (msg) {
+    
+    //  Listen on the event emitter
+    //  The properties and events are defined in the thing model. The thing is notified about these by using the below event and property event listener.
+    //  The event which the listeners are listening on are signalled by the device driver in case of local proxies or 
+    //  by the REST HTTP end point in case of remote proxies.
+    self.onProperty = function (name, callback) {
+        eventh.emitter.on('device_property_changed', function (msg) {
             try {
-                if (!msg || !msg.id || msg.id != id) {
+                if (!msg || !msg.name || msg.name != name) {
                     return;
                 }
                 
@@ -26,10 +28,10 @@ var device = function () {
         });
     };
     
-    self.onEvent = function (id, callback) {
-        simulator.emitter.on('device_event_signalled', function (msg) {
+    self.onEvent = function (name, callback) {
+        eventh.emitter.on('device_event_signalled', function (msg) {
             try {
-                if (!msg || !msg.id || msg.id != id) {
+                if (!msg || !msg.name || msg.name != name) {
                     return;
                 }
                 
@@ -41,38 +43,34 @@ var device = function () {
         });
     };
     
-    self.setProperty = function (id, property, value) {
+    self.setProperty = function (name, property, value) {
         logger.debug("send patch to device: " + property + ", value " + value);
         var msg = {
             type: 'patch',
-            id: id,
+            name: name,
             property: property,
             value: value
         };
-        simulator.emitter.emit("device_msg", msg);
+        eventh.onDeviceMessage(msg);
     }
     
-    self.action = function (id, action) {
+    self.action = function (name, action) {
         logger.debug("invoke action " + action + " at device simulator");
         var msg = {
             type: 'action',
-            id: id,
+            name: name,
             action: action
         };
-        simulator.emitter.emit("device_msg", msg);
+        eventh.onDeviceMessage(msg);
     }
 
     return self;
 };
 
 /* 
-    The thing definition includes name, model, transport and implementation
+    The thing definition includes name, model and implementation
     {
-        "name": "door12",
-         "transport": {
-            "protocol": "http",
-            "port": 11010
-        },     
+        "name": "door12",    
         "model": {
             "@events": {
                 "bell": null,
@@ -136,7 +134,6 @@ var things = [
             unlock: function (thing) {
                 logger.info('at implementation ' + thing.name + ' "unlock action invoked -> call the device');
                 d.action("door12", 'unlock');
-                //thing.is_open = true;
             },
             lock: function (thing) {
                 logger.info('at implementation ' + thing.name + ' "lock" action invoked -> call the device');
@@ -153,15 +150,28 @@ var things = [
                 d.onProperty("switch12", function (err, property, value) {
                     thing[property] = value;
                 });
-                
-                d.onEvent(function (err, event, data) {
-                    
-                });
+                // turn off the light at start
+                // the client from the web UI can turn on then
+                thing.on = false;
             },
             stop: function (thing) { },
             patch: function (thing, property, value) {
-                d.setProperty("door12", property, value);
+                d.setProperty("switch12", property, value);
             }
+        }
+    },
+    //  implement a remote sensor handled by other WoT server
+    {
+        "thing": function (callback) {
+            db.find_thing("pump12", callback);
+        },        
+        "implementation": {
+            start: function (thing) {
+                d.onProperty("pump12", function (err, property, value) {
+                    thing[property] = value;
+                });
+            },
+            stop: function (thing) { }
         }
     }
 ];
@@ -177,3 +187,5 @@ catch (e) {
 }
 
 
+// start the device simulator
+simulator.start();

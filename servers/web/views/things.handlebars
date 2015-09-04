@@ -78,31 +78,16 @@
 
 
 <script type="text/html" id="is_open-property-template">
-    <div style="color:#aaa;font-size:12px">
-        <i>(This demonstrates using a template to print detailed information for a read-only property)</i>
-    </div>
+    <!-- ko if: data() == true -->
     <div>
-        <div>
-            <div class="pull-left" style="width:100px">Property: </div>
-            <div class="pull-left"><span data-bind="text: property"></span></div>
-            <div style="clear:both"></div>
-        </div>
-        <div>
-            <div class="pull-left" style="width:100px">Type: </div>
-            <div class="pull-left"><span data-bind="text: type"></span></div>
-            <div style="clear:both"></div>
-        </div>
-        <div>
-            <div class="pull-left" style="width:100px">IsWritable: </div>
-            <div class="pull-left"><span data-bind="text: iswriteable"></span></div>
-            <div style="clear:both"></div>
-        </div>
-        <div>
-            <div class="pull-left" style="width:100px">Value: </div>
-            <div class="pull-left"><span data-bind="text: data"></span></div>
-            <div style="clear:both"></div>
-        </div>
+        Opened&nbsp;&nbsp;&nbsp;<i class="fa fa-check-circle"></i>
     </div>
+    <!-- /ko -->
+    <!-- ko if: data() == false -->
+    <div>
+        Closed&nbsp;&nbsp;&nbsp;<i class="fa fa-lock"></i>
+    </div>
+    <!-- /ko -->
 </script>
 
 <script type="text/html" id="battery_value-property-template">
@@ -121,35 +106,15 @@
     </div>
 </script>
 
-
 <script type="text/html" id="on-property-template">
-    <div style="color:#aaa;font-size:12px">
-        <i>(This demonstrates using a template to print detailed information for a writeable property)</i>
-    </div>
     <div>
         <div>
-            <div class="pull-left" style="width:100px">Property: </div>
-            <div class="pull-left"><span data-bind="text: property"></span></div>
-            <div style="clear:both"></div>
-        </div>
-        <div>
-            <div class="pull-left" style="width:100px">Type: </div>
-            <div class="pull-left"><span data-bind="text: type"></span></div>
-            <div style="clear:both"></div>
-        </div>
-        <div>
-            <div class="pull-left" style="width:100px">IsWritable: </div>
-            <div class="pull-left"><span data-bind="text: iswriteable"></span></div>
-            <div style="clear:both"></div>
-        </div>
-        <div>
-            <div class="pull-left" style="width:100px">Value: </div>
-            <div class="pull-left"><span data-bind="text: data"></span></div>
+            <div class="pull-left" style="margin-right:10px">Device is ON </div>
+            <div class="pull-left" style="padding-top:0"><input type="checkbox" data-bind="checked: data" /></div>
             <div style="clear:both"></div>
         </div>
     </div>
 </script>
-
 
 
 <script type="text/html" id="power_consumption-property-template">
@@ -176,6 +141,13 @@
         </div>
     </div>   
 </script>
+
+<script type="text/html" id="pressure-property-template">
+    <div>
+        Water Pressure:  <span data-bind="text: data"></span> Bar
+    </div>
+</script>
+
 
 
 {{#section 'script'}}

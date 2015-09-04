@@ -1,19 +1,20 @@
 ﻿var logger = require('../../logger');
 var config = require('../../config');
 var thingevents = require('../events/thingevents');
+var restify = require('restify');
 
-var Thing = exports.Thing = function Thing(name, transport, model, implementation) {
+var Thing = exports.Thing = function Thing(name, model, implementation, remote) {
     if (!name) {
         throw new Error("Error in creating Thing object, invalid thing name.");
-    }
-    if (!transport) {
-        throw new Error("Error in creating Thing object, invalid transport.");
     }
     if (!model) {
         throw new Error("Error in creating Thing object, invalid model.");
     }
     if (!implementation) {
         throw new Error("Error in creating Thing object, invalid implementation.");
+    }
+    if (remote && !remote.uri) {
+        throw new Error("For remote thing the uri must be defined");
     }
     
     var self = this;
@@ -22,7 +23,6 @@ var Thing = exports.Thing = function Thing(name, transport, model, implementatio
     
     this.running = false;
     this.name = name;
-    this.transport = transport;
     this.model = model;
     this.observers = {};
     this.properties = {};
@@ -30,6 +30,8 @@ var Thing = exports.Thing = function Thing(name, transport, model, implementatio
     this.implementation = implementation;
     this.unresolved = 0;
     this.pending = {}; // for dependency
+    this.isremote = remote != null ? true : false;
+    this.remoteuri = remote ? remote.uri :  '';
 
     this.init_events = function () {
         var thing = self;
@@ -40,6 +42,56 @@ var Thing = exports.Thing = function Thing(name, transport, model, implementatio
             thingevents.onEventSignalled(thing.name, event_name, data);
         };        
     }
+    
+    this.remote_property_get = function (property, callback) {
+        var client = restify.createJsonClient({
+            url: this.remoteuri,
+            version: '*'
+        });
+        
+        var params = {
+            thing: this.name,
+            property: property
+        };
+        client.post('/api/thing/property/get', params, function (err, req, res, data) {
+            if (err) {
+                return callback(err);
+            }
+            
+            if (data && data.thing && data.property && data.value != undefined) {
+                callback(null, data.value);
+            }
+            else {
+                callback("property value is empty");
+            }
+        });
+    };
+
+    this.property_get = function (property, callback) {
+        if (this.isremote == false) {
+            callback(null, this.values[property]);
+        }
+        else {
+            try {
+                if (this.values[property] == undefined) {
+                    this.remote_property_get(property, function (err, result) {
+                        if (err) {
+                            return callback('Error in populating remote property value: ' + err);
+                        }
+                        //  received the property value from the remote server, set it 
+                        self.values[property] = result;
+                        callback(null, self.values[property]);
+                    });
+                }
+                else {
+                    callback(null, this.values[property]);
+                }
+            }
+            catch (e) {
+                logger.error('Error in populating remote property value: ' + e.message);
+            }
+        }
+    };
     
     // initialise thing's getters and setters
     // if ws is null, thing isn't a proxy and hence
@@ -63,13 +115,11 @@ var Thing = exports.Thing = function Thing(name, transport, model, implementatio
                         },
                         
                         set: function (value) {
-                            if (thing.running) {
-                                //logger.debug("setting " + thing.name + "." + property + " = " + value);
-                                thing.values[property] = value;
-                            }
+                            //logger.debug("setting " + thing.name + "." + property + " = " + value);
+                            thing.values[property] = value;                            
                             
-                            // signal the event handler that the propery has changed
-                            thingevents.onPropertyChanged(thing.name, property, value);
+                            // signal the event handler to send the propery value
+                            thingevents.onProperty(thing.name, property, value);
                         }
                     });
                 })(prop);
@@ -95,13 +145,13 @@ var Thing = exports.Thing = function Thing(name, transport, model, implementatio
             if (actions.hasOwnProperty(act)) {
                 (function (action) {
                     thing[action] = function (data) {
-                        if (thing.running) {
+                        if (thing.isremote == false) {
                             logger.debug('invoking action: ' + thing.name + '.' + action + '()');
                             thing.implementation[action](thing, data);
                         } 
                         else {
-                            // TODO
-                            logger.debug('unable to invoke action: ' + thing.name + '.' + action + '() - the thing is not running');
+                            // call the remote WoT server that handles the thing
+                            
                         }
                     }
                 })(act);
@@ -114,13 +164,13 @@ var Thing = exports.Thing = function Thing(name, transport, model, implementatio
         var thing = self;
         (function () {
             thing.patch = function (property, data) {
-                if (thing.running) {
+                if (thing.isremote == false) {
                     logger.debug('Invoking patch handler. thing: ' + thing.name + ' property:' + property + '()');
                     thing.implementation.patch(thing, property, data);
                 } 
                 else {
-                    // TODO
-                    logger.debug('unable to invoke patch handler: ' + thing.name + ' - the thing is not running');
+                    //  call the remote WoT server that handles the thing
+                    
                 }
             }
         })();        
@@ -215,10 +265,6 @@ var Thing = exports.Thing = function Thing(name, transport, model, implementatio
         */
     }
     
-    this.register_proxy = function (uri, succeed, fail) {
-        //  TODO   
-    }
-    
     // dependent is a thing, property is the property name for the dependee
     // and dependee is the *name*  for the thing this thing is depending on
     this.record_dependency = function (dependent, property, dependee) {
@@ -242,25 +288,50 @@ var Thing = exports.Thing = function Thing(name, transport, model, implementatio
         //  TODO
         //  resolve the dependency
     }
-   
-    this.init_events();
-    this.init_properties();
-    this.init_actions();
-    this.init_dependencies();
-    this.init_patch();
-
-    if (this.unresolved <= 0) {
-        if (!this.running) {
-            logger.debug("starting " + name);
-            this.running = true;
-            implementation.start(this);
-        } 
-        else {
-            logger.debug(name + ' is already running');
+    
+    this.register_proxy = function () {
+        if (!this.isremote) {
+            //  this is not a remote thing -> no need to register this endpoint
+            return;
         }
-    } 
-    else {
-        logger.debug("deferring start of " + name + " until its dependencies are resolved");
+
+        var client = restify.createJsonClient({
+            url: this.remoteuri,
+            version: '*'
+        });
+        
+        var params = {
+            endpoint: config.servers.http.fqdn,
+            thing: this.name
+        };
+        client.post('/api/endpoint/register', params, function (err, req, res, data) {
+            if (err) {
+                return logger.error("Error in registering the remote proxy: " + err);
+            }
+            
+            if (!data || !data.result) {
+                logger.error("Error in registering the remote proxy");
+            }
+            else {
+                logger.info("Remote proxy is registered for " + self.name);
+            }
+        });
+    }   
+    
+    try {
+        this.init_events();
+        this.init_properties();
+        this.init_actions();
+        this.init_dependencies();
+        this.init_patch();
+        this.register_proxy();
+
+        logger.debug("starting " + name);
+        this.running = true;
+        implementation.start(this);
+    }
+    catch (e) {
+        logger.error("Error in initialsing thing: " + e.message);
     }
 }
 

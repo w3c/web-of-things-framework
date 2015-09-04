@@ -28,19 +28,19 @@ WoT.ViewModels.ThingsHandlerViewModel = function () {
         else if (message.state) // update all properties on proxy
         {
             // find the thing in the things list
-            for (var i = 0; i < self.things().length; i++) {
-                var thing = self.things()[i];
-                var name = thing.name();
-                if (thing_name == name) {
-                    var obj = message.state;
-                    for (var property in obj) {
-                        if (obj.hasOwnProperty(property)) {
-                            thing.set_property(property, obj[property]);
-                        }
-                    }
-                    break;
-                }
-            }
+            //for (var i = 0; i < self.things().length; i++) {
+            //    var thing = self.things()[i];
+            //    var name = thing.name();
+            //    if (thing_name == name) {
+            //        var obj = message.state;
+            //        for (var property in obj) {
+            //            if (obj.hasOwnProperty(property)) {
+            //                thing.set_property(property, obj[property]);
+            //            }
+            //        }
+            //        break;
+            //    }
+            //}
         } 
         else if (message.patch) // update named property on proxy
         {

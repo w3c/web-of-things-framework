@@ -106,39 +106,13 @@ function start(settings) {
             // we can notify events and property updates
             var thing_name = message.proxy;
             register_proxy(thing_name, ws);
-            
-            thing_handler.get_thing_async(thing_name, function (err, thing) {
-                if (err) {
-                    send_error(ws, err);
-                }
-                else if (!thing) {
-                    send_error(ws, 'the thing is null');
-                }
-                else {
-                    var props = {};
-                    var names = thing.properties;
-                    
-                    for (var prop in names) {
-                        if (names.hasOwnProperty(prop) && prop.substr(0, 1) !== "_")
-                            props[prop] = thing.values[prop];
-                    }
-                    
-                    // return state of properties
-                    props["running"] = thing.running;
-                    
-                    var response = {
-                        thing: thing_name,
-                        state: props
-                    };
-                    
-                    ws.send(JSON.stringify(response));
-                }
-            });
-
         } 
         else if (message.patch) {
             var thing_name = message.thing;
             thing_handler.get_thing_async(thing_name, function (err, thing) {
+                if (err) {
+                    return send_error(ws, err);
+                }
                 thing.patch(message.patch, message.data);
             });
         } 
@@ -172,41 +146,25 @@ function start(settings) {
     }
     
     
-    thingevents.emitter.on('property_changed', function (payload) {
+    thingevents.emitter.on('thingevent', function (event_name, payload) {
         try {
-            var thing = payload.thing;
-            var connections = proxies[thing];
-            
-            var notification = JSON.stringify(payload);
-            
-            for (var conn in connections) {
-                //logger.debug("sending: " + notification);
-                var ws = connections[conn];
-                ws.send(notification);
+            switch (event_name) {
+                case 'propertychange':
+                case 'eventsignall':
+                    var thing = payload.thing;
+                    logger.debug("http end point handler signalled for " + thing);
+                    
+                    break;
+                default:
+                    logger.error("handler for " + event_name + " is not implemented");
+                    break;
             }
         }
         catch (e) {
-            logger.error("property_changed error: " + e.message);
+            logger.error("thingevent error in processing " + event_name + ": " + e.message);
         }
     });
 
-    thingevents.emitter.on('event_signalled', function (payload) {
-        try {
-            var thing = payload.thing;
-            var connections = proxies[thing];
-            
-            var notification = JSON.stringify(payload);
-            
-            for (var conn in connections) {
-                //logger.debug("sending: " + notification);
-                var ws = connections[conn];
-                ws.send(notification);
-            }
-        }
-        catch (e) {
-            logger.error("property_changed error: " + e.message);
-        }
-    });
 }
 
 

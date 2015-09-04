@@ -81,4 +81,43 @@ router.route('/things/list')
 });
 
 
+router.route('/thing/property/get')
+    .post(function (req, res) {
+    
+    try {
+        var request = req.body;
+        if (!request) {
+            return handleError('invalid request parameter', res);
+        }
+        var thing_name = request.thing;
+        if (!thing_name) {
+            return handleError('invalid request thing name parameter', res);
+        }
+        var property = request.property;
+        if (!property) {
+            return handleError('invalid request property parameter', res);
+        }
+        
+        thing_handler.get_thing_async(thing_name, function (err, thing) {
+            if (err) {
+                return handleError('property get error', res);
+            }
+            
+            // get the property asynchronously so the remote property can be retrieved in case the thing is a remote proxy
+            thing.property_get(property, function (err, value) {
+                var response = {
+                    thing: thing_name,
+                    property: property,
+                    value: value
+                };
+                return res.json(response);
+            });
+        });
+    }
+    catch (e) {
+        return handleError(e, res);
+    }
+});
+
+
 module.exports = router;
