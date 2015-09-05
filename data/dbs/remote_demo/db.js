@@ -3,12 +3,14 @@
 // The WoT server will manage these things
 var definitions = [];
 
-
 definitions.push(
     {
         "name": "pump12",
         "model": {
             "@properties": {
+                "is_open": {
+                    "type": "boolean"
+                },
                 "on": {
                     "type": "boolean",
                     "writeable": true
@@ -16,6 +18,10 @@ definitions.push(
                 "pressure": {
                     "type": "numeric"
                 }
+            },
+            "@actions": {
+                "unlock": null,
+                "lock": null
             }
         }
     }

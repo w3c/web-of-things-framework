@@ -82,12 +82,21 @@ var things = [
                     thing[property] = value;
                     //logger.debug("property: " + property + " value: " + value);
                 });
-                //thing.pressure = 1.014;
-                //thing.on = true;
+                
+                // the device lock is closed
+                thing.is_open = false;
             },
             stop: function (thing) { },
             patch: function (thing, property, value) {
                 d.setProperty("pump12", property, value);
+            },
+            unlock: function (thing) {
+                logger.info('at implementation ' + thing.name + ' "unlock action invoked -> call the device');
+                d.action("pump12", 'unlock');
+            },
+            lock: function (thing) {
+                logger.info('at implementation ' + thing.name + ' "lock" action invoked -> call the device');
+                d.action("pump12", 'lock');
             }
         }
     }

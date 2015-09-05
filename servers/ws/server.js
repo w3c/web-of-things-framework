@@ -119,6 +119,7 @@ function start(settings) {
         } 
         else if (message.action) {
             var thing_name = message.thing;
+            var action = message.action;
             thing_handler.get_thing_async(thing_name, function (err, thing) {
                 if (err) {
                     send_error(ws, err);
@@ -128,7 +129,7 @@ function start(settings) {
                 }
                 else {
                     try {
-                        thing[message.action](message.data);
+                        thing[action](message.data);
                     }
                     catch (e) {
                         send_error(ws, e.message);

@@ -96,6 +96,7 @@ var d = new device();
 //
 //  The implementation of the things  
 //
+
 var things = [
     {
         "thing": function (callback) {

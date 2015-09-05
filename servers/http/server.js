@@ -30,10 +30,43 @@ exports.start = function start(settings) {
         }
     });
     
+    server.post('/api/thing/action', function create(req, res, next) {
+        try {
+            var request = req.params;
+            if (!request || !request.thing || !request.action ) {
+                return next(new Error('thing patch  error: invalid parameters'));
+            }
+            var thing_name = request.thing;
+            var action = request.action;
+            var data = request.data;
+            
+            logger.debug('/api/thing/action received request thing: ' + thing_name + ' action: ' + action);
+            
+            thing_handler.get_thing_async(thing_name, function (err, thing) {
+                try {
+                    if (err) {
+                        return next(new Error('action invoke error: ' + err));
+                    }
+                    
+                    thing[action](data);
+                    res.send(200, { result: true });
+                }
+                catch (e) {
+                    next(new Error('thing action error: ' + e.message));
+                    logger.error("Error in /api/thing/action " + e.message);
+                }
+            });
+        }
+        catch (e) {
+            next(new Error('thing patch error: ' + e.message));
+            logger.error("Error in /api/thing/patch " + e.message);
+        }
+    });
+    
     server.post('/api/thing/patch', function create(req, res, next) {
         try {
             var request = req.params;
-            if (!request || !request.thing || !request.patch || !request.value == undefined) {
+            if (!request || !request.thing || !request.patch || request.value == undefined) {
                 return next(new Error('thing patch  error: invalid parameters'));
             }
             var thing_name = request.thing;
@@ -45,7 +78,7 @@ exports.start = function start(settings) {
             thing_handler.get_thing_async(thing_name, function (err, thing) {
                 try {
                     if (err) {
-                        return next(new Error('property get error: ' + err));
+                        return next(new Error('patch invoke error: ' + err));
                     }
                     
                     thing.patch(property, value);

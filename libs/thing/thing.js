@@ -44,6 +44,27 @@ var Thing = exports.Thing = function Thing(name, model, implementation, remote) 
     }
     
     
+    this.remote_action = function (action, data) {
+        var client = restify.createJsonClient({
+            url: this.remoteuri,
+            version: '*'
+        });
+        
+        var params = {
+            thing: this.name,
+            action: action,
+            data: data
+        };
+        client.post('/api/thing/action', params, function (err, req, res, data) {
+            if (err) {
+                logger.error("/api/thing/action error: " + err);
+            }            
+            else if (!data && !data.result) {
+                logger.error("/api/thing/action error: invalid result");
+            }
+        });
+    };
+    
     this.remote_patch = function (property, value) {
         var client = restify.createJsonClient({
             url: this.remoteuri,
@@ -167,13 +188,18 @@ var Thing = exports.Thing = function Thing(name, model, implementation, remote) 
             if (actions.hasOwnProperty(act)) {
                 (function (action) {
                     thing[action] = function (data) {
-                        if (thing.isremote == false) {
-                            logger.debug('invoking action: ' + thing.name + '.' + action + '()');
-                            thing.implementation[action](thing, data);
-                        } 
-                        else {
-                            // call the remote WoT server that handles the thing
-                            
+                        try {
+                            if (thing.isremote == false) {
+                                logger.debug('invoking action: ' + thing.name + '.' + action + '()');
+                                thing.implementation[action](thing, data);
+                            } 
+                            else {
+                                // call the remote WoT server that handles the thing
+                                thing.remote_action(action, data);
+                            }
+                        }
+                        catch (e) {
+                            logger.error('Error in invoking action: ' + e.message);
                         }
                     }
                 })(act);
@@ -186,13 +212,18 @@ var Thing = exports.Thing = function Thing(name, model, implementation, remote) 
         var thing = self;
         (function () {
             thing.patch = function (property, data) {
-                if (thing.isremote == false) {
-                    logger.debug('Invoking patch handler. thing: ' + thing.name + ' property:' + property + '()');
-                    thing.implementation.patch(thing, property, data);
-                } 
-                else {
-                    //  call the remote WoT server that handles the thing
-                    thing.remote_patch(property, data);
+                try {
+                    if (thing.isremote == false) {
+                        logger.debug('Invoking patch handler. thing: ' + thing.name + ' property:' + property + '()');
+                        thing.implementation.patch(thing, property, data);
+                    } 
+                    else {
+                        //  call the remote WoT server that handles the thing
+                        thing.remote_patch(property, data);
+                    }
+                }
+                catch (e) {
+                    logger.error('Error in invoking patch: ' + e.message);
                 }
             }
         })();        

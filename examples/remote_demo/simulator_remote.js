@@ -47,10 +47,11 @@ var simulator = function ( thing) {
 
 
 //  this is for the simulation to maintain the state of "on" between the "on" and "power_consumption" properties
+var device_name = "pump12";
 var is_pump12_on;
 
 var pump = {
-    "name": "pump12",
+    "name": device_name,
     "model": {
         // for patch include the writable properties from the data/dbs/file/db.js file
         "properties": {
@@ -60,7 +61,7 @@ var pump = {
                 // the property has changes at the the device, notify WoT about the change
                 is_pump12_on = value;
                 var data = {
-                    name: 'pump12',
+                    name: device_name,
                     property: 'on',
                     value: value
                 };
@@ -77,13 +78,34 @@ var pump = {
                     }
                     //send the event
                     var data = {
-                        name: 'pump12',
+                        name: device_name,
                         property: 'pressure',
                         value: cons
                     };
                     eventh.onDevicePropertyChanged(data);
                 };
                 setInterval(setconsval, 2000);
+            }
+        },
+        "actions": {
+            "unlock": function () {
+                // the simulator received the unlock request ... the door was unlocked ... set the "is_open" property to true
+                logger.debug('device "unlock" action is invoked, the device is setting the is_open property to true');
+                var data = {
+                    name: device_name,
+                    property: 'is_open',
+                    value: true
+                };
+                eventh.onDevicePropertyChanged(data);
+            },
+            "lock": function () {
+                logger.debug('device "lock" action is invoked, the device is setting the is_open property to true');
+                var data = {
+                    name: device_name,
+                    property: 'is_open',
+                    value: false
+                };
+                eventh.onDevicePropertyChanged(data);
             }
         }
     }
