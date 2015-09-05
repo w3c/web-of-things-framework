@@ -1,49 +1,46 @@
 ﻿
-<div class="row" id="things-container">
-    <div class="col-md-12 col-lg-12" style="padding:20px 0; text-align:center">
-        <h1>My Things</h1>
-    </div>
-    <div class="col-md-12 col-lg-12">
-        <div data-bind="template: { name: 'things-template', foreach: things }">
-        </div>
+<div id="things-container" style="padding-top:70px;">
+    <div data-bind="template: { name: 'things-template', foreach: things }">
     </div>
 </div>
 
 <script type="text/html" id="things-template">
     <div class="things_list_item">
-        <div class="thing_name">
-            <div class="pull-left" style="width:120px">Thing name: </div>
-            <div class="pull-left"><span data-bind="text: name"></span></div>
-            <div style="clear:both"></div>
-        </div>
-        <div class="thing_properties">
-            <h5>
-                Properties
-            </h5>
-            <div data-bind="template: { name: 'property-template', foreach: properties }">
-                    
+        <div class="row">
+            <div class="col-md-12 col-lg-12">
+                <div class="thing_name">
+                    <span data-bind="text: name"></span>
+                </div>
             </div>
-        </div>
-        <!-- ko if: actions().length > 0 -->
-        <div class="thing_actions">
-            <h5>
-                Actions
-            </h5>
-            <div data-bind="template: { name: 'action-template', foreach: actions }">
+            <div class="col-md-12 col-lg-12">
+                <div class="col-md-4 col-lg-4 thing_properties">
+                    <h5>
+                        Properties
+                    </h5>
+                    <div data-bind="template: { name: 'property-template', foreach: properties }" class="thing_properties_items">
+                    </div>
+                </div>
 
+                <!-- ko if: actions().length > 0 -->
+                <div class="col-md-4 col-lg-4 thing_actions">
+                    <h5>
+                        Actions
+                    </h5>
+                    <div data-bind="template: { name: 'action-template', foreach: actions }">
+                    </div>
+                </div>
+                <!-- /ko -->
+                <!-- ko if: events().length > 0 -->
+                <div class="col-md-4 col-lg-4 thing_actions">
+                    <h5>
+                        Events
+                    </h5>
+                    <div data-bind="template: { name: 'event-template', foreach: events }">
+                    </div>
+                </div>
+                <!-- /ko -->
             </div>
-        </div>
-        <!-- /ko -->
-        <!-- ko if: events().length > 0 -->
-        <div class="thing_actions">
-            <h5>
-                Events
-            </h5>
-            <div data-bind="template: { name: 'event-template', foreach: events }">
-
-            </div>
-        </div>
-        <!-- /ko -->
+        </div>        
     </div>       
 </script>
 
@@ -78,36 +75,21 @@
 
 
 <script type="text/html" id="is_open-property-template">
-    <div style="color:#aaa;font-size:12px">
-        <i>(This demonstrates using a template to print detailed information for a read-only property)</i>
-    </div>
+    <!-- ko if: data() == true -->
     <div>
-        <div>
-            <div class="pull-left" style="width:100px">Property: </div>
-            <div class="pull-left"><span data-bind="text: property"></span></div>
-            <div style="clear:both"></div>
-        </div>
-        <div>
-            <div class="pull-left" style="width:100px">Type: </div>
-            <div class="pull-left"><span data-bind="text: type"></span></div>
-            <div style="clear:both"></div>
-        </div>
-        <div>
-            <div class="pull-left" style="width:100px">IsWritable: </div>
-            <div class="pull-left"><span data-bind="text: iswriteable"></span></div>
-            <div style="clear:both"></div>
-        </div>
-        <div>
-            <div class="pull-left" style="width:100px">Value: </div>
-            <div class="pull-left"><span data-bind="text: data"></span></div>
-            <div style="clear:both"></div>
-        </div>
+        Opened&nbsp;&nbsp;&nbsp;<i class="fa fa-check-circle"></i>
     </div>
+    <!-- /ko -->
+    <!-- ko if: data() == false -->
+    <div>
+        Closed&nbsp;&nbsp;&nbsp;<i class="fa fa-lock"></i>
+    </div>
+    <!-- /ko -->
 </script>
 
 <script type="text/html" id="battery_value-property-template">
     <div>
-        Battery:  <span data-bind="text: data"></span> Volt
+        Battery:  <span data-bind="digitsnum: data, digits:3"></span> Volt
     </div>
 </script>
 
@@ -121,40 +103,20 @@
     </div>
 </script>
 
-
 <script type="text/html" id="on-property-template">
-    <div style="color:#aaa;font-size:12px">
-        <i>(This demonstrates using a template to print detailed information for a writeable property)</i>
-    </div>
     <div>
         <div>
-            <div class="pull-left" style="width:100px">Property: </div>
-            <div class="pull-left"><span data-bind="text: property"></span></div>
-            <div style="clear:both"></div>
-        </div>
-        <div>
-            <div class="pull-left" style="width:100px">Type: </div>
-            <div class="pull-left"><span data-bind="text: type"></span></div>
-            <div style="clear:both"></div>
-        </div>
-        <div>
-            <div class="pull-left" style="width:100px">IsWritable: </div>
-            <div class="pull-left"><span data-bind="text: iswriteable"></span></div>
-            <div style="clear:both"></div>
-        </div>
-        <div>
-            <div class="pull-left" style="width:100px">Value: </div>
-            <div class="pull-left"><span data-bind="text: data"></span></div>
+            <div class="pull-left" style="margin-right:10px">Device is ON </div>
+            <div class="pull-left" style="padding-top:0"><input type="checkbox" data-bind="checked: data" /></div>
             <div style="clear:both"></div>
         </div>
     </div>
 </script>
 
 
-
 <script type="text/html" id="power_consumption-property-template">
     <div>
-        Power consumption:  <span data-bind="text: data"></span> watts
+        Power consumption:  <span data-bind="digitsnum: data, digits:3"></span> watts
     </div>
 </script>
 
@@ -176,6 +138,20 @@
         </div>
     </div>   
 </script>
+
+
+<script type="text/html" id="temperature-property-template">
+    <div>
+        Temperature around the door:          
+    </div>
+    <div>
+        <span data-bind="digitsnum: data, digits:4"></span> Celsius
+    </div>
+    <div>
+
+    </div>
+</script>
+
 
 
 {{#section 'script'}}

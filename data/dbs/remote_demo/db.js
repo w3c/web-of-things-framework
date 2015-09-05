@@ -5,55 +5,6 @@ var definitions = [];
 
 definitions.push(
     {
-        "name": "door12",    
-        "model": {
-            "@events": {
-                "bell": {
-                    fields: [
-                        "timestamp"
-                    ]
-                },
-            },
-            "@properties": {
-                "is_open": {
-                    "type": "boolean"
-                },
-                "battery_value": {
-                    "type": "numeric"
-                },
-                "is_camera_on": {
-                    "type": "boolean",
-                    "writeable": true
-                },
-            },
-            "@actions": {
-                "unlock": null,
-                "lock": null
-            }
-        }
-    }
-);
-
-definitions.push(
-    {
-        "name": "switch12",
-        "model": {
-            "@properties": {
-                "on": {
-                    "type": "boolean",
-                    "writeable": true
-                },
-                "power_consumption": {
-                    "type": "numeric"
-                }
-            }
-        }
-    }
-);
-
-
-definitions.push(
-    {
         "name": "door33",
         "model": {
             "@events": {
@@ -79,9 +30,6 @@ definitions.push(
                 "unlock": null,
                 "lock": null
             }
-        },
-        "remote": {
-            "uri": "http://localhost:8890"
         }
     }
 );
@@ -108,8 +56,6 @@ exports.find_thing = function find_thing(name, callback) {
 // the "things" list is for the clients, typically this will be rendered to the client UI
 var things = [];
 
-things.push({ name: 'door12', id: 1 });
-things.push({ name: 'switch12', id: 2 });
 things.push({ name: 'door33', id: 3 });
 
 

@@ -1,7 +1,8 @@
 ﻿WoT.ViewModels = WoT.ViewModels || {};
 
-WoT.ViewModels.ThingProperty = function (_property, _prop, _on_propertychanged) {
+WoT.ViewModels.ThingProperty = function (_property, _prop, _on_propertychanged, _name) {
     var viewModel = {
+        thing_name: _name,
         template_name: ko.observable(_property + '-property-template'),
         property: ko.observable(_property),
         type: ko.observable(_prop.type),
@@ -15,6 +16,29 @@ WoT.ViewModels.ThingProperty = function (_property, _prop, _on_propertychanged) 
 
         set_value: function (val) {
             viewModel.data(val);
+        },
+
+        get_value: function () {
+            var data = { thing: viewModel.thing_name, property: viewModel.property()};
+            $.ajax({
+                url: 'api/thing/property/get',
+                type: "POST",
+                dataType: "json",
+                contentType: "application/json",
+                data: JSON.stringify(data)
+            }).done(function (result) {
+                
+                if (result.error) {
+                    return console.log("Error: " + result.error)
+                }
+                
+                if (result.hasOwnProperty("value")) {
+                    viewModel.set_value(result.value)
+                }
+
+            }).fail(function (jqXHR, textStatus) {
+                WoT.App.ShowError(textStatus + " Error, " + jqXHR.responseText);
+            });    
         }
     };
     
@@ -152,8 +176,9 @@ WoT.ViewModels.ThingViewModel = function (_name, _id, _wssendproc) {
         var properties_array = [];
         for (var prop in properties) {
             if (properties.hasOwnProperty(prop)) {
-                var property = new WoT.ViewModels.ThingProperty(prop, properties[prop], self.on_propertychanged);
+                var property = new WoT.ViewModels.ThingProperty(prop, properties[prop], self.on_propertychanged, self.name());
                 properties_array.push(property);
+                property.get_value();
             }
         }        
         self.properties(properties_array);

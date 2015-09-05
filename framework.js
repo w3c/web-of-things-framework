@@ -1,6 +1,5 @@
 // wot-framework.js
 var logger = require('./logger');
-var config = require('./config');
 
 var server_handler = require('./servers/server_handler');
 var thing_handler = require('./libs/thing/thing_handler');

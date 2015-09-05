@@ -155,6 +155,30 @@
 })($, ko);
 
 
+(function ($, ko) {
+    WoT.Utils = WoT.Utils || {};
+    
+    WoT.Utils.toFixed = function (number, precision) {
+        var val = +(Math.round(+(number.toString() + 'e' + precision)).toString() + 'e' + -precision);
+        return val.toString();
+    }
+    
+    WoT.Utils.formatDigits = function (val, digits) {
+        var value = 0;
+        if (!isNaN(val)) {
+            value = parseFloat(val);
+            var strval = ('' + value);
+            var pos = strval.indexOf('.');
+            var decimals = pos == -1 ? digits : strval.substr(pos + 1).length;
+            digits = decimals < digits ? digits : decimals;
+        }
+        
+        return value.toFixed(digits).replace(/(\d)(?=(\d{3})+\.)/g, "$1,");
+    }    
+
+})($, ko);
+
+
 ko.bindingHandlers.bellring = {
     init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
         
@@ -179,3 +203,23 @@ ko.bindingHandlers.bellring = {
         catch (e) { }
     }
 };
+
+
+ko.bindingHandlers.digitsnum =  {    
+    update: function (element, valueAccessor, allBindings) {
+        var value = ko.utils.unwrapObservable(valueAccessor()) || 0;
+        var digits = allBindings.get('digits') ? parseInt(allBindings.get('digits')) : 4;
+        var num = isNaN(value) ? 0 : parseFloat(value);
+        if (isNaN(num)) {
+            var zeroText = "0.";
+            for (var i = 0; i < digits; i++) {
+                zeroText += "0";
+            }
+            $(element).val(zeroText);
+            return;
+        }
+        value = num;
+        var amount = WoT.Utils.formatDigits(value, digits);
+        $(element).text(amount);
+    }
+}

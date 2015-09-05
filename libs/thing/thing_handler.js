@@ -3,9 +3,10 @@ var path = require('path');
 var util = require('util');
 var url = require('url');
 var logger = require('../../logger');
-var config = require('../../config');
 var Thing = require('./thing').Thing;
 var list_of_things = require('../lists/registry.js');
+
+var config = global.appconfig;
 
 function get_thing (name) {
     if (list_of_things.hasOwnProperty(name)) {
@@ -27,12 +28,12 @@ function get_thing_async(name, callback) {
 
 function register_thing (name, thing) {
     if (!name || !thing) {
-        throw ('Error in register_thing(). The id and thing canot be null');
+        throw ('Error in register_thing(). The name and thing cannot be null');
     }
     
     var isexists = get_thing(name);
     if (isexists) {
-        throw ('Error in register_thing(). The thing already exists. id: ' + id);
+        throw ('Error in register_thing(). The thing already exists. name: ' + name);
     }
     
     list_of_things[name] = thing;
@@ -63,15 +64,10 @@ function init(things) {
         for (var i = 0; i < things.length; i++) {
             var thing_def = things[i];
             thing_def.thing(function (err, thing){
-                var name, transport, model, implementation;
+                var name, model, implementation, remote;
                 name = thing.name;
                 if (!name) {
                     return logger.error("Error in register_from_config. The thing name is required");
-                }
-                
-                transport = thing.transport;
-                if (!transport) {
-                    return logger.error("Error in register_from_config. The thing transport is required");
                 }
                 
                 model = thing.model;
@@ -85,12 +81,14 @@ function init(things) {
                     return logger.error("Error in register_from_config. The thing implementation is required");
                 }
                 
+                remote = thing.remote;
+
                 var isexists = get_thing(name);
                 if (isexists) {
                     return logger.error ('The thing already exists: ' + name);
-                }
+                }              
                 
-                var thingobj = new Thing(name, transport, model, implementation);
+                var thingobj = new Thing(name, model, implementation, remote);
                 register_thing(name, thingobj);
             });            
         }

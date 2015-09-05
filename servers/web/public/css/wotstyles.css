@@ -245,11 +245,11 @@
     border-bottom:1px solid #ccc;
     padding:5px 10px;
     background-color:#f5f5f5;
+    font-weight:bold;
 }
 
 .thing_properties, .thing_actions{
-    margin:0 30px 30px 30px;
-    padding-top:10px;
+    padding:10px 20px 10px 20px;
 }
 
 .thing_properties h5, .thing_actions h5{
@@ -259,12 +259,20 @@
     font-weight:bold;
     border-bottom:1px dotted #ddd;
     padding-bottom:5px;
+    color:#777;
+}
+
+.thing_properties_items {
 }
 
 .thing_property_item {
     border-bottom:1px dotted #ddd;
     padding-top:10px;
     padding-bottom:10px;
+}
+
+.thing_properties_items div:last-child{
+    border-bottom: none;
 }
 
 .thing_action_item {

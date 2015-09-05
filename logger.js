@@ -1,7 +1,8 @@
 ﻿var path = require('path');
 var fs = require('fs');
 var winston = require('winston');
-var config = require("./config");
+
+var config = global.appconfig;
 
 var logDir = path.join(__dirname, '/logs');
 
