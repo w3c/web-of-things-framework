@@ -7,6 +7,13 @@ definitions.push(
     {
         "name": "door33",
         "model": {
+            "@events": {
+                "bell": {
+                    fields: [
+                        "timestamp"
+                    ]
+                },
+            },
             "@properties": {
                 "is_open": {
                     "type": "boolean"

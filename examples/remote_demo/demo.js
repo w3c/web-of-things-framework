@@ -83,6 +83,14 @@ var things = [
                     //logger.debug("property: " + property + " value: " + value);
                 });
                 
+                d.onEvent("door33", function (err, event, data) {
+                    if (err) {
+                        return logger.error("thing implementation onEvent error: " + err);
+                    }
+                    
+                    thing.raise_event(event, data);
+                });
+                
                 // the device lock is closed
                 thing.is_open = false;
             },

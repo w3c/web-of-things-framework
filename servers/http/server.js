@@ -169,18 +169,44 @@ exports.start = function start(settings) {
                 thing[property] = value;
                 res.send(200, { result: true });
             });
-
-            // register this thing and endpoint
-            db.register_endpoint(thing, endpoint, function (err, result) {
-                if (err) {
-                    return next(new Error('endpoint register error: ' + err));
-                }
-                
-                res.send(200, { result: result });
-            });
         }
         catch (e) {
-            next(new Error('endpoint register error: ' + e.message));
+            next(new Error('endpoint propertychange error: ' + e.message));
+            logger.error("Error in /api/property/get " + e.message);
+        }
+    });
+    
+    
+    server.post('/api/thing/eventsignall', function create(req, res, next) {
+        try {
+            var request = req.params;
+            if (!request || !request.thing || !request.event) {
+                return next(new Error('/api/thing/eventsignall error: invalid parameters'));
+            }
+            var thing_name = request.thing;
+            var event = request.event;
+            var data = request.data;
+            
+            //logger.debug('/api/thing/eventsignall received request thing: ' + thing_name + ' property: ' + property);
+            
+            thing_handler.get_thing_async(thing_name, function (err, thing) {
+                if (err) {
+                    return next(new Error('property get error: ' + err));
+                }
+                
+                try {
+                    thing.raise_event(event, data);
+                    res.send(200, { result: true });
+                }
+                catch (e) {
+                    next(new Error('endpoint eventsignall error: ' + e.message));
+                    logger.error("Error in /api/property/get " + e.message);
+                }
+            });
+            
+        }
+        catch (e) {
+            next(new Error('endpoint eventsignall error: ' + e.message));
             logger.error("Error in /api/property/get " + e.message);
         }
     });
@@ -188,8 +214,12 @@ exports.start = function start(settings) {
     server.listen(port, function () {
         logger.info('HTTP REST server is listening on port ' + port);
     });
-
-    // listen on the thing events and send it to the registered endpoints
+    
+    //
+    //  Listen on the thing events and send it to the registered endpoints
+    //  All transport handler (web socket, this HTTP, etc. must implement this event handler listener to get notification
+    //  from thing about property changes and events happened on the thing
+    //  
     thingevents.emitter.on('thingevent', function (event_name, payload) {
         try {
             switch (event_name) {

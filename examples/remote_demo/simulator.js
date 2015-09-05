@@ -50,9 +50,29 @@ var simulator = function ( thing) {
 var device_name = "door33";
 var is_door33_on;
 
-var pump = {
+var door = {
     "name": device_name,
     "model": {
+        "events": {
+            "bell": function () {
+                //  Demonstrates to raise an event from the device by ringing the bell in every 30 seconds.
+                //  This implementation emits an event to the WoT listner. This will be most likely an HTTP end point call 
+                //  from the device to the WoT listener in real world applications, but for this demo example we just emit an event
+                var ringbell = function () {
+                    var data = {
+                        name: device_name,
+                        event: 'bell',
+                        data: {
+                            // this will be some relevant device data instead of this demo timestamp value
+                            timestamp: Math.floor(Date.now() / 1000)
+                        }
+                    };
+                    eventh.onDeviceEventSignalled(data);
+                };
+                
+                setInterval(ringbell, 30000);
+            },
+        },
         // for patch include the writable properties from the data/dbs/file/db.js file
         "properties": {
             "on": function (value) {
@@ -111,9 +131,10 @@ var pump = {
 
 
 exports.start = function start() {
-    var pump_device = new simulator(pump);
-    pump.model.properties.on(true);
-    pump.model.properties.temperature();
+    var door_device = new simulator(door);
+    door.model.properties.on(true);
+    door.model.properties.temperature();
+    door.model.events.bell();
 }
 
 exports.emitter = eventh;
