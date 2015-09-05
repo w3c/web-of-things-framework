@@ -11,4 +11,6 @@ Ince the "on" property of the switch12 device os turned ON then shortly the UI s
 
 In order to receive notifications for door door33 the remote WoT instance must be operational (see the remote_demo example).
 
+Open a second, third, etc. browser session  at http://localhost:8888 and then click on the "Things" menu item. The web socket transport should notify all broswer session upon property changes and events.
+
 
