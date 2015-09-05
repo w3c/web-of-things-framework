@@ -166,11 +166,11 @@ var things = [
     //  implement a remote sensor handled by other WoT server
     {
         "thing": function (callback) {
-            db.find_thing("pump12", callback);
+            db.find_thing("door33", callback);
         },        
         "implementation": {
             start: function (thing) {
-                d.onProperty("pump12", function (err, property, value) {
+                d.onProperty("door33", function (err, property, value) {
                     thing[property] = value;
                 });
             },

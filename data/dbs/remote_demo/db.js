@@ -5,7 +5,7 @@ var definitions = [];
 
 definitions.push(
     {
-        "name": "pump12",
+        "name": "door33",
         "model": {
             "@properties": {
                 "is_open": {
@@ -15,7 +15,7 @@ definitions.push(
                     "type": "boolean",
                     "writeable": true
                 },
-                "pressure": {
+                "temperature": {
                     "type": "numeric"
                 }
             },
@@ -49,7 +49,7 @@ exports.find_thing = function find_thing(name, callback) {
 // the "things" list is for the clients, typically this will be rendered to the client UI
 var things = [];
 
-things.push({ name: 'pump12', id: 3 });
+things.push({ name: 'door33', id: 3 });
 
 
 // all databases returns the data asynchronously so return from this local file asynchronously as well 

@@ -47,8 +47,8 @@ var simulator = function ( thing) {
 
 
 //  this is for the simulation to maintain the state of "on" between the "on" and "power_consumption" properties
-var device_name = "pump12";
-var is_pump12_on;
+var device_name = "door33";
+var is_door33_on;
 
 var pump = {
     "name": device_name,
@@ -56,10 +56,10 @@ var pump = {
         // for patch include the writable properties from the data/dbs/file/db.js file
         "properties": {
             "on": function (value) {
-                logger.debug('pump12 sets on property to ' + value);
+                logger.debug('door33 sets on property to ' + value);
                 // ... processing ... this will be asynchronous on real world devices
                 // the property has changes at the the device, notify WoT about the change
-                is_pump12_on = value;
+                is_door33_on = value;
                 var data = {
                     name: device_name,
                     property: 'on',
@@ -67,24 +67,22 @@ var pump = {
                 };
                 eventh.onDevicePropertyChanged(data); 
             },
-            "pressure": function (value) {
-                //  put a timer to simulate a decreasing power consumption
-                var setconsval = function () {
-                    var cons = 0;
-                    if (is_pump12_on) {
-                        cons = (Math.floor(Math.random() * 21)) * 0.001;
-                        cons += 1;
-                        cons = parseFloat(cons.toFixed(3));
-                    }
+            "temperature": function (value) {
+                //  put a timer to simulate 
+                var settempval = function () {
+                    var celsius = (Math.floor(Math.random() * 990)) * 0.0001;
+                    celsius += 20;
+                    celsius = parseFloat(celsius.toFixed(4));
+                    
                     //send the event
                     var data = {
                         name: device_name,
-                        property: 'pressure',
-                        value: cons
+                        property: 'temperature',
+                        value: celsius
                     };
                     eventh.onDevicePropertyChanged(data);
                 };
-                setInterval(setconsval, 2000);
+                setInterval(settempval, 2000);
             }
         },
         "actions": {
@@ -115,7 +113,7 @@ var pump = {
 exports.start = function start() {
     var pump_device = new simulator(pump);
     pump.model.properties.on(true);
-    pump.model.properties.pressure();
+    pump.model.properties.temperature();
 }
 
 exports.emitter = eventh;

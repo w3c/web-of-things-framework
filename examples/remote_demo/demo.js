@@ -4,7 +4,7 @@ var events = require("events");
 var logger = require('../../logger');
 var db = require('../../data/db')();
 var wot = require('../../framework');
-var simulator = require('./simulator_remote');
+var simulator = require('./simulator');
 var eventh = require('../../libs/events/thingevents');
 
 var device = function () {
@@ -74,11 +74,11 @@ var d = new device();
 var things = [
     {
         "thing": function (callback) {
-            db.find_thing("pump12", callback);
+            db.find_thing("door33", callback);
         },        
         "implementation": {
             start: function (thing) {
-                d.onProperty("pump12", function (err, property, value) {
+                d.onProperty("door33", function (err, property, value) {
                     thing[property] = value;
                     //logger.debug("property: " + property + " value: " + value);
                 });
@@ -88,15 +88,15 @@ var things = [
             },
             stop: function (thing) { },
             patch: function (thing, property, value) {
-                d.setProperty("pump12", property, value);
+                d.setProperty("door33", property, value);
             },
             unlock: function (thing) {
                 logger.info('at implementation ' + thing.name + ' "unlock action invoked -> call the device');
-                d.action("pump12", 'unlock');
+                d.action("door33", 'unlock');
             },
             lock: function (thing) {
                 logger.info('at implementation ' + thing.name + ' "lock" action invoked -> call the device');
-                d.action("pump12", 'lock');
+                d.action("door33", 'lock');
             }
         }
     }

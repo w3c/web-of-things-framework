@@ -92,7 +92,7 @@
 
 <script type="text/html" id="battery_value-property-template">
     <div>
-        Battery:  <span data-bind="text: data"></span> Volt
+        Battery:  <span data-bind="digitsnum: data, digits:3"></span> Volt
     </div>
 </script>
 
@@ -119,7 +119,7 @@
 
 <script type="text/html" id="power_consumption-property-template">
     <div>
-        Power consumption:  <span data-bind="text: data"></span> watts
+        Power consumption:  <span data-bind="digitsnum: data, digits:3"></span> watts
     </div>
 </script>
 
@@ -142,9 +142,16 @@
     </div>   
 </script>
 
-<script type="text/html" id="pressure-property-template">
+
+<script type="text/html" id="temperature-property-template">
     <div>
-        Water Pressure:  <span data-bind="text: data"></span> Bar
+        Temperature around the door:          
+    </div>
+    <div>
+        <span data-bind="digitsnum: data, digits:4"></span> Celsius
+    </div>
+    <div>
+
     </div>
 </script>
 

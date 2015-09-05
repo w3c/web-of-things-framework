@@ -54,8 +54,15 @@ definitions.push(
 
 definitions.push(
     {
-        "name": "pump12",
+        "name": "door33",
         "model": {
+            "@events": {
+                "bell": {
+                    fields: [
+                        "timestamp"
+                    ]
+                },
+            },
             "@properties": {
                 "is_open": {
                     "type": "boolean"
@@ -64,7 +71,7 @@ definitions.push(
                     "type": "boolean",
                     "writeable": true
                 },
-                "pressure": {
+                "temperature": {
                     "type": "numeric"
                 }
             },
@@ -103,7 +110,7 @@ var things = [];
 
 things.push({ name: 'door12', id: 1 });
 things.push({ name: 'switch12', id: 2 });
-things.push({ name: 'pump12', id: 3 });
+things.push({ name: 'door33', id: 3 });
 
 
 // all databases returns the data asynchronously so return from this local file asynchronously as well 
