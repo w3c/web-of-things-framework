@@ -32,23 +32,18 @@ var Thing = exports.Thing = function Thing(name, model, implementation, remote) 
     this.pending = {}; // for dependency
     this.isremote = remote != null ? true : false;
     this.remoteuri = remote ? remote.uri :  '';
-
-    this.init_events = function () {
-        var thing = self;
-        var events = thing.model["@events"];
-        
-        thing.raise_event = function (event_name, data) {
-            // signal the event handler that the propery has changed
-            thingevents.onEventSignalled(thing.name, event_name, data);
-        };        
-    }
     
-    
-    this.remote_action = function (action, data) {
+    this.get_remote_client = function () {
         var client = restify.createJsonClient({
             url: this.remoteuri,
-            version: '*'
+            version: '*',
+            agent: false
         });
+        return client;  
+    };
+    
+    this.remote_action = function (action, data) {
+        var client = this.get_remote_client();
         
         var params = {
             thing: this.name,
@@ -62,14 +57,13 @@ var Thing = exports.Thing = function Thing(name, model, implementation, remote) 
             else if (!data && !data.result) {
                 logger.error("/api/thing/action error: invalid result");
             }
+            
+            client.close();
         });
     };
     
     this.remote_patch = function (property, value) {
-        var client = restify.createJsonClient({
-            url: this.remoteuri,
-            version: '*'
-        });
+        var client = this.get_remote_client();
         
         var params = {
             thing: this.name,
@@ -83,14 +77,13 @@ var Thing = exports.Thing = function Thing(name, model, implementation, remote) 
             else if (!data && !data.result) {
                 logger.error("/api/thing/patch error: invalid result");
             }
+
+            client.close();
         });
     };
 
     this.remote_property_get = function (property, callback) {
-        var client = restify.createJsonClient({
-            url: this.remoteuri,
-            version: '*'
-        });
+        var client = this.get_remote_client();
         
         var params = {
             thing: this.name,
@@ -107,6 +100,8 @@ var Thing = exports.Thing = function Thing(name, model, implementation, remote) 
             else {
                 callback("property value is empty");
             }
+
+            client.close();
         });
     };
 
@@ -135,6 +130,16 @@ var Thing = exports.Thing = function Thing(name, model, implementation, remote) 
             }
         }
     };
+    
+    this.init_events = function () {
+        var thing = self;
+        var events = thing.model["@events"];
+        
+        thing.raise_event = function (event_name, data) {
+            // signal the event handler that the propery has changed
+            thingevents.onEventSignalled(thing.name, event_name, data);
+        };
+    }
     
     // initialise thing's getters and setters
     // if ws is null, thing isn't a proxy and hence

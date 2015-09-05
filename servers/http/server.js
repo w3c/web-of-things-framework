@@ -20,15 +20,6 @@ exports.start = function start(settings) {
         .use(restify.fullResponse())
         .use(restify.bodyParser());
     
-    server.post('/api', function create(req, res, next) {
-        try {
-            var request = req.params;
-            logger.info('/api received request ' + request);
-        }
-        catch (e) {
-            logger.error("");
-        }
-    });
     
     server.post('/api/thing/action', function create(req, res, next) {
         try {
@@ -50,6 +41,7 @@ exports.start = function start(settings) {
                     
                     thing[action](data);
                     res.send(200, { result: true });
+                    return next();
                 }
                 catch (e) {
                     next(new Error('thing action error: ' + e.message));
@@ -83,6 +75,7 @@ exports.start = function start(settings) {
                     
                     thing.patch(property, value);
                     res.send(200, { result: true });
+                    return next();
                 }
                 catch (e) {
                     next(new Error('thing patch error: ' + e.message));
@@ -114,6 +107,7 @@ exports.start = function start(settings) {
                 
                 var value = thing[property];
                 res.send(200, { thing: thing_name, property: property, value: value });
+                return next();
             });
         }
         catch (e) {
@@ -141,6 +135,7 @@ exports.start = function start(settings) {
                 }
 
                 res.send(200, { result: result });
+                return next();
             });
         }
         catch (e) {
@@ -168,6 +163,7 @@ exports.start = function start(settings) {
                 
                 thing[property] = value;
                 res.send(200, { result: true });
+                return next();
             });
         }
         catch (e) {
@@ -197,6 +193,7 @@ exports.start = function start(settings) {
                 try {
                     thing.raise_event(event, data);
                     res.send(200, { result: true });
+                    return next();
                 }
                 catch (e) {
                     next(new Error('endpoint eventsignall error: ' + e.message));
@@ -243,7 +240,8 @@ exports.start = function start(settings) {
                                 var url = endpoints[i];
                                 var client = restify.createJsonClient({
                                     url: url,
-                                    version: '*'
+                                    version: '*',
+                                    agent: false
                                 });
                                 var path = '/api/thing/' + event_name;            
                                 client.post(path, payload, function (err, req, res, data) {
