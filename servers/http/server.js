@@ -246,11 +246,11 @@ exports.start = function start(settings) {
                                 var path = '/api/thing/' + event_name;            
                                 client.post(path, payload, function (err, req, res, data) {
                                     if (err) {
-                                        return logger.error("Error in registering the remote proxy: " + err);
+                                        return logger.error("Error in sending to /api/thing: " + err);
                                     }
                                     
                                     if (!data || !data.result) {
-                                        logger.error("Error in registering the remote proxy");
+                                        logger.error("Error in in sending to /api/thing");
                                     }
                                     else {
                                         //logger.debug("Remote proxy " + path + " called for " + thing);
@@ -259,7 +259,7 @@ exports.start = function start(settings) {
                             }                
                         }
                         catch (e) {
-                            logger.error("Error in sending to endpoint_list " + e.message);
+                            logger.error("Error in in sending to /api/thing/ " + e.message);
                         }                                
                     });
                     break;

@@ -353,10 +353,7 @@ var Thing = exports.Thing = function Thing(name, model, implementation, remote) 
             return;
         }
 
-        var client = restify.createJsonClient({
-            url: this.remoteuri,
-            version: '*'
-        });
+        var client = this.get_remote_client();
         
         var params = {
             endpoint: config.servers.http.fqdn,
