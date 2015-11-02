@@ -11,6 +11,8 @@ The door12 battery level changes every 2 second, the door beel event is signalle
 
 Once the "on" property of the switch12 device is selected, the UI should be notified with the power consumption property level in every 2 seconds. 
 
+To run the remote proxy device "door33" with the CoAP demo the remote WoT instance must be operational (see the remote_demo example) as well as the global.is_door33_defined variable must be set to "true" at the top of demo.js file.
+
 
 
 
