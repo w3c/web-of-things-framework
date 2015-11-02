@@ -1,5 +1,10 @@
 ﻿// set this global config variable first
 global.appconfig = require('./config');
+
+// define what things will be handled by this demo
+global.is_door12_defined = true;
+global.is_switch12_defined = true;
+
 var events = require("events");
 var logger = require('../../logger');
 var db = require('../../data/db')();
@@ -10,41 +15,31 @@ var adapter = require('../../libs/adapters/coap');
 
 var device = function (thing_name) {
 
-    var self = this;
+    var self = this;   
     
-    self.onProperty = function (callback) {
-        //eventh.emitter.on('device_property_changed', function (msg) {
-        //    try {
-        //        if (!msg || !msg.name || msg.name != thing_name) {
-        //            return;
-        //        }
-                
-        //        callback(null, msg.property, msg.value);                
-        //    }
-        //    catch (e) {
-        //        logger.error(e);
-        //    }
-        //});
+    self.property_get = function (property, callback) {
+        logger.debug("get property from CoAP device: " + property );
+        var msg = {
+            type: 'property_get',
+            name: thing_name,
+            property: property
+        };
+        
+        //eventh.onDeviceMessage(msg);
+        adapter.send({ host: self.host, port: self.port }, msg, function (err, result) {
+            if (err) {
+                return callback(err);
+            }
 
-        //listen on the coap message
-    };
+            if (result && result.property && result.property == property && result.hasOwnProperty('value')) {
+                callback(null, result.value);
+            }
+            else {
+                callback("Invalid CoAP property_get response");       
+            }     
+        });
+    }
     
-    self.onEvent = function (callback) {
-        //eventh.emitter.on('device_event_signalled', function (msg) {
-        //    try {
-        //        if (!msg || !msg.name || msg.name != thing_name) {
-        //            return;
-        //        }
-                
-        //        callback(null, msg.event, msg.data);
-        //    }
-        //    catch (e) {
-        //        logger.error(e);
-        //    }
-        //});
-
-        //listen on the coap message
-    };
     
     self.setProperty = function (property, value) {
         logger.debug("send patch to device: " + property + ", value " + value);
@@ -54,8 +49,9 @@ var device = function (thing_name) {
             property: property,
             value: value
         };
+
         //eventh.onDeviceMessage(msg);
-        adapter.patch(msg, function (err, result) {
+        adapter.send({ host: self.host, port: self.port }, msg, function (err, result) {
 
         });
     }
@@ -67,8 +63,9 @@ var device = function (thing_name) {
             name: thing_name,
             action: action
         };
+
         //eventh.onDeviceMessage(msg);
-        adapter.action(msg, function (err, result) {
+        adapter.send({ host: self.host, port: self.port }, msg, function (err, result) {
 
         });
     }
@@ -81,9 +78,12 @@ var device = function (thing_name) {
             }
             
             //start the CoAP client/server
-            if (!data || !data.device || !data.protocol || !data.uri) {
+            if (!data || !data.device || !data.protocol || !data.host) {
                 return callback("Invalid adapter configuration data");
-            }
+            }           
+
+            self.host = data.host;
+            self.port = data.port;
             
             adapter.init(data, function (err) {
                 callback(err);
@@ -125,12 +125,12 @@ var device = function (thing_name) {
 */
 
 
-
 //
-//  The implementation of the things  
+//  The implementations of the things  
 //
 
- var door_device = new device("door12");
+var door_device = new device("door12");
+var switch_device = new device("switch12");
 
 var things = [
     {
@@ -138,36 +138,11 @@ var things = [
             db.find_thing("door12", callback);
         },
         "implementation": {
-            start: function (thing) {
-               
+            start: function (thing) {               
                 door_device.init(function (err) {
                     if (err) {
-                        return logger.error("CoAP adapter initialisation error: " + err);
+                        return logger.error("CoAP door12 adapter initialisation error: " + err);
                     }
-
-                    //  listen on the property changes
-                    //  the device simulator will emit an event when any property change
-                    //  and this listener will be notified
-                    door_device.onProperty(function (err, property, value) {
-                        if (err) {
-                            return logger.error("thing implementation onProperty error: " + err);
-                        }
-
-                        thing[property] = value;
-                    });
-                
-                    door_device.onEvent(function (err, event, data) {
-                        if (err) {
-                            return logger.error("thing implementation onEvent error: " + err);
-                        }
-
-                        thing.raise_event(event, data);
-                    });
-                
-                    //  just for the demo set the camera state is "ON" (true)
-                    //thing.is_camera_on = false;
-                    //  and let say the the door is closed
-                    //thing.is_open = false;
                 });
             },
             stop: function (thing) {
@@ -175,6 +150,16 @@ var things = [
                     if (err) {
                         return logger.error("CoAP adapter unbind error: " + err);
                     }
+                });
+            },
+            property_get: function (property, callback) {
+                door_device.property_get(property, function (err, value) {
+                    if (err) {
+                        callback(err);
+                        return logger.error("CoAP adapter property_get error: " + err);
+                    }
+                    
+                    callback(null, value);   
                 });
             },
             //  must be the property set handler implemented here otherwise
@@ -191,26 +176,41 @@ var things = [
                 door_device.action('lock');
             }
         }
+    },
+    {
+        "thing": function (callback) {
+            db.find_thing("switch12", callback);
+        },        
+        "implementation": {
+            start: function (thing) {
+                switch_device.init(function (err) {
+                    if (err) {
+                        return logger.error("CoAP switch12 adapter initialisation error: " + err);
+                    }
+                });
+            },
+            stop: function (thing) { 
+                switch_device.unbind(function (err) {
+                    if (err) {
+                        return logger.error("CoAP adapter unbind error: " + err);
+                    }
+                });
+            },
+            property_get: function (property, callback) {
+                switch_device.property_get(property, function (err, value) {
+                    if (err) {
+                        callback(err);
+                        return logger.error("CoAP adapter property_get error: " + err);
+                    }
+                    
+                    callback(null, value);
+                });
+            },
+            patch: function (thing, property, value) {
+                switch_device.setProperty(property, value);
+            }
+        }
     } //,
-    //{
-    //    "thing": function (callback) {
-    //        db.find_thing("switch12", callback);
-    //    },        
-    //    "implementation": {
-    //        start: function (thing) {
-    //            d.onProperty("switch12", function (err, property, value) {
-    //                thing[property] = value;
-    //            });
-    //            // turn off the light at start
-    //            // the client from the web UI can turn on then
-    //            thing.on = false;
-    //        },
-    //        stop: function (thing) { },
-    //        patch: function (thing, property, value) {
-    //            d.setProperty("switch12", property, value);
-    //        }
-    //    }
-    //},
     ////  implement a remote sensor handled by other WoT server
     //{
     //    "thing": function (callback) {

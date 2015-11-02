@@ -1,5 +1,6 @@
 ﻿// set this global config variable first
 global.appconfig = require('./config');
+
 var events = require("events");
 var logger = require('../../logger');
 var db = require('../../data/db')();

@@ -107,7 +107,20 @@ var Thing = exports.Thing = function Thing(name, model, implementation, remote) 
 
     this.property_get = function (property, callback) {
         if (this.isremote == false) {
-            callback(null, this.values[property]);
+            var thing = self;
+            if (thing.implementation.property_get && typeof thing.implementation.property_get === 'function') {
+                thing.implementation.property_get(property, function (err, value) {
+                    if (err) {
+                        return callback('Error in populating implementation property value: ' + err);
+                    }
+                    // store the propoerty value
+                    thing.values[property] = value;
+                    callback(null, value); 
+                });
+            }
+            else {
+                callback(null, this.values[property]);
+            }
         }
         else {
             try {
