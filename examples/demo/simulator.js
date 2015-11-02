@@ -112,7 +112,7 @@ var door = {
                 eventh.onDevicePropertyChanged(data);
             },
             "lock": function () {
-                logger.debug('device "lock" action is invoked, the device is setting the is_open property to true');
+                logger.debug('device "lock" action is invoked, the device is setting the is_open property to false');
                 var data = {
                     name: 'door12',
                     property: 'is_open',

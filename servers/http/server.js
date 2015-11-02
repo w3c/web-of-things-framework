@@ -252,9 +252,8 @@ exports.start = function start(settings) {
                                     if (!data || !data.result) {
                                         logger.error("Error in in sending to /api/thing");
                                     }
-                                    else {
-                                        //logger.debug("Remote proxy " + path + " called for " + thing);
-                                    }
+
+                                    client.close();
                                 });
                             }                
                         }
