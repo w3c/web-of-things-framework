@@ -400,7 +400,7 @@ var Thing = exports.Thing = function Thing(name, model, implementation, remote) 
         implementation.start(this);
     }
     catch (e) {
-        logger.error("Error in initialsing thing: " + e.message);
+        logger.error("Error in initialising thing: " + e.message);
     }
 }
 

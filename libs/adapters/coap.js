@@ -1,5 +1,5 @@
 ﻿var logger = require('../../logger');
-var coap = require('../../libs/transport/node-coap/');
+var coap = require('coap');
 
 exports.init = function init(adapter, callback) {
     logger.info('CoAP adapter init');

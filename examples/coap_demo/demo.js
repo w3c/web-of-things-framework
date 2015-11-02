@@ -153,7 +153,7 @@ var things = [
                 door_device.property_get(property, function (err, value) {
                     if (err) {
                         callback(err);
-                        return logger.error("CoAP adapter property_get error: " + err);
+                        return logger.error("CoAP adapter door12 " + property + " property_get error: " + err);
                     }
                     
                     callback(null, value);   
@@ -197,7 +197,7 @@ var things = [
                 switch_device.property_get(property, function (err, value) {
                     if (err) {
                         callback(err);
-                        return logger.error("CoAP adapter property_get error: " + err);
+                        return logger.error("CoAP adapter switch12 " + property + " property_get error: " + err);
                     }
                     
                     callback(null, value);

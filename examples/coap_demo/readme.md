@@ -2,7 +2,7 @@
 
 Run this demo with "node demo.js" to create a WoT server to communicate with the simulator objects via the CoAP protocols.
 
-Please note the node modules must be installed for the node-coap library which is under libs/transport/node-coap directory.
+Make sure executing "npm install" to install dependencies such as the node-coap library.
 
 This demo wires up the door12 and switch12 devices.
 

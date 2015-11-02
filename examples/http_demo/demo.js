@@ -18,7 +18,7 @@ var device = function (thing_name) {
     var self = this;   
     
     self.property_get = function (property, callback) {
-        logger.debug("get property from CoAP device: " + property );
+        logger.debug("get property from HTTP device: " + property );
         var msg = {
             type: 'property_get',
             name: thing_name,
@@ -34,7 +34,7 @@ var device = function (thing_name) {
                 callback(null, result.value);
             }
             else {
-                callback("Invalid CoAP property_get response");       
+                callback("Invalid HTTP property_get response");       
             }     
         });
     }
@@ -67,7 +67,7 @@ var device = function (thing_name) {
         });
     }
     
-    // create the CoAP adapter
+    // create the HTTP adapter
     self.init = function(callback) {
         db.find_adapter(thing_name, "http", function (err, data) {
             if (err) {
@@ -140,14 +140,14 @@ var things = [
             start: function (thing) {               
                 door_device.init(function (err) {
                     if (err) {
-                        return logger.error("CoAP door12 adapter initialisation error: " + err);
+                        return logger.error("HTTP door12 adapter initialisation error: " + err);
                     }
                 });
             },
             stop: function (thing) {
                 door_device.unbind(function (err) {
                     if (err) {
-                        return logger.error("CoAP adapter unbind error: " + err);
+                        return logger.error("HTTP adapter unbind error: " + err);
                     }
                 });
             },
@@ -155,7 +155,7 @@ var things = [
                 door_device.property_get(property, function (err, value) {
                     if (err) {
                         callback(err);
-                        return logger.error("CoAP adapter property_get error: " + err);
+                        return logger.error("HTTP adapter property_get error: " + err);
                     }
                     
                     callback(null, value);   
@@ -184,14 +184,14 @@ var things = [
             start: function (thing) {
                 switch_device.init(function (err) {
                     if (err) {
-                        return logger.error("CoAP switch12 adapter initialisation error: " + err);
+                        return logger.error("HTTP switch12 adapter initialisation error: " + err);
                     }
                 });
             },
             stop: function (thing) { 
                 switch_device.unbind(function (err) {
                     if (err) {
-                        return logger.error("CoAP adapter unbind error: " + err);
+                        return logger.error("HTTP adapter unbind error: " + err);
                     }
                 });
             },
@@ -199,7 +199,7 @@ var things = [
                 switch_device.property_get(property, function (err, value) {
                     if (err) {
                         callback(err);
-                        return logger.error("CoAP adapter property_get error: " + err);
+                        return logger.error("HTTP adapter property_get error: " + err);
                     }
                     
                     callback(null, value);
@@ -237,5 +237,5 @@ catch (e) {
 }
 
 
-// start the device CoAP simulator
+// start the device HTTP simulator
 simulator.start();

@@ -1,5 +1,5 @@
 ﻿var logger = require('../../logger');
-var coap = require('../../libs/transport/node-coap/');
+var coap = require('coap');
 var thing_handler = require('../../libs/thing/thing_handler');
 
 var COAP_RESULT_SUCCESS = 0;
