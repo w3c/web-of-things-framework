@@ -170,6 +170,18 @@ adapters.push(
         "protocol": "coap",
         "host": "localhost",
         "port": 5686
+    },
+    {
+        "device": "door12",  
+        "protocol": "http", // http or https
+        "host": "localhost",
+        "port": 8890
+    },
+    {
+        "device": "switch12",  
+        "protocol": "http", // http or https
+        "host": "localhost",
+        "port": 8891
     }
 );
 

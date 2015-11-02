@@ -31,7 +31,7 @@ var config = {
             //  to provide end point for inter server communication  
             //  pass the fqdn to other wot servers as this is the end point listener               
             fqdn: "http://localhost:8889",
-            //  end point port that listen for messages from other WoT servers
+            //  end point port that listen for messages from other WoT servers and from IoT devices that communicate via the HTTP protocol
             port: 8889          
         },
         restapi: {

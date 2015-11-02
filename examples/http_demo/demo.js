@@ -11,7 +11,7 @@ var db = require('../../data/db')();
 var wot = require('../../framework');
 var simulator = require('./simulator');
 var eventh = require('../../libs/events/thingevents');
-var adapter = require('../../libs/adapters/coap');
+var adapter = require('../../libs/adapters/http');
 
 var device = function (thing_name) {
 
@@ -23,9 +23,9 @@ var device = function (thing_name) {
             type: 'property_get',
             name: thing_name,
             property: property
-        };
+        };                
         
-        adapter.send({ host: self.host, port: self.port }, msg, function (err, result) {
+        adapter.send(self.adapter_uri, "/", msg, function (err, result) {
             if (err) {
                 return callback(err);
             }
@@ -49,7 +49,7 @@ var device = function (thing_name) {
             value: value
         };
 
-        adapter.send({ host: self.host, port: self.port }, msg, function (err, result) {
+        adapter.send(self.adapter_uri, "/", msg, function (err, result) {
             // TODO handles the result
         });
     }
@@ -62,25 +62,27 @@ var device = function (thing_name) {
             action: action
         };
 
-        adapter.send({ host: self.host, port: self.port }, msg, function (err, result) {
+        adapter.send(self.adapter_uri, "/", msg, function (err, result) {
             // TODO handles the result
         });
     }
     
     // create the CoAP adapter
     self.init = function(callback) {
-        db.find_adapter(thing_name, "coap", function (err, data) {
+        db.find_adapter(thing_name, "http", function (err, data) {
             if (err) {
                 return callback(err);
             }
             
             //start the CoAP client/server
             if (!data || !data.device || !data.protocol || !data.host) {
-                return callback("Invalid adapter configuration data");
+                return callback("Invalid http adapter configuration data");
             }           
-
+            
+            self.protocol = data.protocol;
             self.host = data.host;
             self.port = data.port;
+            self.adapter_uri = self.protocol + "://" + self.host + ":" + self.port;
             
             adapter.init(data, function (err) {
                 callback(err);

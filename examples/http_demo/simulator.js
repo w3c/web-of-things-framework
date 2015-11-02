@@ -1,52 +1,58 @@
 ﻿var logger = require('../../logger');
-var coap = require('../../libs/transport/node-coap/');
+var restify = require('restify');
+
+var config = global.appconfig;
 
 var COAP_RESULT_SUCCESS = 0;
 var COAP_ERROR_INVALID_REQUEST = 1;
 var COAP_ERROR_INVALID_REQUEST_FUNC = 2;
 var COAP_SERVER_ERROR = 3;
 
-function coap_send(data) {
-    var req = coap.request('coap://localhost'); // the WoT server listen on dafault port
-    
-    req.write(JSON.stringify(data));
-    
-    req.on('response', function (res) {
-        try {
-            if (res && res.payload && res.payload.length) {
-                //var msg = JSON.parse(res.payload.toString());
-                logger.debug("CoAP server response: " +  res.payload.toString());
-            }
-            res.on('end', function () {
-            })
+function http_send(action, payload) {      
+    var url = config.servers.http.fqdn;
+    var client = restify.createJsonClient({
+        url: url,
+        version: '*',
+        agent: false
+    });
+    var path = '/api/thing/' + action;
+    client.post(path, payload, function (err, req, res, data) {
+        if (err) {
+            return logger.error("Error in sending to /api/thing: " + err.message);
         }
-        catch (e) {
-            logger.error("coap send error: " + e.message);
+        
+        if (!data || !data.result) {
+            logger.error("Error in in sending to /api/thing");
         }
-    })
+
+        client.close();
+    });
     
-    req.end();
 }
 
 var simulator = function ( thing, port) {
-    logger.debug("starting coap device simulator for " + thing.name);
+    logger.debug("starting HTTP device simulator for " + thing.name);
     
     var model = thing.model;
 
-    var server = coap.createServer();
+    var server = restify.createServer();
+    server
+        .use(restify.fullResponse())
+        .use(restify.bodyParser());
     
-    server.on('request', function (req, res) {
-        if (!req.payload || !req.payload.length) {
-            return res.end(JSON.stringify({ "error": COAP_ERROR_INVALID_REQUEST }));
+    
+    server.post('/', function create(req, res, next) {
+        var data = req.params;
+        if (!data || !data.name || !data.type) {
+            return next(new Error('Device HTTP listener error: invalid parameters'));
         }
-        
+
         try {
-            var data = JSON.parse(req.payload.toString());
             if (!data.type || !data.name || data.name != thing.name) {
                 return;
             }
             
-            logger.debug('CoAP device simulator received: ' + data.type + ' from ' + data.name);
+            logger.debug('HTTP device simulator received: ' + data.type + ' from ' + data.name);
             
             //console.log(req.params);
             switch (data.type) {
@@ -56,7 +62,8 @@ var simulator = function ( thing, port) {
                     if (model.actions[action]) {
                         model.actions[action]();
                     }
-                    res.end(JSON.stringify({ "result": COAP_RESULT_SUCCESS }));
+                    res.send(200, { result: true });
+                    return next();
                     break;
             
                 case 'patch':
@@ -66,29 +73,32 @@ var simulator = function ( thing, port) {
                     if (model.properties[property]) {
                         model.properties[property](value);
                     }
-                    res.end(JSON.stringify({ "result": COAP_RESULT_SUCCESS }));
+                    res.send(200, { result: true });
+                    return next();
                     break;                
             
                 case 'property_get':
                     //  get property
                     var property = data.property;
                     var value = model.properties.get(property);
-                    res.end(JSON.stringify({ "property": property, "value": value }));
+                    res.send(200, { thing: thing.name, property: property, value: value });
+                    return next();
                     break;
 
                 default:
+                    next(new Error('HTTP device listener error: invalid action type'));
                     break;
             }
         }
         catch (e) {
             logger.error(e);
-            return res.end(JSON.stringify({ "error": COAP_SERVER_ERROR }));
+            next(new Error('property get error: ' + e.message));
         }       
         
     });
     
-    server.listen(port, null, function () {
-        logger.info('CoAP device simulator listener for thing ' + thing.name + ' started on port ' + port);
+    server.listen(port, function () {
+        logger.info('HTTP device simulator listener for thing ' + thing.name + ' started on port ' + port);
     });
 }
 
@@ -108,7 +118,6 @@ var door = {
                 var ringbell = function () {
                     var data = {
                         thing: 'door12',
-                        func: 'eventsignall',
                         event: 'bell',
                         data: {
                             // this will be some relevant device data instead of this demo timestamp value
@@ -116,7 +125,7 @@ var door = {
                         }
                     };                    
                     //send to the WoT CoAP server
-                    coap_send(data);
+                    http_send("eventsignall", data);
                 };
 
                 setInterval(ringbell, 30000);
@@ -133,12 +142,11 @@ var door = {
                 // the property has changes at the the device, notify WoT about the change
                 var data = {
                     thing: 'door12',
-                    func: 'patch',
-                    property: 'is_camera_on',
-                    value: value
+                    patch: 'is_camera_on',
+                    data: value
                 };                
                 //send to the WoT CoAP server
-                coap_send(data);
+                http_send("propertychange", data);
 
                 door_prop_values["is_camera_on"] = value;
             },
@@ -153,12 +161,11 @@ var door = {
                     voltage = parseFloat(voltage.toFixed(3));
                     var data = {
                         thing: 'door12',
-                        func: 'patch',
-                        property: 'battery_value',
-                        value: voltage
+                        patch: 'battery_value',
+                        data: voltage
                     };
                     //send to the WoT CoAP server
-                    coap_send(data);
+                    http_send("propertychange", data);
 
                     door_prop_values["battery_value"] = voltage;
                 };
@@ -171,26 +178,24 @@ var door = {
                 logger.debug('device "unlock" action is invoked, the device is setting the is_open property to true');
                 var data = {
                     thing: 'door12',
-                    func: 'patch',
-                    property: 'is_open',
-                    value: true
+                    patch: 'is_open',
+                    data: true
                 };
                 door_prop_values["is_open"] = true;
 
                 //send to new property to the WoT CoAP server
-                coap_send(data);
+                http_send("propertychange", data);
             },
             "lock": function () {
                 logger.debug('device "lock" action is invoked, the device is setting the is_open property to false');
                 var data = {
                     thing: 'door12',
-                    func: 'patch',
-                    property: 'is_open',
-                    value: false
+                    patch: 'is_open',
+                    data: false
                 };
                 door_prop_values["is_open"] = false;
                 //send to new property to the WoT CoAP server
-                coap_send(data);
+                http_send("propertychange", data);
             }
         }
     }
@@ -217,14 +222,13 @@ var lightswitch = {
                 is_switch12_on = value;
                 var data = {
                     thing: 'switch12',
-                    func: 'patch',
-                    property: 'on',
-                    value: value
+                    patch: 'on',
+                    data: value
                 };
                 lightswitch_prop_values["on"] = value;
 
                 //send to new property to the WoT CoAP server
-                coap_send(data);
+                http_send("propertychange", data);
             },
             "power_consumption": function (value) {
                 //  put a timer to simulate a decreasing power consumption
@@ -239,15 +243,14 @@ var lightswitch = {
                     //send the event
                     var data = {
                         thing: 'switch12',
-                        func: 'patch',
-                        property: 'power_consumption',
-                        value: cons
+                        patch: 'power_consumption',
+                        data: cons
                     };
                     
                     lightswitch_prop_values["power_consumption"] = cons;
 
                     //send to new property to the WoT CoAP server
-                    coap_send(data);
+                    http_send("propertychange", data);
                 };
                 setInterval(setconsval, 10000);
             }
@@ -257,11 +260,11 @@ var lightswitch = {
 
 
 exports.start = function start() {
-    logger.debug('Start device simulator to communicate with WoT via the CoAP protocol');
-    var door_device = new simulator(door, 5685);
+    logger.debug('Start device simulator to communicate with WoT via the HTTP protocol');
+    var door_device = new simulator(door, 8890);
     door.model.properties.battery_value();
     door.model.events.bell();
     
-    var switch_device = new simulator(lightswitch, 5686);
+    var switch_device = new simulator(lightswitch, 8891);
     lightswitch.model.properties.power_consumption();
 }
