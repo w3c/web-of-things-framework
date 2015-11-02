@@ -86,8 +86,8 @@ function init(things) {
                 var isexists = get_thing(name);
                 if (isexists) {
                     return logger.error ('The thing already exists: ' + name);
-                }              
-                
+                }                
+
                 var thingobj = new Thing(name, model, implementation, remote);
                 register_thing(name, thingobj);
             });            

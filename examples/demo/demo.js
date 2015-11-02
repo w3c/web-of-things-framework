@@ -1,5 +1,11 @@
 ﻿// set this global config variable first
 global.appconfig = require('./config');
+
+// define what things will be handled by this demo
+global.is_door12_defined = true;
+global.is_switch12_defined = true;
+global.is_door33_defined = true;
+
 var events = require("events");
 var logger = require('../../logger');
 var db = require('../../data/db')();
@@ -123,7 +129,7 @@ var things = [
                     thing.raise_event(event, data);
                 });
                 
-                //  just for the demo set the camera state is "ON" (true)
+                //  just for the demo set the camera state is turned off (false)
                 thing.is_camera_on = false;
                 //  and let say the the door is closed
                 thing.is_open = false;

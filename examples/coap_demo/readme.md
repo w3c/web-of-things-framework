@@ -1,6 +1,8 @@
 ﻿## WoT Framework Demo 
 
-Run this demo with "node demo.js" to create a WoT server. 
+Run this demo with "node demo.js" to create a WoT server to communicate with the simulator objects via the CoAP protocols.
+
+This demo wires up the door12 and switch12 devices.
 
 Once the Wot server is running open a browser session at http://localhost:8888 and then click on the "Things" menu item to view and manage the demo things.
 Please note the web server port is configured in the config file that is in the same directory as the demo.js file.
@@ -9,8 +11,8 @@ The door12 battery level changes every 2 second, the door beel event is signalle
 
 Once the "on" property of the switch12 device is selected, the UI should be notified with the power consumption property level in every 2 seconds. 
 
-In order to receive notifications for door door33 the remote WoT instance must be operational (see the remote_demo example).
+To run the remote proxy device "door33" with the CoAP demo the remote WoT instance must be operational (see the remote_demo example) as well as the global.is_door33_defined variable must be set to "true" at the top of demo.js file.
 
-Open a second, third, etc. browser session  at http://localhost:8888 and then click on the "Things" menu item. The web socket transport should notify all broswer session upon property changes and events.
+
 
 

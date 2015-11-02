@@ -6,6 +6,7 @@ var cookieParser = require('cookie-parser');
 var exphbs = require('express-handlebars');
 var main_routes = require('./routes/main');
 var api_routes = require('./routes/api');
+var favicon = require('serve-favicon');
 
 var config = global.appconfig;
 
@@ -33,6 +34,8 @@ app.engine('handlebars', exphbs({
 
 app.set('view engine', 'handlebars');
 
+// uncomment after placing your favicon in /public
+app.use(favicon(__dirname + '/public/favicon.ico'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());

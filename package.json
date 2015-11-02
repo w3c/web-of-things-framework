@@ -11,6 +11,7 @@
     "express": "^4.13.1",
     "express-handlebars": "^2.0.1",
     "restify": "^4.0.0",
+    "serve-favicon": "^2.3.0",
     "winston": "^1.0.1",
     "ws": "latest"
   },

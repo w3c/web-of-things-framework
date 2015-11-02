@@ -108,9 +108,18 @@ exports.find_thing = function find_thing(name, callback) {
 // the "things" list is for the clients, typically this will be rendered to the client UI
 var things = [];
 
-things.push({ name: 'door12', id: 1 });
-things.push({ name: 'switch12', id: 2 });
-things.push({ name: 'door33', id: 3 });
+// for demo and test reasons use global variables to define which resources are exposed to the clients
+if (global.is_door12_defined) {
+    things.push({ name: 'door12', id: 1 });
+}
+
+if (global.is_switch12_defined) {
+    things.push({ name: 'switch12', id: 2 });
+}
+
+if (global.is_door33_defined) {
+    things.push({ name: 'door33', id: 3 });
+}
 
 
 // all databases returns the data asynchronously so return from this local file asynchronously as well 
@@ -145,4 +154,39 @@ exports.register_endpoint = function register_endpoint(thing, endpoint, callback
 
 exports.endpoint_list = function register_endpoint(thing, callback) {
     callback(null, endpoints[thing]);
+}
+
+var adapters = [];
+
+adapters.push(
+    {
+        "device": "door12",  
+        "protocol": "coap",
+        "host": "localhost",
+        "port": 5685
+    },
+    {
+        "device": "switch12",  
+        "protocol": "coap",
+        "host": "localhost",
+        "port": 5686
+    }
+);
+
+
+exports.find_adapter = function find_adapter(device, protocol, callback) {
+    var adapter = null;
+    for (i = 0; i < adapters.length; i++) {
+        if (adapters[i].device == device && adapters[i].protocol == protocol) {
+            adapter = adapters[i];
+            break;
+        }
+    }
+    
+    if (!adapter) {
+        return callback("adapter for " + device + ", protocol " + protocol + " doesn't exists in the database");
+    }
+    
+    //  return the name, protocol and model
+    callback(null, adapter);
 }

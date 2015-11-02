@@ -105,12 +105,17 @@ router.route('/thing/property/get')
             
             // get the property asynchronously so the remote property can be retrieved in case the thing is a remote proxy
             thing.property_get(property, function (err, value) {
-                var response = {
-                    thing: thing_name,
-                    property: property,
-                    value: value
-                };
-                return res.json(response);
+                if (err) {
+                    handleError(err, res);
+                }
+                else {
+                    var response = {
+                        thing: thing_name,
+                        property: property,
+                        value: value
+                    };
+                    return res.json(response);
+                }
             });
         });
     }
