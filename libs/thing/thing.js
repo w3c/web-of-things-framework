@@ -355,13 +355,14 @@ var Thing = exports.Thing = function Thing(name, model, implementation, remote) 
 
         var client = this.get_remote_client();
         
+        var thingname = this.name;
         var params = {
             endpoint: config.servers.http.fqdn,
-            thing: this.name
+            thing: thingname
         };
         client.post('/api/endpoint/register', params, function (err, req, res, data) {
             if (err) {
-                return logger.error("Error in registering the remote proxy: " + err);
+                return logger.error("Error in registering the '" + thingname + "' remote proxy: " + err);
             }
             
             if (!data || !data.result) {

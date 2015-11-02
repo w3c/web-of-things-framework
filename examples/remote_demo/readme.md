@@ -2,7 +2,7 @@
 
 Run this file with "node demo.js" from this directory to create a new instance of WoT server on the local machine (or on a remote server) to test the communication between two WoT server instances.
 
-Go to the examples directory and tart the remote server:
+Go to the examples directory and start the remote server:
 
 cd examples
 

@@ -109,8 +109,8 @@ exports.find_thing = function find_thing(name, callback) {
 var things = [];
 
 things.push({ name: 'door12', id: 1 });
-things.push({ name: 'switch12', id: 2 });
-things.push({ name: 'door33', id: 3 });
+//things.push({ name: 'switch12', id: 2 });
+//things.push({ name: 'door33', id: 3 });
 
 
 // all databases returns the data asynchronously so return from this local file asynchronously as well 
@@ -145,4 +145,32 @@ exports.register_endpoint = function register_endpoint(thing, endpoint, callback
 
 exports.endpoint_list = function register_endpoint(thing, callback) {
     callback(null, endpoints[thing]);
+}
+
+var adapters = [];
+
+adapters.push(
+    {
+        "device": "door12",  
+        "protocol": "coap",
+        "uri": "coap://localhost/WoT"        
+    }
+);
+
+
+exports.find_adapter = function find_adapter(device, protocol, callback) {
+    var adapter = null;
+    for (i = 0; i < adapters.length; i++) {
+        if (adapters[i].device == device && adapters[i].protocol == protocol) {
+            adapter = adapters[i];
+            break;
+        }
+    }
+    
+    if (!adapter) {
+        return callback("adapter for " + device + ", protocol " + protocol + " doesn't exists in the database");
+    }
+    
+    //  return the name, protocol and model
+    callback(null, adapter);
 }
