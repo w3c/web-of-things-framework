@@ -37,6 +37,7 @@ var config = {
         restapi: {
         },
         coap: {
+            port: 5683          // default CoAP port
         },
         mqtt: {
         }

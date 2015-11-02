@@ -204,7 +204,7 @@ exports.start = function start(settings) {
         }
         catch (e) {
             next(new Error('endpoint eventsignall error: ' + e.message));
-            logger.error("Error in /api/property/get " + e.message);
+            logger.error("Error in /api/thing/eventsignall " + e.message);
         }
     });
 
