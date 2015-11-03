@@ -1,7 +1,7 @@
 // wot-framework.js
 var logger = require('./logger');
 
-var server_handler = require('./servers/server_handler');
+var server_handler = require('./transports/server_handler');
 var thing_handler = require('./libs/thing/thing_handler');
 
 exports.init = function init(things) {

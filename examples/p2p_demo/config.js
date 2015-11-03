@@ -21,21 +21,8 @@ var config = {
     //  These are really protocols but since the web server settings is included here as well the setting name is "server".
     //  These servers/protocols will be exposed to the clients i.e. the clients connect to WoT via these servers/protocols
     servers: {
-        web: {
-            port: 8888,         // http web server port to listen reqests from browsers
-        },
-        ws: {
-            port: 8080          // web socket port
-        },
-        http: {
-            //  to provide end point for inter server communication  
-            //  pass the fqdn to other wot servers as this is the end point listener               
-            fqdn: "http://localhost:8889",
-            //  end point port that listen for messages from other WoT servers
-            port: 8889          
-        },
-        coap: {
-            port: 5683          // default CoAP port
+        p2p: {
+            port: 9860
         }
     },
     //  The application database configuration. The ./data/dbs directory includes the database implementations

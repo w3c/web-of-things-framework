@@ -172,6 +172,12 @@ adapters.push(
         "port": 5686
     },
     {
+        "device": "door33",  
+        "protocol": "coap",
+        "host": "localhost",
+        "port": 5687
+    },
+    {
         "device": "door12",  
         "protocol": "http", // http or https
         "host": "localhost",
@@ -182,6 +188,12 @@ adapters.push(
         "protocol": "http", // http or https
         "host": "localhost",
         "port": 8891
+    },
+    {
+        "device": "door33",  
+        "protocol": "http", // http or https
+        "host": "localhost",
+        "port": 8892
     }
 );
 
