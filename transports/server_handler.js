@@ -6,7 +6,7 @@ var config = global.appconfig;
 function initialize_server(server, settings) {
     try {
         logger.debug(server + " server configuration exists. Start " + server + " server");
-        var path = './' + server + '/server.js';
+        var path = './' + server + '/handler.js';
         var server_handler = require(path);
         server_handler.start(settings);
     }
