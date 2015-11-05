@@ -20,25 +20,25 @@ var Contact = require('./contact');
 * @param {object} node - the node executing the route
 */
 function Router(type, key, node) {
-  if (!(this instanceof Router)) {
-    return new Router(type, key, node);
-  }
+    if (!(this instanceof Router)) {
+        return new Router(type, key, node);
+    }
 
-  assert(['NODE', 'VALUE'].indexOf(type) !== -1, 'Invalid search type');
+    assert(['NODE', 'VALUE'].indexOf(type) !== -1, 'Invalid search type');
 
-  this.node = node;
-  this.type = type;
-  this.key = key;
-  this.hashedKey = utils.createID(key);
+    this.node = node;
+    this.type = type;
+    this.key = key;
+    this.hashedKey = utils.createID(key);
 
-  this.limit = constants.ALPHA;
-  this.shortlist = node._getNearestContacts(key, this.limit, node._self.nodeID);
-  this.closestNode = this.shortlist[0];
-  this.previousClosestNode = null;
-  this.contacted = {};
-  this.foundValue = false;
-  this.value = null;
-  this.contactsWithoutValue = [];
+    this.limit = constants.ALPHA;
+    this.shortlist = node._getNearestContacts(key, this.limit, node._self.nodeID);
+    this.closestNode = this.shortlist[0];
+    this.previousClosestNode = null;
+    this.contacted = {};
+    this.foundValue = false;
+    this.value = null;
+    this.contactsWithoutValue = [];
 }
 
 /**
@@ -135,16 +135,17 @@ Router.prototype._handleFindResult = function(params, contact, callback) {
     return rejectContact();
   }
 
-  this.node.validateKeyValuePair(this.key, parsedValue, function(isValid) {
+this.node.validateKeyValuePair(this.key, parsedValue, function(isValid) {
     if(!isValid) {
-      self.node._log.warn('failed to validate key/value pair for %s', self.key);
-      return rejectContact();
+        self.node._log.warn('failed to validate key/value pair for %s', self.key);
+        return rejectContact();
     }
 
     self.foundValue = true;
     self.value = parsedValue;
+
     callback();
-  });
+});
 
   function rejectContact() {
     self._removeFromShortList(contact.nodeID);
@@ -210,30 +211,34 @@ Router.prototype._handleQueryResults = function(callback) {
 * @param {function} callback
 */
 Router.prototype._handleValueReturned = function(callback) {
-  var self = this;
+    var self = this;
 
-  var distances = this.contactsWithoutValue.map(function(contact) {
-    return {
-      distance: utils.getDistance(contact.nodeID, self.node._self.nodeID),
-      contact: contact
-    };
-  });
+    var distances = this.contactsWithoutValue.map(function(contact) {
+        return {
+            distance: utils.getDistance(contact.nodeID, self.node._self.nodeID),
+            contact: contact
+        };
+    });
 
-  distances.sort(function(a, b) {
-    return utils.compareKeys(a.distance, b.distance);
-  });
+    distances.sort(function(a, b) {
+        return utils.compareKeys(a.distance, b.distance);
+    });
 
-  if (distances.length >= 1) {
-    var closestWithoutValue = distances[0].contact;
-    var message = new Message('STORE', {
-      key: self.key,
-      value: self.value
-    }, this.node._self);
+    if (distances.length >= 1) {
+        var closestWithoutValue = distances[0].contact;
+        
+        var message = new Message('STORE', 
+            {
+                key: self.key,
+                value: self.value
+            }, 
+            this.node._self
+        );
 
-    this.node._rpc.send(closestWithoutValue, message);
-  }
+        this.node._rpc.send(closestWithoutValue, message);
+    }
 
-  callback(null, 'VALUE', self.value);
+    callback(null, 'VALUE', self.value);
 };
 
 module.exports = Router;

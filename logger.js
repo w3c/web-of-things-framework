@@ -123,16 +123,16 @@ function log_info(msg, val1, val2, val3, val4) {
 function log_debug(msg, val1, val2, val3, val4) {
     try {
         if (msg) {
-            if (val1 && val2 && val3 && val4) {
+            if (val1 != undefined && val2 != undefined && val3 != undefined && val4 != undefined) {
                 logger.debug(msg, val1, val2, val3, val4);
             }
-            else if (val1 && val2 && val3 ) {
+            else if (val1 != undefined && val2 != undefined && val3 != undefined ) {
                 logger.debug(msg, val1, val2, val3);
             }
-            else if (val1 && val2) {
+            else if (val1 != undefined && val2 != undefined) {
                 logger.debug(msg, val1, val2);
             }
-            else if (val1 ) {
+            else if (val1 != undefined ) {
                 logger.debug(msg, val1);
             }
             else {

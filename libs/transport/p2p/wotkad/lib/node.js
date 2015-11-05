@@ -19,11 +19,13 @@ var Router = require('./router');
 var Message = require('./message');
 var Item = require('./item');
 var transports = require('./transports');
+var localstorage = require('./storages/localstorage');
+var logger = require('../../../../../logger');
 
 inherits(Node, events.EventEmitter);
 
 Node.DEFAULTS = {
-  transport: transports.UDP
+    transport: transports.UDP
 };
 
 /**
@@ -32,34 +34,31 @@ Node.DEFAULTS = {
 * @param {object} options
 */
 function Node(options) {
-  if (!(this instanceof Node)) {
-    return new Node(options);
-  }
+    if (!(this instanceof Node)) {
+        return new Node(options);
+    }
 
-  events.EventEmitter.call(this);
+    events.EventEmitter.call(this);
 
-  this._options = merge(Object.create(Node.DEFAULTS), options);
-  this._storage = options.storage;
+    this._options = merge(Object.create(Node.DEFAULTS), options);
+    this._storage = options.storage ? options.storage : new localstorage(options.nick);
 
-  assert(typeof this._storage === 'object', 'No storage adapter supplied');
-  assert(typeof this._storage.get === 'function', 'Store has no `get` method');
-  assert(typeof this._storage.put === 'function', 'Store has no `put` method');
-  assert(typeof this._storage.del === 'function', 'Store has no `del` method');
-  assert(
-    typeof this._storage.createReadStream === 'function',
-    'Store has no `createReadStream` method'
-  );
+    assert(typeof this._storage === 'object', 'No storage adapter supplied');
+    assert(typeof this._storage.get === 'function', 'Store has no `get` method');
+    assert(typeof this._storage.put === 'function', 'Store has no `put` method');
+    assert(typeof this._storage.del === 'function', 'Store has no `del` method');
+    assert(typeof this._storage.createReadStream === 'function', 'Store has no `createReadStream` method');
 
-  this._buckets = {};
-  this._log = global.logger;
-  this._rpc = new this._options.transport(options);
-  this._self = this._rpc._contact;
+    this._buckets = {};
+    this._log = logger;
+    this._rpc = new this._options.transport(options);
+    this._self = this._rpc._contact;
 
-  this._bindRPCMessageHandlers();
-  this._startReplicationInterval();
-  this._startExpirationInterval();
+    this._bindRPCMessageHandlers();
+    this._startReplicationInterval();
+    this._startExpirationInterval();
 
-  this._log.debug('node created with nodeID %s', this._self.nodeID);
+    this._log.debug('node created with nodeID %s for nick %s', this._self.nodeID, this._options.nick);
 }
 
 /**
@@ -69,29 +68,32 @@ function Node(options) {
 * @param {function} callback - optional
 */
 Node.prototype.connect = function(options, callback) {
-  if (callback) {
-    this.once('connect', callback);
-    this.once('error', callback);
-  }
-
-  var self = this;
-  var seed = this._rpc._createContact(options);
-
-  this._log.debug('entering overlay network via %j', seed);
-
-  async.waterfall([
-    this._updateContact.bind(this, seed),
-    this._findNode.bind(this, this._self.nodeID),
-    this._refreshBucketsBeyondClosest.bind(this)
-  ], function(err) {
-    if (err) {
-      return self.emit('error', err);
+    if (callback) {
+        this.once('connect', callback);
+        this.once('error', callback);
     }
 
-    self.emit('connect');
-  });
+    var self = this;
+    var seed = this._rpc._createContact(options);
 
-  return this;
+    //this._log.debug('entering overlay network via %j', seed, {});
+
+    async.waterfall(
+        [
+            this._updateContact.bind(this, seed),
+            this._findNode.bind(
+                this, this._self.nodeID),
+                this._refreshBucketsBeyondClosest.bind(this)
+        ], 
+        function (err) {
+            if (err) {
+                return self.emit('error', err);
+            }
+
+            self.emit('connect', null, (self && self._self ? self._self : null));
+        });
+
+    return this;
 };
 
 /**
@@ -102,10 +104,11 @@ Node.prototype.connect = function(options, callback) {
 * @param {function} callback
 */
 Node.prototype.validateKeyValuePair = function(key, value, callback) {
-  if(this._options.validateKeyValuePair) {
-    return this._options.validateKeyValuePair.apply(this, arguments);
-  }
-  callback(true);
+    if(this._options.validateKeyValuePair) {
+        return this._options.validateKeyValuePair.apply(this, arguments);
+    }
+    
+    callback(true);
 };
 
 /**
@@ -116,18 +119,18 @@ Node.prototype.validateKeyValuePair = function(key, value, callback) {
 * @param {function} callback
 */
 Node.prototype.put = function(key, value, callback) {
-  var node = this;
+    var node = this;
 
-  this._log.debug('attempting to set value for key %s', key);
+    //this._log.debug('attempting to set value for key %s', key);
 
-  this.validateKeyValuePair(key, value, function(isValid) {
+    this.validateKeyValuePair(key, value, function(isValid) {
     if(!isValid) {
-      node._log.warn('failed to validate key/value pair for %s', key);
-      return callback(new Error('Failed to validate key/value pair'));
+        //node._log.debug('failed to validate key/value pair for %s', key);
+        return callback(new Error('Failed to validate key/value pair'));
     }
 
     node._putValidatedKeyValue(key, value, callback);
-  });
+    });
 };
 
 /**
@@ -138,28 +141,31 @@ Node.prototype.put = function(key, value, callback) {
 * @param {function} callback
 */
 Node.prototype._putValidatedKeyValue = function(key, value, callback) {
-  var node = this;
-  var item = new Item(key, value, this._self.nodeID);
-  var message = new Message('STORE', item, this._self);
+    var node = this;
+    var item = new Item(key, value, this._self.nodeID);
+    var message = new Message('STORE', item, this._self);
 
-  this._findNode(item.key, function(err, contacts) {
-    if (err) {
-      node._log.error('failed to find nodes - reason: %s', err.message);
-      return callback(err);
-    }
+    this._findNode(item.key, function(err, contacts) {
+        if (err) {
+            node._log.error('failed to find nodes - reason: %s', err.message);
+            return callback(err);
+        }
 
-    if (contacts.length === 0) {
-      node._log.error('no contacts are available');
-      contacts = node._getNearestContacts(key, constants.K, node._self.nodeID);
-    }
+        if (contacts.length === 0) {
+            node._log.error('no contacts are available');
+            contacts = node._getNearestContacts(key, constants.K, node._self.nodeID);
+        }
 
-    node._log.debug('found %d contacts for STORE operation', contacts.length);
+        //node._log.debug('found %d contacts for STORE operation', contacts.length);
 
-    async.each(contacts, function(contact, done) {
-      node._log.debug('sending STORE message to %j', contact, {});
-      node._rpc.send(contact, message, done);
-    }, callback);
-  });
+        async.each(contacts, function (contact, done) {
+
+            //node._log.debug('sending STORE message to %j', contact, {});
+
+            node._rpc.send(contact, message, done);
+        }, 
+        callback);
+    });
 };
 
 /**
@@ -169,24 +175,24 @@ Node.prototype._putValidatedKeyValue = function(key, value, callback) {
 * @param {function} callback
 */
 Node.prototype.get = function(key, callback) {
-  var self = this;
+    var self = this;
 
-  this._log.debug('attempting to get value for key %s', key);
+  //this._log.debug('attempting to get value for key %s', key);
 
-  this._storage.get(key, function(err, value) {
-    if (!err && value) {
-      return callback(null, JSON.parse(value).value);
-    }
+    this._storage.get(key, function(err, value) {
+        if (!err && value) {
+            return callback(null, JSON.parse(value).value);
+        }
 
-    self._findValue(key, function(err, value) {
-      if (err) {
-        return callback(err);
-      }
+        self._findValue(key, function(err, value) {
+            if (err) {
+                return callback(err);
+            }
 
-      callback(null, value);
+            callback(null, value);
+        });
+
     });
-
-  });
 };
 
 /**
@@ -194,17 +200,17 @@ Node.prototype.get = function(key, callback) {
 * #_bindRPCMessageHandlers
 */
 Node.prototype._bindRPCMessageHandlers = function() {
-  var self = this;
+    var self = this;
 
-  this._rpc.on('PING', this._handlePing.bind(this));
-  this._rpc.on('STORE', this._handleStore.bind(this));
-  this._rpc.on('FIND_NODE', this._handleFindNode.bind(this));
-  this._rpc.on('FIND_VALUE', this._handleFindValue.bind(this));
-  this._rpc.on('CONTACT_SEEN', this._updateContact.bind(this));
+    this._rpc.on('PING', this._handlePing.bind(this));
+    this._rpc.on('STORE', this._handleStore.bind(this));
+    this._rpc.on('FIND_NODE', this._handleFindNode.bind(this));
+    this._rpc.on('FIND_VALUE', this._handleFindValue.bind(this));
+    this._rpc.on('CONTACT_SEEN', this._updateContact.bind(this));
 
-  this._rpc.on('ready', function() {
-    self._log.debug('node listening on %j', self._self.toString());
-  });
+    this._rpc.on('ready', function() {
+        self._log.debug('node listening on %j', self._self.toString());
+    });
 };
 
 /**
@@ -265,7 +271,7 @@ Node.prototype._replicate = function() {
 * #_startExpirationInterval
 */
 Node.prototype._startExpirationInterval = function() {
-  setInterval(this._expire.bind(this), constants.T_EXPIRE);
+    setInterval(this._expire.bind(this), constants.T_EXPIRE);
 };
 
 /**
@@ -305,22 +311,22 @@ Node.prototype._expire = function() {
 * @param {function} done
 */
 Node.prototype._refreshBucketsBeyondClosest = function(contacts, done) {
-  var bucketIndexes = Object.keys(this._buckets);
-  var leastBucket = _.min(bucketIndexes);
-  var refreshBuckets = bucketIndexes.filter(bucketFilter);
-  var queue = async.queue(this._refreshBucket.bind(this), 1);
+    var bucketIndexes = Object.keys(this._buckets);
+    var leastBucket = _.min(bucketIndexes);
+    var refreshBuckets = bucketIndexes.filter(bucketFilter);
+    var queue = async.queue(this._refreshBucket.bind(this), 1);
 
-  this._log.debug('refreshing buckets farthest than closest known');
+    //this._log.debug('refreshing buckets farthest than closest known');
 
-  refreshBuckets.forEach(function(index) {
-    queue.push(index);
-  });
+    refreshBuckets.forEach(function(index) {
+        queue.push(index);
+    });
 
-  function bucketFilter(index) {
-    return index >= leastBucket;
-  }
+    function bucketFilter(index) {
+        return index >= leastBucket;
+    }
 
-  done();
+    done();
 };
 
 /**
@@ -330,9 +336,9 @@ Node.prototype._refreshBucketsBeyondClosest = function(contacts, done) {
 * @param {function} callback
 */
 Node.prototype._refreshBucket = function(index, callback) {
-  var random = utils.getRandomInBucketRangeBuffer(index);
+    var random = utils.getRandomInBucketRangeBuffer(index);
 
-  this._findNode(random.toString('hex'), callback);
+    this._findNode(random.toString('hex'), callback);
 };
 
 /**
@@ -342,19 +348,19 @@ Node.prototype._refreshBucket = function(index, callback) {
 * @param {function} callback
 */
 Node.prototype._findValue = function(key, callback) {
-  var self = this;
+    var self = this;
 
-  this._log.debug('searching for value at key %s', key);
+    //this._log.debug('searching for value at key %s', key);
 
-  this._find(key, 'VALUE', function(err, type, value) {
-    if (err || type === 'NODE') {
-      return callback(new Error('Failed to find value for key: ' + key));
-    }
+    this._find(key, 'VALUE', function(err, type, value) {
+        if (err || type === 'NODE') {
+            return callback(new Error('Failed to find value for key: ' + key));
+        }
 
-    self._log.debug('found value for key %s', key);
+        //self._log.debug('found value for key %s', key);
 
-    callback(null, value);
-  });
+        callback(null, value);
+    });
 };
 
 /**
@@ -364,19 +370,19 @@ Node.prototype._findValue = function(key, callback) {
 * @param {function} callback
 */
 Node.prototype._findNode = function(nodeID, callback) {
-  var self = this;
+    var self = this;
 
-  this._log.debug('searching for nodes close to key %s', nodeID);
+    //this._log.debug('searching for nodes close to key %s', nodeID);
 
-  this._find(nodeID, 'NODE', function(err, type, contacts) {
-    if (err) {
-      return callback(err);
-    }
+    this._find(nodeID, 'NODE', function(err, type, contacts) {
+        if (err) {
+            return callback(err);
+        }
 
-    self._log.debug('found %d nodes close to key %s', contacts.length, nodeID);
+        //self._log.debug('found %d nodes close to key %s', contacts.length, nodeID);
 
-    callback(null, contacts);
-  });
+        callback(null, contacts);
+    });
 };
 
 /**
@@ -387,7 +393,7 @@ Node.prototype._findNode = function(nodeID, callback) {
 * @param {function} callback
 */
 Node.prototype._find = function(key, type, callback) {
-  Router(type, key, this).route(callback);
+    Router(type, key, this).route(callback);
 };
 
 /**
@@ -397,57 +403,57 @@ Node.prototype._find = function(key, type, callback) {
 * @param {function} callback - optional
 */
 Node.prototype._updateContact = function(contact, callback) {
-  assert(contact instanceof Contact, 'Invalid contact supplied');
+    assert(contact instanceof Contact, 'Invalid contact supplied');
 
-  this._log.debug('updating contact %j', contact);
+    //this._log.debug('updating contact %j', contact, {});
 
-  var self = this;
-  var bucketIndex = utils.getBucketIndex(this._self.nodeID, contact.nodeID);
+    var self = this;
+    var bucketIndex = utils.getBucketIndex(this._self.nodeID, contact.nodeID);
 
-  assert(bucketIndex < constants.B);
+    assert(bucketIndex < constants.B);
 
-  if (!this._buckets[bucketIndex]) {
-    this._log.debug('creating new bucket for contact at index %d', bucketIndex);
-    this._buckets[bucketIndex] = new Bucket();
-  }
-
-  var bucket = this._buckets[bucketIndex];
-  var inBucket = bucket.hasContact(contact.nodeID);
-  var bucketHasRoom = bucket.getSize() < constants.K;
-  var contactAtHead = bucket.getContact(0);
-  var pingMessage = new Message('PING', {}, this._self);
-
-  contact.seen();
-
-  if (inBucket) {
-    this._log.debug('contact already in bucket, moving to tail');
-    bucket.removeContact(contact);
-    bucket.addContact(contact);
-    complete();
-  } else if (bucketHasRoom) {
-    this._log.debug('contact not in bucket, moving to head');
-    bucket.addContact(contact);
-    complete();
-  } else {
-    this._log.debug('no room in bucket, sending PING to contact at head');
-    this._rpc.send(contactAtHead, pingMessage, function(err) {
-      if (err) {
-        self._log.debug('head contact did not respond, replacing with new');
-        bucket.removeContact(contactAtHead);
-        bucket.addContact(contact);
-      }
-
-      complete();
-    });
-  }
-
-  function complete() {
-    if (typeof callback === 'function') {
-      callback();
+    if (!this._buckets[bucketIndex]) {
+        //this._log.debug('creating new bucket for contact at index %d', bucketIndex);
+        this._buckets[bucketIndex] = new Bucket();
     }
-  }
 
-  return contact;
+    var bucket = this._buckets[bucketIndex];
+    var inBucket = bucket.hasContact(contact.nodeID);
+    var bucketHasRoom = bucket.getSize() < constants.K;
+    var contactAtHead = bucket.getContact(0);
+    var pingMessage = new Message('PING', {}, this._self);
+
+    contact.seen();
+
+    if (inBucket) {
+        //this._log.debug('contact already in bucket, moving to tail');
+        bucket.removeContact(contact);
+        bucket.addContact(contact);
+        complete();
+    } else if (bucketHasRoom) {
+        //this._log.debug('contact not in bucket, moving to head');
+        bucket.addContact(contact);
+        complete();
+    } else {
+        this._log.debug('no room in bucket, sending PING to contact at head');
+        this._rpc.send(contactAtHead, pingMessage, function(err) {
+            if (err) {
+                self._log.debug('head contact did not respond, replacing with new');
+                bucket.removeContact(contactAtHead);
+                bucket.addContact(contact);
+            }
+
+            complete();
+        });
+    }
+
+    function complete() {
+        if (typeof callback === 'function') {
+            callback();
+        }
+    }
+
+    return contact;
 };
 
 /**
@@ -469,25 +475,26 @@ Node.prototype._handlePing = function(params) {
 * @param {object} params
 */
 Node.prototype._handleStore = function(params) {
-  var node = this;
-  var item;
+    var node = this;
+    var item;
 
-  try {
-    item = new Item(params.key, params.value, params.nodeID);
-  } catch(err) {
-    return;
-  }
-
-  this._log.info('received valid STORE from %s', params.nodeID);
-
-  this.validateKeyValuePair(item.key, params.value, function(isValid) {
-    if(!isValid) {
-      node._log.warn('failed to validate key/value pair for %s', item.key);
-      return;
+    try {
+        item = new Item(params.key, params.value, params.nodeID);
+    } 
+    catch (err) {
+        return this._log.error("Item create error %j", err, {});
     }
 
-    node._storeValidatedKeyValue(item, params);
-  });
+    //this._log.info('received valid STORE from %s', params.nodeID);
+
+    this.validateKeyValuePair(item.key, params.value, function(isValid) {
+        if(!isValid) {
+            node._log.debug('failed to validate key/value pair for %s', item.key);
+            return;
+        }
+
+        node._storeValidatedKeyValue(item, params);
+    });
 };
 
 /**
@@ -496,19 +503,22 @@ Node.prototype._handleStore = function(params) {
 * @param {object} item
 * @param {object} params
 */
-Node.prototype._storeValidatedKeyValue = function(item, params) {
-  var node = this;
-  this._storage.put(item.key, JSON.stringify(item), function(err) {
-    var contact = node._rpc._createContact(params);
-    var message = new Message('STORE_REPLY', {
-      referenceID: params.rpcID,
-      success: !!err
-    }, node._self);
+Node.prototype._storeValidatedKeyValue = function (item, params) {
 
-    node._log.debug('successful store, notifying %s', params.nodeID);
-    node._rpc.send(contact, message);
-  });
+    var node = this;
+
+    this._storage.put(item.key, JSON.stringify(item), function(err) {
+        var contact = node._rpc._createContact(params);
+        var message = new Message('STORE_REPLY', {
+            referenceID: params.rpcID,
+            success: !!err
+        }, node._self);
+
+        //node._log.debug('successful store, notifying %s', params.nodeID);
+        node._rpc.send(contact, message);
+    });
 };
+
 
 /**
 * Handle `FIND_NODE` RPC
@@ -516,17 +526,18 @@ Node.prototype._storeValidatedKeyValue = function(item, params) {
 * @param {object} params
 */
 Node.prototype._handleFindNode = function(params) {
-  this._log.info('received FIND_NODE from %j', params, {});
+    //this._log.info('received FIND_NODE from %j', params, {});
 
-  var contact = this._rpc._createContact(params);
-  var near = this._getNearestContacts(params.key, constants.K, params.nodeID);
-  var message = new Message('FIND_NODE_REPLY', {
-    referenceID: params.rpcID,
-    contacts: near
-  }, this._self);
+    var contact = this._rpc._createContact(params);
+    var near = this._getNearestContacts(params.key, constants.K, params.nodeID);
+    var message = new Message('FIND_NODE_REPLY', {
+        referenceID: params.rpcID,
+        contacts: near
+    }, this._self);
 
-  this._log.debug('sending %s nearest %d contacts', params.nodeID, near.length);
-  this._rpc.send(contact, message);
+    //this._log.debug('sending %s nearest %d contacts', params.nodeID, near.length, {});
+
+    this._rpc.send(contact, message);
 };
 
 /**
@@ -535,33 +546,33 @@ Node.prototype._handleFindNode = function(params) {
 * @param {object} params
 */
 Node.prototype._handleFindValue = function(params) {
-  var node = this;
-  var contact = this._rpc._createContact(params);
-  var limit = constants.K;
+    var node = this;
+    var contact = this._rpc._createContact(params);
+    var limit = constants.K;
 
-  this._log.info('received valid FIND_VALUE from %s', params.nodeID);
+    //this._log.info('received valid FIND_VALUE from %s', params.nodeID);
 
-  this._storage.get(params.key, function(err, value) {
-    if (err || !value) {
-      node._log.debug('value not found, sending contacts to %s', params.nodeID);
+    this._storage.get(params.key, function(err, value) {
+        if (err || !value) {
+            node._log.debug('value not found, sending contacts to %s', params.nodeID);
 
-      var notFoundMessage = new Message('FIND_VALUE_REPLY', {
-        referenceID: params.rpcID,
-        contacts: node._getNearestContacts(params.key, limit, params.nodeID)
-      }, node._self);
+            var notFoundMessage = new Message('FIND_VALUE_REPLY', {
+            referenceID: params.rpcID,
+            contacts: node._getNearestContacts(params.key, limit, params.nodeID)
+            }, node._self);
 
-      return node._rpc.send(contact, notFoundMessage);
-    }
+            return node._rpc.send(contact, notFoundMessage);
+        }
 
-    node._log.debug('found value, sending to %s', params.nodeID);
+        //node._log.debug('found value, sending to %s', params.nodeID);
 
-    var foundMessage = new Message('FIND_VALUE_REPLY', {
-      referenceID: params.rpcID,
-      value: value
-    }, contact);
+        var foundMessage = new Message('FIND_VALUE_REPLY', {
+            referenceID: params.rpcID,
+            value: value
+        }, contact);
 
-    node._rpc.send(contact, foundMessage);
-  });
+        node._rpc.send(contact, foundMessage);
+    });
 };
 
 /**

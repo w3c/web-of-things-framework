@@ -17,16 +17,14 @@ var config = {
     log: {
         level: "debug" 
     },
-    //  Server settings
-    //  These are really protocols but since the web server settings is included here as well the setting name is "server".
-    //  These servers/protocols will be exposed to the clients i.e. the clients connect to WoT via these servers/protocols
     servers: {
         p2p: {
-            port: 9860
+            address: 'localhost',
+            port: 31300
         }
     },
     //  The application database configuration. The ./data/dbs directory includes the database implementations
-    //  where the db.js file implements the database functions
+    //  where the db.js file implements the database functions`
     db: {
         type: 'file'
     }

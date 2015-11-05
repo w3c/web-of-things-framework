@@ -13,6 +13,7 @@ var merge = require('merge');
 var constants = require('./constants');
 var Contact = require('./contact');
 var Message = require('./message');
+var logger = require('../../../../../logger');
 
 inherits(RPC, events.EventEmitter);
 
@@ -32,7 +33,7 @@ function RPC(options) {
   this._createMessageID = hat.rack(constants.B);
   this._pendingCalls = {};
   this._contact = this._createContact(options);
-  this._log = global.logger;
+  this._log = logger;
 
   setInterval(this._expireCalls.bind(this), constants.T_RESPONSETIMEOUT + 5);
 }
@@ -80,31 +81,36 @@ RPC.prototype.close = function() {
 * @param {object} info
 */
 RPC.prototype._handleMessage = function(buffer, info) {
-  var message;
-  var data;
-  var params;
-  var contact;
+    var message;
+    var data;
+    var params;
+    var contact;
 
-  try {
-    data = JSON.parse(buffer.toString('utf8'));
-    params = data.params;
-    contact = this._createContact(params);
-    message = new Message(data.type, params, contact);
-    this._log.debug('received valid message %j', message, {}); // {type: message.type}, {});
-  } catch(err) {
-    return this.emit('MESSAGE_DROP', buffer, info);
-  }
+    try {
+        data = JSON.parse(buffer.toString('utf8'));
+        params = data.params;
+        contact = this._createContact(params);
+        message = new Message(data.type, params, contact);
 
-  var referenceID = message.params.referenceID;
-  var pendingCall = this._pendingCalls[referenceID];
+        //this._log.debug('received valid message %j', message, {}); 
+    } 
+    catch (err) {
+        return this.emit('MESSAGE_DROP', buffer, info);
+    }
 
-  if (referenceID && pendingCall) {
-    pendingCall.callback(null, message.params);
-    delete this._pendingCalls[referenceID];
-  } else {
-    this.emit('CONTACT_SEEN', contact);
-    this.emit(message.type, message.params);
-  }
+    var referenceID = message.params.referenceID;
+    var pendingCall = this._pendingCalls[referenceID];
+
+    if (referenceID && pendingCall) {
+        pendingCall.callback(null, message.params);
+        delete this._pendingCalls[referenceID];
+    } 
+    else {
+        this.emit('CONTACT_SEEN', contact);
+        
+        //this._log.debug('emit message %s', message.type); 
+        this.emit(message.type, message.params);
+    }
 };
 
 /**
