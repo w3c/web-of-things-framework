@@ -1,201 +1,193 @@
 ﻿// set this global config variable first
 global.appconfig = require('./config');
 
-// define what things will be handled by this demo
-global.is_door12_defined = true;
-global.is_switch12_defined = true;
-
 var events = require("events");
 var logger = require('../../logger');
 var db = require('../../data/db')();
 var wot = require('../../framework');
-var eventh = require('../../libs/events/thingevents');
-//var simulator = require('./simulator');
+var uuid = require('uuid');
+var PeerNetwork = require('../../libs/transport/p2p/wotkad/peer_network');
+var simulator = require('./simulator');
+var config = global.appconfig;
+
+var peernet = new PeerNetwork();
 
 var device = function (thing_name) {
 
-    var self = this;   
+    var self = this;
+    this.name = thing_name;
     
     self.property_get = function (property, callback) {
-        logger.debug("get property from CoAP device: " + property );
-        var msg = {
-            type: 'property_get',
-            name: thing_name,
-            property: property
-        };
+        logger.debug("get property from the P2P network: " + property);
         
-        adapter.send({ host: self.host, port: self.port }, msg, function (err, result) {
-            if (err) {
-                return callback(err);
-            }
+        if (!this.node) {
+            return callback("peer node is not initialised");
+        }
 
-            if (result && result.property && result.property == property && result.hasOwnProperty('value')) {
-                callback(null, result.value);
-            }
-            else {
-                callback("Invalid CoAP property_get response");       
-            }     
-        });
+        var key = thing_name + "/property/" + property;
+        this.node.get(key, callback);        
     }
     
     
     self.setProperty = function (property, value) {
         logger.debug("send patch to device: " + property + ", value " + value);
-        var msg = {
-            type: 'patch',
-            name: thing_name,
-            property: property,
-            value: value
-        };
+        var key = thing_name + "/patch/" + property;
 
-        adapter.send({ host: self.host, port: self.port }, msg, function (err, result) {
-            // TODO handles the result
-        });
+        // TODO
     }
     
     self.action = function (action) {
         logger.debug("invoke action " + action + " at device simulator");
-        var msg = {
-            type: 'action',
-            name: thing_name,
-            action: action
-        };
+        var key = thing_name + "/action/" + action;
 
-        adapter.send({ host: self.host, port: self.port }, msg, function (err, result) {
-            // TODO handles the result
-        });
+        // TODO
     }
     
-    // create the CoAP adapter
-    self.init = function(callback) {
-        db.find_adapter(thing_name, "coap", function (err, data) {
+    self.is_msg_fordevice = function (keymsg) {
+        var elements = keymsg.split("/");
+        if (elements&& elements[0] == this.name ) {
+            return {result: true, type: elements[1], value: elements[2] };
+        }
+        
+        return false;       
+    }
+    
+    // create the P2P peer node
+    self.init = function ( model, address, port, callback) {
+        this.model = model;
+        
+        var seedaddr = config.servers.p2p.nodes[0].address;
+        var seedport = config.servers.p2p.nodes[0].port;
+        options = {
+            address: address,
+            port: port,
+            nick: uuid.v4(),
+            alg: {}, 
+            private_key: {},
+            public_key: {},
+            seeds: [{ address: seedaddr, port: seedport }]
+        };
+        this.node = peernet.create_peer(options);
+        
+        this.node.on('connect', function (err, value) {
             if (err) {
-                return callback(err);
+                return logger.error("peer connect error %j", err, {});
             }
             
-            //start the CoAP client/server
-            if (!data || !data.device || !data.protocol || !data.host) {
-                return callback("Invalid adapter configuration data");
-            }           
-
-            self.host = data.host;
-            self.port = data.port;
+            logger.debug("peer " + self.name + " %j connected to overlay network", value, {});
             
-            adapter.init(data, function (err) {
-                callback(err);
-            });
+            peernet.on('data', function (key) {
+                var keyres = self.is_msg_fordevice(key);
+                if (keyres && keyres.result == true) {
+                    self.node.get(key, function (err, value) {
+                        if (err) {
+                            return logger.error("peer get error %j", err, {});
+                        }
 
+                        logger.debug(self.name + ' P2P update type: ' + keyres.type + ', ' + keyres.value + ' value is : ' + value);
+                    });
+                }
+            });
+    
         });
+
+        callback();
     }
     
     self.unbind = function (callback) {
-        adapter.unbind(function (err) {
-            callback(err);
-        });
+        //  TODO remove the node from the overlay network
+        callback();
     }
 
-    return self;
-    
+    return self;    
 };
 
 //
 //  The implementations of the things  
 //
 
-var door_device = new device("door12");
-var switch_device = new device("switch12");
+var toyota_car = new device("Toyota");
+var ford_car = new device("Ford");
 
 var things = [
     {
         "thing": function (callback) {
-            db.find_thing("door12", callback);
+            db.find_thing("Toyota", callback);
         },
         "implementation": {
             start: function (thing) {               
-                door_device.init(function (err) {
+                toyota_car.init(thing.model, '127.0.0.1', 65520, function (err) {
                     if (err) {
-                        return logger.error("CoAP door12 adapter initialisation error: " + err);
+                        return logger.error("P2P thing Toyota initialisation error: " + err);
                     }
                 });
             },
             stop: function (thing) {
-                door_device.unbind(function (err) {
+                toyota_car.unbind(function (err) {
                     if (err) {
-                        return logger.error("CoAP adapter unbind error: " + err);
+                        return logger.error("P2P thing Toyota unbind error: " + err);
                     }
                 });
             },
             property_get: function (property, callback) {
-                door_device.property_get(property, function (err, value) {
+                toyota_car.property_get(property, function (err, value) {
                     if (err) {
                         callback(err);
-                        return logger.error("CoAP adapter door12 " + property + " property_get error: " + err);
+                        return logger.error("P2P thing Toyota " + property + " property_get error: " + err);
                     }
                     
+                    logger.debug('peer Toyota thing received key: ' + key + ' value: ' + value);
+
                     callback(null, value);   
                 });
-            },
-            //  must be the property set handler implemented here otherwise
-            //  the client is unable to set the property
-            patch: function (thing, property, value) {
-                door_device.setProperty(property, value);
-            },
-            unlock: function (thing) {
-                logger.info('at implementation ' + thing.name + ' "unlock action invoked -> call the device');
-                door_device.action('unlock');
-            },
-            lock: function (thing) {
-                logger.info('at implementation ' + thing.name + ' "lock" action invoked -> call the device');
-                door_device.action('lock');
             }
         }
     },
     {
         "thing": function (callback) {
-            db.find_thing("switch12", callback);
-        },        
+            db.find_thing("Ford", callback);
+        },
         "implementation": {
             start: function (thing) {
-                switch_device.init(function (err) {
+                ford_car.init(thing.model, '127.0.0.1', 65521, function (err) {
                     if (err) {
-                        return logger.error("CoAP switch12 adapter initialisation error: " + err);
+                        return logger.error("P2P thing Ford initialisation error: " + err);
                     }
                 });
             },
-            stop: function (thing) { 
-                switch_device.unbind(function (err) {
+            stop: function (thing) {
+                ford_car.unbind(function (err) {
                     if (err) {
-                        return logger.error("CoAP adapter unbind error: " + err);
+                        return logger.error("P2P thing Ford unbind error: " + err);
                     }
                 });
             },
             property_get: function (property, callback) {
-                switch_device.property_get(property, function (err, value) {
+                ford_car.property_get(property, function (err, value) {
                     if (err) {
                         callback(err);
-                        return logger.error("CoAP adapter switch12 " + property + " property_get error: " + err);
+                        return logger.error("P2P thing Ford " + property + " property_get error: " + err);
                     }
+                    
+                    logger.debug('peer Ford thing received key: ' + key + ' value: ' + value);
                     
                     callback(null, value);
                 });
-            },
-            patch: function (thing, property, value) {
-                switch_device.setProperty(property, value);
             }
         }
-    } 
+    }        
 ];
 
 // call the framework initialisation method and pass an array of things definitions to the framework
 // for this demo the things are defined here
 try {
-    logger.debug("Calling framework init()");
-    wot.init(things);
+    logger.debug("Initialising framework");
+    wot.transport_init();
+    wot.things_init(things);
+    // start the device device simulator
+    simulator.start();
 }
 catch (e) {
     logger.error("Error in initialising framework " + e.message);
 }
 
-
-// start the device P2P simulator
-//simulator.start();

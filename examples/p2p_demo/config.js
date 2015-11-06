@@ -19,8 +19,20 @@ var config = {
     },
     servers: {
         p2p: {
-            address: 'localhost',
-            port: 31300
+            nodes: [
+                {
+                    address: 'localhost',
+                    port: 31300,
+                    nick: "wotseed01",
+                    seeds: []
+                },
+                {
+                    address: 'localhost',
+                    port: 31301,
+                    nick: "wotseed02",
+                    seeds: [{ address: 'localhost', port: 31300 }]
+                }
+            ]
         }
     },
     //  The application database configuration. The ./data/dbs directory includes the database implementations

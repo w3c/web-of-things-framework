@@ -52,16 +52,6 @@ function onPut(err) {
         return log.error("onPut error %j", err, {});
     }
 
-    //node1.get('door12/events/bell', function (err, value) {
-    //    if (err) {
-    //        return log.error("error %j", err);
-    //    }
-    //    log.debug('----------------------------------------------------');
-    //    log.debug('node1 received door12/events/bell value is : ' + value);
-    //    log.debug('----------------------------------------------------');
-   
-    //});
-
     node2.get('door12/events/bell', function (err, value) {
         if (err) {
             return log.error("error %j", err, {});   
@@ -72,14 +62,6 @@ function onPut(err) {
 
         addnode();
 
-        //if (!is_modified) {
-        //    // now modify the data
-        //    is_modified = true;
-        //    node2.put('door12/events/bell', 'beep2 from node2', onPut);
-        //}
-        //else {
-        //    //putloop();
-        //}
     });
 }
 

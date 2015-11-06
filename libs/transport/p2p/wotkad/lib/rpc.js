@@ -1,5 +1,20 @@
-/**
-* @module kad/rpc
+/*
+ 
+This file is part of W3C Web-of-Things-Framework.
+
+W3C Web-of-Things-Framework is an open source project to create an Internet of Things framework.
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+W3C Web-of-Things-Framework is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with W3C Web-of-Things-Framework.  If not, see <http://www.gnu.org/licenses/>.
+ 
+File created by Tibor Zsolt Pardi
+
+Copyright (C) 2015 The W3C WoT Team
+ 
 */
 
 'use strict';
@@ -45,25 +60,29 @@ function RPC(options) {
 * @param {object} message
 * @param {function} callback
 */
-RPC.prototype.send = function(contact, message, callback) {
-  assert(contact instanceof Contact, 'Invalid contact supplied');
-  assert(message instanceof Message, 'Invalid message supplied');
+RPC.prototype.send = function (contact, message, callback) {
+    //assert(contact instanceof Contact, 'Invalid contact supplied');
+    //if (!(contact instanceof Contact)) {
+    //    return; 
+    //}
+    assert(contact.address && contact.port, 'Invalid contact supplied');
+    assert(message instanceof Message, 'Invalid message supplied');
 
-  merge(message.params, {
-    rpcID: this._createMessageID()
-  });
+    merge(message.params, {
+        rpcID: this._createMessageID()
+    });
 
-  var data = message.serialize();
-  var offset = 0;
+    var data = message.serialize();
+    var offset = 0;
 
-  this._send(data, contact);
+    this._send(data, contact);
 
-  if (typeof callback === 'function') {
-    this._pendingCalls[message.params.rpcID] = {
-      timestamp: Date.now(),
-      callback: callback
-    };
-  }
+    if (typeof callback === 'function') {
+        this._pendingCalls[message.params.rpcID] = {
+            timestamp: Date.now(),
+            callback: callback
+        };
+    }
 };
 
 /**
@@ -71,7 +90,7 @@ RPC.prototype.send = function(contact, message, callback) {
 * #close
 */
 RPC.prototype.close = function() {
-  this._close();
+    this._close();
 };
 
 /**
@@ -118,15 +137,15 @@ RPC.prototype._handleMessage = function(buffer, info) {
 * #_expireCalls
 */
 RPC.prototype._expireCalls = function() {
-  for (var rpcID in this._pendingCalls) {
-    var pendingCall = this._pendingCalls[rpcID];
-    var timePassed = Date.now() - pendingCall.timestamp;
+    for (var rpcID in this._pendingCalls) {
+        var pendingCall = this._pendingCalls[rpcID];
+        var timePassed = Date.now() - pendingCall.timestamp;
 
-    if (timePassed > constants.T_RESPONSETIMEOUT) {
-      pendingCall.callback(new Error('RPC with ID `' + rpcID + '` timed out'));
-      delete this._pendingCalls[rpcID];
+        if (timePassed > constants.T_RESPONSETIMEOUT) {
+            pendingCall.callback(new Error('RPC with ID `' + rpcID + '` timed out'));
+            delete this._pendingCalls[rpcID];
+        }
     }
-  }
 };
 
 /* istanbul ignore next */
@@ -135,7 +154,7 @@ RPC.prototype._expireCalls = function() {
 * #_close
 */
 RPC.prototype._close = function() {
-  throw new Error('Method not implemented');
+    throw new Error('Method not implemented');
 };
 
 /* istanbul ignore next */
@@ -146,7 +165,7 @@ RPC.prototype._close = function() {
 * @param {Contact} contact
 */
 RPC.prototype._send = function(data, contact) {
-  throw new Error('Method not implemented');
+    throw new Error('Method not implemented');
 };
 
 /* istanbul ignore next */
@@ -156,7 +175,7 @@ RPC.prototype._send = function(data, contact) {
 * @param {object} options
 */
 RPC.prototype._createContact = function(options) {
-  throw new Error('Method not implemented');
+    throw new Error('Method not implemented');
 };
 
 module.exports = RPC;

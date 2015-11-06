@@ -1,5 +1,20 @@
-/**
-* @module kad/contact
+/*
+ 
+This file is part of W3C Web-of-Things-Framework.
+
+W3C Web-of-Things-Framework is an open source project to create an Internet of Things framework.
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+W3C Web-of-Things-Framework is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with W3C Web-of-Things-Framework.  If not, see <http://www.gnu.org/licenses/>.
+ 
+File created by Tibor Zsolt Pardi
+
+Copyright (C) 2015 The W3C WoT Team
+ 
 */
 
 'use strict';
@@ -18,26 +33,27 @@ inherits(AddressPortContact, Contact);
 */
 function AddressPortContact(options) {
 
-  if (!(this instanceof AddressPortContact)) {
-    return new AddressPortContact(options);
-  }
+    if (!(this instanceof AddressPortContact)) {
+        return new AddressPortContact(options);
+    }
 
-  assert(options instanceof Object, 'Invalid options were supplied');
-  assert(typeof options.address === 'string', 'Invalid address was supplied');
-  assert(typeof options.port === 'number', 'Invalid port was supplied');
+    assert(options instanceof Object, 'Invalid options were supplied');
+    assert(typeof options.address === 'string', 'Invalid address was supplied');
+    assert(typeof options.port === 'number', 'Invalid port was supplied');
 
-  this.address = options.address;
-  this.port = options.port;
+    this.address = options.address;
+    this.port = options.port;
 
-  Contact.call(this, options)
+    Contact.call(this, options)
 }
+
 
 /**
 * Generate a NodeID by taking the SHA1 hash of the address and port
 * #_createNodeID
 */
 AddressPortContact.prototype._createNodeID = function() {
-  return utils.createID(this.toString());
+    return utils.createID(this.toString());
 };
 
 /**
@@ -45,7 +61,7 @@ AddressPortContact.prototype._createNodeID = function() {
 * #_toString
 */
 AddressPortContact.prototype.toString = function() {
-  return this.address + ':' + this.port;
+    return this.address + ':' + this.port;
 };
 
 module.exports = AddressPortContact;

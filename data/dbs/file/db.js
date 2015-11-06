@@ -87,6 +87,110 @@ definitions.push(
 );
 
 
+definitions.push(
+    {
+        "name": "Toyota",    
+        "model": {
+            "@events": {
+                "door_open": {
+                    "type": "object",
+                    "fields": {
+                        "timestamp": {
+                            "description": "The time of event", 
+                            "type": "numeric"
+                        }, 
+                    }
+                },
+            },
+            "@properties": {
+                "speed": {
+                    "type": "object",
+                    "fields": {
+                        "unit": {
+                            "description": "The unit identifier in KmH or MpH", 
+                            "type": "string"
+                        }, 
+                        "value": {
+                            "description": "The speed value", 
+                            "type": "numeric"
+                        }
+                    }
+                },
+                "location": {
+                    "type": "object",
+                    "fields": {
+                        "latitude": {
+                            "description": "The latitude part of the location", 
+                            "type": "string"
+                        }, 
+                        "longitude": {
+                            "description": "The longitude part of the location", 
+                            "type": "numeric"
+                        }
+                    }
+                }
+            },
+            "@actions": {
+                "unlock": null,
+                "lock": null
+            }
+        }
+    }
+);
+
+
+definitions.push(
+    {
+        "name": "Ford",    
+        "model": {
+            "@events": {
+                "door_open": {
+                    "type": "object",
+                    "fields": {
+                        "timestamp": {
+                            "description": "The time of event", 
+                            "type": "numeric"
+                        }, 
+                    }
+                },
+            },
+            "@properties": {
+                "speed": {
+                    "type": "object",
+                    "fields": {
+                        "unit": {
+                            "description": "The unit identifier in KmH or MpH", 
+                            "type": "string"
+                        }, 
+                        "value": {
+                            "description": "The speed value", 
+                            "type": "numeric"
+                        }
+                    }
+                },
+                "location": {
+                    "type": "object",
+                    "fields": {
+                        "latitude": {
+                            "description": "The latitude part of the location", 
+                            "type": "string"
+                        }, 
+                        "longitude": {
+                            "description": "The longitude part of the location", 
+                            "type": "numeric"
+                        }
+                    }
+                }
+            },
+            "@actions": {
+                "unlock": null,
+                "lock": null
+            }
+        }
+    }
+);
+
+
 exports.find_thing = function find_thing(name, callback) {
     var thing = null;
     for (i = 0; i < definitions.length; i++) {

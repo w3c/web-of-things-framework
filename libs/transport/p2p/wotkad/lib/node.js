@@ -1,5 +1,20 @@
-/**
-* @module kademlia/node
+/*
+ 
+This file is part of W3C Web-of-Things-Framework.
+
+W3C Web-of-Things-Framework is an open source project to create an Internet of Things framework.
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+W3C Web-of-Things-Framework is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with W3C Web-of-Things-Framework.  If not, see <http://www.gnu.org/licenses/>.
+ 
+File created by Tibor Zsolt Pardi
+
+Copyright (C) 2015 The W3C WoT Team
+ 
 */
 
 'use strict';
@@ -81,9 +96,8 @@ Node.prototype.connect = function(options, callback) {
     async.waterfall(
         [
             this._updateContact.bind(this, seed),
-            this._findNode.bind(
-                this, this._self.nodeID),
-                this._refreshBucketsBeyondClosest.bind(this)
+            this._findNode.bind(this, this._self.nodeID),
+            this._refreshBucketsBeyondClosest.bind(this)
         ], 
         function (err) {
             if (err) {
@@ -150,12 +164,18 @@ Node.prototype._putValidatedKeyValue = function(key, value, callback) {
             node._log.error('failed to find nodes - reason: %s', err.message);
             return callback(err);
         }
+        
+        //for (var i = 0; i < contacts.length; i++) {
+        //    if (!(contacts[i] instanceof Contact)) {
+        //        throw new Error('Invalid contact');
+        //    }
+        //}
 
         if (contacts.length === 0) {
             node._log.error('no contacts are available');
             contacts = node._getNearestContacts(key, constants.K, node._self.nodeID);
         }
-
+        
         //node._log.debug('found %d contacts for STORE operation', contacts.length);
 
         async.each(contacts, function (contact, done) {
@@ -226,44 +246,47 @@ Node.prototype._startReplicationInterval = function() {
 * #_replicate
 */
 Node.prototype._replicate = function() {
-  var self = this;
-  var stream = this._storage.createReadStream();
+    var self = this;
+    var stream = this._storage.createReadStream();
 
-  this._log.info('starting local database replication');
+    this._log.info('starting local database replication');
 
-  stream.on('data', function(data) {
-    if (typeof data.value === 'string') {
-      try {
-        data.value = JSON.parse(data.value);
-      } catch(err) {
-        return self._log.error('failed to parse value from %s', data.value);
-      }
-    }
-
-    // if we are not the publisher, then replicate every T_REPLICATE
-    if (data.value.publisher !== self._self.nodeID) {
-      self.put(data.key, data.value.value, function(err) {
-        if (err) {
-          self._log.error('failed to replicate item at key %s', data.key);
+    stream.on('data', function(data) {
+        if (typeof data.value === 'string') {
+            try {
+                data.value = JSON.parse(data.value);
+            } 
+            catch (err) {
+                return self._log.error('failed to parse value from %s', data.value);
+            }
         }
-      });
-    // if we are the publisher, then only replicate every T_REPUBLISH
-    } else if (Date.now() <= data.value.timestamp + constants.T_REPUBLISH) {
-      self.put(data.key, data.value.value, function(err) {
-        if (err) {
-          self._log.error('failed to republish item at key %s', data.key);
+
+        // if we are not the publisher, then replicate every T_REPLICATE
+        if (data.value.publisher !== self._self.nodeID) {
+            self.put(data.key, data.value.value, function(err) {
+                if (err) {
+                    self._log.error('failed to replicate item at key %s', data.key);
+                }
+            });
+    
+        // if we are the publisher, then only replicate every T_REPUBLISH
+        } 
+        else if (Date.now() <= data.value.timestamp + constants.T_REPUBLISH) {
+            self.put(data.key, data.value.value, function(err) {
+                if (err) {
+                    self._log.error('failed to republish item at key %s', data.key);
+                }
+            });
         }
-      });
-    }
-  });
+    });
 
-  stream.on('error', function(err) {
-    self._log.error('error while replicating: %s', err.message);
-  });
+    stream.on('error', function(err) {
+        self._log.error('error while replicating: %s', err.message);
+    });
 
-  stream.on('end', function() {
-    self._log.info('database replication complete');
-  });
+    stream.on('end', function() {
+        self._log.info('database replication complete');
+    });
 };
 
 /**
@@ -462,11 +485,11 @@ Node.prototype._updateContact = function(contact, callback) {
 * @param {object} params
 */
 Node.prototype._handlePing = function(params) {
-  var contact = this._rpc._createContact(params);
-  var message = new Message('PONG', { referenceID: params.rpcID }, this._self);
+    var contact = this._rpc._createContact(params);
+    var message = new Message('PONG', { referenceID: params.rpcID }, this._self);
 
-  this._log.info('received PING from %s, sending PONG', params.nodeID);
-  this._rpc.send(contact, message);
+    this._log.info('received PING from %s, sending PONG', params.nodeID);
+    this._rpc.send(contact, message);
 };
 
 /**
@@ -509,13 +532,18 @@ Node.prototype._storeValidatedKeyValue = function (item, params) {
 
     this._storage.put(item.key, JSON.stringify(item), function(err) {
         var contact = node._rpc._createContact(params);
-        var message = new Message('STORE_REPLY', {
-            referenceID: params.rpcID,
-            success: !!err
-        }, node._self);
+        var message = new Message(
+            'STORE_REPLY', {
+                referenceID: params.rpcID,
+                success: !!err
+            }, 
+            node._self);
 
         //node._log.debug('successful store, notifying %s', params.nodeID);
         node._rpc.send(contact, message);
+
+        // signal an event that the message was stored
+        node.emit('store', node._self.nodeID, item );
     });
 };
 
@@ -530,10 +558,14 @@ Node.prototype._handleFindNode = function(params) {
 
     var contact = this._rpc._createContact(params);
     var near = this._getNearestContacts(params.key, constants.K, params.nodeID);
-    var message = new Message('FIND_NODE_REPLY', {
-        referenceID: params.rpcID,
-        contacts: near
-    }, this._self);
+
+    var message = new Message(
+        'FIND_NODE_REPLY', 
+        {
+            referenceID: params.rpcID,
+            contacts: near
+        }, 
+        this._self);
 
     //this._log.debug('sending %s nearest %d contacts', params.nodeID, near.length, {});
 
@@ -583,66 +615,66 @@ Node.prototype._handleFindValue = function(params) {
 * @param {string} nodeID
 */
 Node.prototype._getNearestContacts = function(key, limit, nodeID) {
-  var contacts = [];
-  var hashedKey = utils.createID(key);
-  var initialIndex = utils.getBucketIndex(this._self.nodeID, hashedKey);
-  var ascBucketIndex = initialIndex;
-  var descBucketIndex = initialIndex;
+    var contacts = [];
+    var hashedKey = utils.createID(key);
+    var initialIndex = utils.getBucketIndex(this._self.nodeID, hashedKey);
+    var ascBucketIndex = initialIndex;
+    var descBucketIndex = initialIndex;
 
-  if (this._buckets[initialIndex]) {
-    addNearestFromBucket(this._buckets[initialIndex]);
-  }
-
-  while (contacts.length < limit && ascBucketIndex < constants.B) {
-    ascBucketIndex++;
-
-    if (this._buckets[ascBucketIndex]) {
-      addNearestFromBucket(this._buckets[ascBucketIndex]);
+    if (this._buckets[initialIndex]) {
+        addNearestFromBucket(this._buckets[initialIndex]);
     }
-  }
 
-  while (contacts.length < limit && descBucketIndex >= 0) {
-    descBucketIndex--;
+    while (contacts.length < limit && ascBucketIndex < constants.B) {
+        ascBucketIndex++;
 
-    if (this._buckets[descBucketIndex]) {
-      addNearestFromBucket(this._buckets[descBucketIndex]);
+        if (this._buckets[ascBucketIndex]) {
+            addNearestFromBucket(this._buckets[ascBucketIndex]);
+        }
     }
-  }
 
-  function addToContacts(contact) {
-    var isContact = contact instanceof Contact;
-    var poolNotFull = contacts.length < limit;
-    var notRequester = contact.nodeID !== nodeID;
+    while (contacts.length < limit && descBucketIndex >= 0) {
+        descBucketIndex--;
 
-    if (isContact && poolNotFull && notRequester) {
-      contacts.push(contact);
+        if (this._buckets[descBucketIndex]) {
+            addNearestFromBucket(this._buckets[descBucketIndex]);
+        }
     }
-  }
 
-  function addNearestFromBucket(bucket) {
-    var contactList = bucket.getContactList();
-    var distances = contactList.map(addDistance).sort(sortKeysByDistance);
-    var howMany = limit - contacts.length;
+    function addToContacts(contact) {
+        var isContact = contact instanceof Contact;
+        var poolNotFull = contacts.length < limit;
+        var notRequester = contact.nodeID !== nodeID;
 
-    distances.splice(0, howMany).map(pluckContact).forEach(addToContacts);
-  }
+        if (isContact && poolNotFull && notRequester) {
+            contacts.push(contact);
+        }
+    }
 
-  function pluckContact(c) {
-    return c.contact;
-  }
+    function addNearestFromBucket(bucket) {
+        var contactList = bucket.getContactList();
+        var distances = contactList.map(addDistance).sort(sortKeysByDistance);
+        var howMany = limit - contacts.length;
 
-  function sortKeysByDistance(a, b) {
-    return utils.compareKeys(a.distance, b.distance);
-  }
+        distances.splice(0, howMany).map(pluckContact).forEach(addToContacts);
+    }
 
-  function addDistance(contact) {
-    return {
-      contact: contact,
-      distance: utils.getDistance(contact.nodeID, hashedKey)
-    };
-  }
+    function pluckContact(c) {
+        return c.contact;
+    }
 
-  return contacts;
+    function sortKeysByDistance(a, b) {
+        return utils.compareKeys(a.distance, b.distance);
+    }
+
+    function addDistance(contact) {
+        return {
+            contact: contact,
+            distance: utils.getDistance(contact.nodeID, hashedKey)
+        };
+    }
+
+    return contacts;
 };
 
 module.exports = Node;

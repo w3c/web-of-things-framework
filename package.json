@@ -7,6 +7,7 @@
   },
   "dependencies": {
     "async": "^1.5.0",
+    "bigi": "^1.4.1",
     "body-parser": "^1.13.2",
     "clarinet": "^0.11.0",
     "coap": "^0.12.0",

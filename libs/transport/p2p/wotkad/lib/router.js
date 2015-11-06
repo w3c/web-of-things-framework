@@ -1,7 +1,21 @@
-/**
-* @module kad/router
-*/
+/*
+ 
+This file is part of W3C Web-of-Things-Framework.
 
+W3C Web-of-Things-Framework is an open source project to create an Internet of Things framework.
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by 
+the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+W3C Web-of-Things-Framework is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of 
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with W3C Web-of-Things-Framework.  If not, see <http://www.gnu.org/licenses/>.
+ 
+File created by Tibor Zsolt Pardi
+
+Copyright (C) 2015 The W3C WoT Team
+ 
+*/
 'use strict';
 
 var assert = require('assert');
@@ -33,6 +47,7 @@ function Router(type, key, node) {
 
     this.limit = constants.ALPHA;
     this.shortlist = node._getNearestContacts(key, this.limit, node._self.nodeID);
+
     this.closestNode = this.shortlist[0];
     this.previousClosestNode = null;
     this.contacted = {};
@@ -47,20 +62,23 @@ function Router(type, key, node) {
 * @param {function} callback
 */
 Router.prototype.route = function(callback) {
-  if (!this.closestNode) {
-    return callback(new Error('Not connected to any peers'));
-  }
+    if (!this.closestNode) {
+        return callback(new Error('Not connected to any peers'));
+    }
 
-  this.closestNodeDistance = utils.getDistance(
-    this.hashedKey,
-    this.closestNode.nodeID
-  );
+    this.closestNodeDistance = utils.getDistance(
+        this.hashedKey,
+        this.closestNode.nodeID
+    );
 
-  this.message = new Message('FIND_' + this.type, {
-    key: this.key
-  }, this.node._self);
+    this.message = new Message(
+        'FIND_' + this.type, 
+        {
+            key: this.key
+        }, 
+        this.node._self);
 
-  this._iterativeFind(this.shortlist, callback);
+    this._iterativeFind(this.shortlist, callback);
 };
 
 /**
@@ -70,11 +88,11 @@ Router.prototype.route = function(callback) {
 * @param {function} callback
 */
 Router.prototype._iterativeFind = function(contacts, callback) {
-  var self = this;
+    var self = this;
 
-  async.each(contacts, this._queryContact.bind(this), function(err) {
-    self._handleQueryResults(callback);
-  });
+    async.each(contacts, this._queryContact.bind(this), function(err) {
+        self._handleQueryResults(callback);
+    });
 };
 
 /**
@@ -84,17 +102,17 @@ Router.prototype._iterativeFind = function(contacts, callback) {
 * @param {function} callback
 */
 Router.prototype._queryContact = function(contactInfo, callback) {
-  var self = this;
-  var contact = this.node._rpc._createContact(contactInfo);
+    var self = this;
+    var contact = this.node._rpc._createContact(contactInfo);
 
-  this.node._rpc.send(contact, this.message, function(err, params) {
-    if (err) {
-      self._removeFromShortList(contact.nodeID);
-      return callback();
-    }
+    this.node._rpc.send(contact, this.message, function(err, params) {
+        if (err) {
+            self._removeFromShortList(contact.nodeID);
+            return callback();
+        }
 
-    self._handleFindResult(params, contact, callback);
-  });
+        self._handleFindResult(params, contact, callback);
+    });
 };
 
 /**
@@ -104,53 +122,55 @@ Router.prototype._queryContact = function(contactInfo, callback) {
 * @param {object} contact
 * @param {function} callback
 */
-Router.prototype._handleFindResult = function(params, contact, callback) {
-  var self = this;
-  var distance = utils.getDistance(this.hashedKey, contact.nodeID);
+Router.prototype._handleFindResult = function (params, contact, callback) {
+    var self = this;
+    var distance = utils.getDistance(this.hashedKey, contact.nodeID);
 
-  this.contacted[contact.nodeID] = this.node._updateContact(contact);
+    this.contacted[contact.nodeID] = this.node._updateContact(contact);
 
-  if (utils.compareKeys(distance, this.closestNodeDistance) === -1) {
-    this.previousClosestNode = this.closestNode;
-    this.closestNode = contact;
-    this.closestNodeDistance = distance;
-  }
+    if (utils.compareKeys(distance, this.closestNodeDistance) === -1) {
+        this.previousClosestNode = this.closestNode;
+        this.closestNode = contact;
+        this.closestNodeDistance = distance;
+    }
 
-  if(this.type === 'NODE') {
-    this._addToShortList(params.contacts);
-    return callback();
-  }
+    if(this.type === 'NODE') {
+        this._addToShortList(params.contacts);
+        return callback();
+    }
 
-  if(!params.value) {
-    this.contactsWithoutValue.push(contact);
-    this._addToShortList(params.contacts);
-    return callback();
-  }
+    if(!params.value) {
+        this.contactsWithoutValue.push(contact);
+        this._addToShortList(params.contacts);
+        return callback();
+    }
 
-  var parsedValue;
-  try {
-    parsedValue = JSON.parse(params.value).value;
-  } catch(err) {
-    this.node._log.warn('failed to parse value %s', params.value);
-    return rejectContact();
-  }
-
-this.node.validateKeyValuePair(this.key, parsedValue, function(isValid) {
-    if(!isValid) {
-        self.node._log.warn('failed to validate key/value pair for %s', self.key);
+    var parsedValue;
+    try {
+        parsedValue = JSON.parse(params.value).value;
+    } 
+    catch (err) {
+        this.node._log.error('failed to parse value %s', params.value);
         return rejectContact();
     }
 
-    self.foundValue = true;
-    self.value = parsedValue;
+    this.node.validateKeyValuePair(this.key, parsedValue, function(isValid) {
+        if(!isValid) {
+            self.node._log.warn('failed to validate key/value pair for %s', self.key);
+            return rejectContact();
+        }
 
-    callback();
-});
+        self.foundValue = true;
+        self.value = parsedValue;
 
-  function rejectContact() {
-    self._removeFromShortList(contact.nodeID);
-    callback();
-  }
+        callback();
+    });
+
+    
+    function rejectContact() {
+        self._removeFromShortList(contact.nodeID);
+        callback();
+    }
 };
 
 /**
@@ -159,9 +179,11 @@ this.node.validateKeyValuePair(this.key, parsedValue, function(isValid) {
 * @param {array} contacts
 */
 Router.prototype._addToShortList = function(contacts) {
-  assert(Array.isArray(contacts), 'No contacts supplied');
-  this.shortlist = this.shortlist.concat(contacts);
-  this.shortlist = _.uniq(this.shortlist, false, 'nodeID');
+    assert(Array.isArray(contacts), 'No contacts supplied');
+
+    this.shortlist = this.shortlist.concat(contacts);
+    this.shortlist = _.uniq(this.shortlist, false, 'nodeID');
+
 };
 
 /**
@@ -170,9 +192,15 @@ Router.prototype._addToShortList = function(contacts) {
 * @param {string} nodeID
 */
 Router.prototype._removeFromShortList = function(nodeID) {
-  this.shortlist = _.reject(this.shortlist, function(c) {
-    return c.nodeID === nodeID;
-  });
+    this.shortlist = _.reject(this.shortlist, function(c) {
+        return c.nodeID === nodeID;
+    });
+
+    for (var i = 0; i < this.shortlist.length; i++) {
+        if (!(this.shortlist[i] instanceof Contact)) {
+            throw new Error('Invalid contact');
+        }
+    }
 };
 
 /**
@@ -181,28 +209,29 @@ Router.prototype._removeFromShortList = function(nodeID) {
 * @param {function} callback
 */
 Router.prototype._handleQueryResults = function(callback) {
-  var self = this;
+    var self = this;
 
-  if (this.foundValue) {
-    return this._handleValueReturned(callback);
-  }
+    if (this.foundValue) {
+        return this._handleValueReturned(callback);
+    }
 
-  var closestNodeUnchanged = this.closestNode === this.previousClosestNode;
-  var shortlistFull = this.shortlist.length >= constants.K;
+    var closestNodeUnchanged = this.closestNode === this.previousClosestNode;
+    var shortlistFull = this.shortlist.length >= constants.K;
 
-  if (closestNodeUnchanged || shortlistFull) {
-    return callback(null, 'NODE', this.shortlist);
-  }
+    if (closestNodeUnchanged || shortlistFull) {
+        return callback(null, 'NODE', this.shortlist);
+    }
 
-  var remainingContacts = _.reject(this.shortlist, function(c) {
-    return self.contacted[c.nodeID];
-  });
+    var remainingContacts = _.reject(this.shortlist, function(c) {
+        return self.contacted[c.nodeID];
+    });
 
-  if (remainingContacts.length === 0) {
-    callback(null, 'NODE', this.shortlist);
-  } else {
-    this._iterativeFind(remainingContacts.splice(0, constants.ALPHA), callback);
-  }
+    if (remainingContacts.length === 0) {
+        callback(null, 'NODE', this.shortlist);
+    } 
+    else {
+        this._iterativeFind(remainingContacts.splice(0, constants.ALPHA), callback);
+    }
 };
 
 /**
