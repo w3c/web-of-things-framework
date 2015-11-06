@@ -20,31 +20,10 @@ Copyright (C) 2015 The W3C WoT Team
 var crypto = require('crypto');
 var ecdsa = require('./EccDsa');
 
-
-/*
- * The public_key parameter must be in hex string format
- */
-
-function EccVerify(public_key, input, signature) {
-    if (!public_key) {
-        throw new Error("Invalid EccVerify public key parameter");
-    }
-    if (input == undefined) {
-        throw new Error("Invalid EccVerify input parameter");
-    }
-    if (!signature) {
-        throw new Error("Invalid EccVerify signature parameter");
-    }
-    
-    var pkbuffer;
-    try {
-        pkbuffer = new Buffer(public_key, 'hex');
-    }
-    catch (e) {
-    }
-    
-    if (!pkbuffer) {
-        throw new Error('Encoding public key failed');
+function EccSign(privateKey, input) {
+    if (!privateKey || input == undefined) {
+        throw new Error("Invalid EccSign parameters");
+        return;
     }
     
     var text = null;
@@ -73,26 +52,18 @@ function EccVerify(public_key, input, signature) {
     if (!text) {
         throw new Error("Invalid EccSign input parameter");
     }
-    
+
     var buffer = new Buffer(text, "utf-8");
     var hash = crypto.createHash('sha256').update(buffer).digest();
-    
-    var signBuffer = null;
-    try {
-        signBuffer = new Buffer(signature, 'base64');
-    }
-    catch (e) {
-        signBuffer = null;
-    }
-    if (!signBuffer) {
-        throw new Error("Invalid signature buffer.");
-    }
 
-    var signature = ecdsa.parseSig(signBuffer);
-    var valid = ecdsa.verify(hash, signature, pkbuffer);
+    var signbuffer = ecdsa.sign(hash, privateKey);
+    var ser1 = ecdsa.serializeSig(signbuffer);
+    var ser2 = new Buffer(ser1);
 
-    return valid;
+    var signatureb64 = ser2.toString('base64');
+
+    return signatureb64;
 }
 
-module.exports = EccVerify;
+module.exports = EccSign;
 

@@ -19,10 +19,9 @@ Copyright (C) 2015 The W3C WoT Team
 
 
 var crypto = require('crypto');
-var ecurve = require('ecurve');
+var ecurve = require('./ecurve');
 var ecparams = ecurve.getCurveByName('secp256k1');
 var BigInteger = require('bigi');
-var ks = require('./KeyString');
 var ecdsa = require('./EccDsa');
 
 function EccKey(bytes, compressed) {
@@ -128,21 +127,26 @@ Object.defineProperty(EccKey.prototype, 'publicKeyStr', {
     }
 })
 
-Object.defineProperty(EccKey.prototype, 'pubKeyHashStr', {
-    get: function () {
-        return this.pubKeyHash.toString('hex')
-    }
-})
-
-Object.defineProperty(EccKey.prototype, 'pubKeyEncode', {
-    get: function () {
-        return ks.encode(this.publicKey);
-    }
-})
-
 
 EccKey.prototype.toString = function (format) {
     return this.privateKey.toString('hex')
+}
+
+
+EccKey.prototype.DecodePk = function(hexkey) {
+    if (!hexkey || hexkey.constructor != String ) {
+        throw new Error("Invalid KeyString decode paramater");
+    }
+    
+    var buffer;
+    try {
+        buffer = new Buffer(hexkey, 'hex');
+    }
+    catch (err) {
+        throw new Error('Encoding key failed. Error: ' + err);
+    }
+
+    return buffer;
 }
 
 EccKey.prototype.sign = function sign(text, account) {

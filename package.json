@@ -25,6 +25,7 @@
     "mqtt": "^1.5.0",
     "ms": "^0.7.1",
     "restify": "^4.0.0",
+    "secure-random": "^1.1.1",
     "serve-favicon": "^2.3.0",
     "underscore": "^1.8.3",
     "underscore.string": "^3.2.2",
