@@ -33,5 +33,4 @@ exports.onDeviceEventSignalled = function (data) {
 }
 
 
-
 exports.emitter = eventEmitter;

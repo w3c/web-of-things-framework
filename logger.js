@@ -25,7 +25,7 @@ fs.open(logDir, 'r', function (err, fd) {
 var logfilePath = path.join(__dirname, '/logs/application.log');
 var exceptionFileLog = path.join(__dirname, '/logs/exception.log');
 
-var level = config.log.level ? config.log.level : "error";
+var level = config && config.log && config.log.level ? config.log.level : "error";
 
 var logger = new (winston.Logger)({
     exitOnError: false,
@@ -57,7 +57,7 @@ var logger = new (winston.Logger)({
     ]
 });
 
-function log_error(err) {
+function log_error(err, val1, val2, val3, val4) {
     try {        
         if (err) {
             //  most of js exceptions have a "message" field
@@ -66,7 +66,21 @@ function log_error(err) {
                 logger.error(err.message);
             }
             else {
-                logger.error(err);
+                if (val1 && val2 && val3 && val4) {
+                    logger.error(err, val1, val2, val3, val4);
+                }
+                else if (val1 && val2 && val3) {
+                    logger.error(err, val1, val2, val3);
+                }
+                else if (val1 && val2) {
+                    logger.error(err, val1, val2);
+                }
+                else if (val1) {
+                    logger.error(err, val1);
+                }
+                else {
+                    logger.error(err);
+                }
             }
         }
     }
@@ -78,10 +92,24 @@ function log_error(err) {
     }
 }
 
-function log_info(msg) {
+function log_info(msg, val1, val2, val3, val4) {
     try {
         if (msg) {
-            logger.info(msg);
+            if (val1 && val2 && val3 && val4) {
+                logger.info(msg, val1, val2, val3, val4);
+            }
+            else if (val1 && val2 && val3) {
+                logger.info(msg, val1, val2, val3);
+            }
+            else if (val1 && val2) {
+                logger.info(msg, val1, val2);
+            }
+            else if (val1) {
+                logger.info(msg, val1);
+            }
+            else {
+                logger.info(msg);
+            }
         }
     }
     catch (e) {
@@ -92,10 +120,24 @@ function log_info(msg) {
     }
 }
 
-function log_debug(msg) {
+function log_debug(msg, val1, val2, val3, val4) {
     try {
         if (msg) {
-            logger.debug(msg);
+            if (val1 != undefined && val2 != undefined && val3 != undefined && val4 != undefined) {
+                logger.debug(msg, val1, val2, val3, val4);
+            }
+            else if (val1 != undefined && val2 != undefined && val3 != undefined ) {
+                logger.debug(msg, val1, val2, val3);
+            }
+            else if (val1 != undefined && val2 != undefined) {
+                logger.debug(msg, val1, val2);
+            }
+            else if (val1 != undefined ) {
+                logger.debug(msg, val1);
+            }
+            else {
+                logger.debug(msg);
+            }
         }
     }
     catch (e) {

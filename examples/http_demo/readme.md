@@ -1,6 +1,6 @@
 ﻿## WoT Framework Demo 
 
-Run this demo with "node demo.js" to cjreate a WoT server to communicate with the simulator objects via the HTTP protocols. Real IoT devices would use this system similarly via the HTTP protocol as the simulator objects. The simulator and device objects communicates with the default HTTP end point of WoT server. The simulator and device objects expose an HTTP listener to receive messages from the WoT system. The WoT system uses an adapter object at /libs/adapters/http.js to send messages to the simulators/devices.
+Run this demo with "node demo.js" to create a WoT server to communicate with the simulator objects via the HTTP protocols. Real IoT devices would use this system similarly via the HTTP protocol as the simulator objects. The simulator and device objects communicates with the default HTTP end point of WoT server. The simulator and device objects expose an HTTP listener to receive messages from the WoT system. The WoT system uses an adapter object at /libs/adapters/http.js to send messages to the simulators/devices.
 
 This demo wires up the door12 and switch12 simulator devices.
 

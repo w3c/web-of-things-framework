@@ -33,13 +33,6 @@ var config = {
             fqdn: "http://localhost:8889",
             //  end point port that listen for messages from other WoT servers and from IoT devices that communicate via the HTTP protocol
             port: 8889          
-        },
-        restapi: {
-        },
-        coap: {
-            port: 5683          // default CoAP port
-        },
-        mqtt: {
         }
     },
     //  The application database configuration. The ./data/dbs directory includes the database implementations

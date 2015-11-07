@@ -106,6 +106,7 @@ var door_prop_values = {};
 // set by default the door to closed and camera to turned off
 door_prop_values["is_open"] = false;
 door_prop_values["is_camera_on"] = false;
+door_prop_values["battery_value"] = 0;
 
 var door = {
     "name": "door12",

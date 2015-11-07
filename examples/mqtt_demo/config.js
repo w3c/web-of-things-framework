@@ -34,8 +34,7 @@ var config = {
             //  end point port that listen for messages from other WoT servers
             port: 8889          
         },
-        coap: {
-            port: 5683          // default CoAP port
+        mqtt: {
         }
     },
     //  The application database configuration. The ./data/dbs directory includes the database implementations

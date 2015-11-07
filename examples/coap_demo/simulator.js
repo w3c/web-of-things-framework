@@ -1,5 +1,5 @@
 ﻿var logger = require('../../logger');
-var coap = require('../../libs/transport/node-coap/');
+var coap = require('coap');
 
 var COAP_RESULT_SUCCESS = 0;
 var COAP_ERROR_INVALID_REQUEST = 1;
@@ -96,6 +96,7 @@ var door_prop_values = {};
 // set by default the door to closed and camera to turned off
 door_prop_values["is_open"] = false;
 door_prop_values["is_camera_on"] = false;
+door_prop_values["battery_value"] = 0;
 
 var door = {
     "name": "door12",
