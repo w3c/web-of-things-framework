@@ -13,6 +13,8 @@ You should have received a copy of the GNU General Public License along with W3C
  
 File created by Tibor Zsolt Pardi
 
+Source is based on https://github.com/gordonwritescode  
+
 Copyright (C) 2015 The W3C WoT Team
  
 */
