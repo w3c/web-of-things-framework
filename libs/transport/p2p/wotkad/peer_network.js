@@ -23,6 +23,8 @@ var assert = require('assert');
 var async = require('async');
 var wotkad = require('./kaddht');   //WOT Kademlia DHT object
 var logger = require('../../../../logger');
+var WoTMessage = require('../../../../libs/message/wotmsg');
+var p2phandler = require('../../../../transports/p2p/handler');
 
 util.inherits(PeerNetwork, events.EventEmitter);
 
@@ -33,7 +35,8 @@ function PeerNetwork() {
 
     events.EventEmitter.call(this);
     
-    this.stored_items = {}; 
+    //  TODO this should be in persistent store such as Redis or Levelup
+    this.stored_items = {};
 }
 
 PeerNetwork.prototype.create_peer = function (options) {
@@ -42,17 +45,11 @@ PeerNetwork.prototype.create_peer = function (options) {
     assert(options.address, 'No address supplied');
     assert(options.port, 'No port supplied');
     assert(options.nick, 'No nick supplied');
-    assert(options.alg, 'No acryptography algorithm supplied');
-    assert(options.private_key, 'No private key supplied');
-    assert(options.public_key, 'No private key supplied');
-    
+
     var peernode = wotkad({
         address: options.address,
         port: options.port,
-        nick: options.nick,
-        alg: options.alg,
-        private_key: options.private_key,
-        public_key: options.public_key,
+        nick: options.nick,        
         seeds: options.seeds,
         validateKeyValuePair: this.validate_keyvaluepair
     });
@@ -79,8 +76,103 @@ PeerNetwork.prototype.msg_stored = function (node_id, item) {
 }
 
 
-PeerNetwork.prototype.validate_keyvaluepair = function (key, value, callback) {
-    callback(true);
+//PeerNetwork.prototype.get_public_key = function (key, msg, callback) {
+//    var elements = key.split("/");
+//    var nick = elements[0];
+//    p2phandler.get_public_key(nick, function (err, pkey) {
+//        if (err) {
+//            // not exists ?
+//            if (key.indexOf("/") > -1) {
+//                return callback(err);
+//            }
+
+//            var wotmsg = new WoTMessage();
+//            pkey = WoTMessage.get_message_payload(msg);
+//        }
+//    });
+
+//    var elements = key.split("/");
+//    var nick = elements[0];
+//    var pkey = this.public_keys[nick];
+//    if (pkey) {
+//        return callback(null, pkey);
+//    }
+
+//    //  try to get the public key from the message
+//    if (key.indexOf("/") == -1) {
+//        var wotmsg = new WoTMessage();
+//        pkey = WoTMessage.get_public_key(msg);
+//    }
+//}
+
+
+PeerNetwork.prototype.validate_keyvaluepair = function (key, msg, callback) {
+    try {
+        
+        var is_pkeyadd_message = function (message) {
+            var result = false;
+            try {
+                var wotmsg = new WoTMessage();
+                var payload = wotmsg.get_message_payload(message);
+                result = payload && payload.data && payload.data.type && payload.data.type == wotmsg.MSGTYPE.ADDPK && payload.data[wotmsg.MSGFIELD.PUBKEY] != null;
+            }
+            catch (err) {
+                logger.error("PeerNetwork validate_keyvaluepair is_pkeyadd_message error: %j", err, {});
+            }
+            return result;
+        };
+
+        var validate_msg = function (message, public_key) {
+            try {
+                var wotmsg = new WoTMessage();
+                var decoded = wotmsg.decode(message, public_key);
+                if (decoded) {
+                    return true;
+                }
+            }
+            catch (err) {
+                logger.error("PeerNetwork validate_keyvaluepair validate message error: %j", err, {});
+            }
+            return false;
+        };
+        
+        var elements = key.split("/");
+        var nick = elements[0];
+        // try to get the public key forst from the local repository
+        var public_key = p2phandler.get_public_key_sync(nick);
+        if (public_key) {
+            var is_valid = validate_msg(msg, public_key);
+            return callback(is_valid);
+        }
+        else {
+            p2phandler.get_public_key(nick, function (err, pkey) {
+                if (err) {
+                    // not exists ?
+                    if (key.indexOf("/") > -1) {
+                        logger.error("PeerNetwork validate_keyvaluepair failed to get public key error: %j", err, {});
+                        return callback(false);
+                    }
+                    
+                    if (is_pkeyadd_message(msg)) {
+                        return callback(true);
+                    }
+                    else {
+                        logger.error("PeerNetwork validate_keyvaluepair failed to get public key");
+                        return callback(false);
+                    }
+                }
+                else {
+                    var is_valid = validate_msg(msg, pkey);
+                    return callback(is_valid);
+                }
+            });
+        }
+    }
+    catch (err) {
+        logger.error("PeerNetwork validate_keyvaluepair error %j", err, {});
+        callback(false);
+    }
+    //callback(true);
 }
 
 

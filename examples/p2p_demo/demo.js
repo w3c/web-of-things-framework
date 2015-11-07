@@ -9,6 +9,9 @@ var wot = require('../../framework');
 var uuid = require('uuid');
 var PeerNetwork = require('../../libs/transport/p2p/wotkad/peer_network');
 var simulator = require('./simulator');
+var p2phandler = require('../../transports/p2p/handler');
+var WoTMessage = require('../../libs/message/wotmsg');
+
 var config = global.appconfig;
 
 var peernet = new PeerNetwork();
@@ -54,7 +57,7 @@ var device = function (thing_name) {
     }
     
     // create the P2P peer node
-    self.init = function ( model, address, port, callback) {
+    self.init = function ( model, address, port, callback, datafn) {
         this.model = model;
         
         var seedaddr = config.servers.p2p.nodes[0].address;
@@ -63,9 +66,6 @@ var device = function (thing_name) {
             address: address,
             port: port,
             nick: uuid.v4(),
-            alg: {}, 
-            private_key: {},
-            public_key: {},
             seeds: [{ address: seedaddr, port: seedport }]
         };
         this.node = peernet.create_peer(options);
@@ -85,7 +85,7 @@ var device = function (thing_name) {
                             return logger.error("peer get error %j", err, {});
                         }
 
-                        logger.debug(self.name + ' P2P update type: ' + keyres.type + ', ' + keyres.value + ' value is : ' + value);
+                        datafn(key, value);
                     });
                 }
             });
@@ -107,6 +107,24 @@ var device = function (thing_name) {
 //  The implementations of the things  
 //
 
+function decode_message(nick, msg) {
+    try {
+        var pkey = p2phandler.get_public_key_sync(nick)
+        if (!pkey) {
+            throw new Error("failed to receive public key");   
+        }
+        var wotmsg = new WoTMessage();
+        var payload = wotmsg.decode(msg, pkey);
+        if (payload && payload.data) {
+            return payload.data;
+        }
+    }
+    catch (err) {
+        logger.error("validate_message error: %j", err, {});
+    }
+    return null;
+}
+
 var toyota_car = new device("Toyota");
 var ford_car = new device("Ford");
 
@@ -116,12 +134,23 @@ var things = [
             db.find_thing("Toyota", callback);
         },
         "implementation": {
-            start: function (thing) {               
-                toyota_car.init(thing.model, '127.0.0.1', 65520, function (err) {
-                    if (err) {
-                        return logger.error("P2P thing Toyota initialisation error: " + err);
+            start: function (thing) {
+                toyota_car.init(thing.model, '127.0.0.1', 65520, 
+                    function (err) {
+                        if (err) {
+                            return logger.error("P2P thing Toyota initialisation error: " + err);
+                        }
+                    },
+                    function (key, msg) {
+                        if (key == "Toyota/property/speed") {
+                            //  verify and decode the message using the sender public key
+                            var data = decode_message("Toyota", msg);
+                            if (data) {
+                                logger.debug('Toyota P2P update speed: ' + data.value + ' ' + data.unit);
+                            }
+                        }
                     }
-                });
+                );
             },
             stop: function (thing) {
                 toyota_car.unbind(function (err) {
@@ -150,11 +179,22 @@ var things = [
         },
         "implementation": {
             start: function (thing) {
-                ford_car.init(thing.model, '127.0.0.1', 65521, function (err) {
-                    if (err) {
-                        return logger.error("P2P thing Ford initialisation error: " + err);
+                ford_car.init(thing.model, '127.0.0.1', 65521, 
+                    function (err) {
+                        if (err) {
+                            return logger.error("P2P thing Ford initialisation error: " + err);
+                        }
+                    },
+                    function (key, msg) {
+                        if (key == "Ford/property/speed") {
+                            //  verify and decode the message using the sender public key
+                            var data = decode_message("Ford", msg);
+                            if (data) {
+                                logger.debug('Ford P2P update speed: ' + data.value + ' ' + data.unit);
+                            }
+                        }
                     }
-                });
+                );
             },
             stop: function (thing) {
                 ford_car.unbind(function (err) {

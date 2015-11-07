@@ -1,6 +1,15 @@
 ﻿var assert = require('assert');
 var logger = require('../../logger');
-var PeerNetwork = require('../../libs/transport/p2p/wotkad/peer_network');
+var wotkad = require('../../libs/transport/p2p/wotkad/kaddht');   //WOT Kademlia DHT object
+var WoTMessage = require('../../libs/message/wotmsg');
+
+
+var list_of_seeds = [];
+//  TODO use persistent store Redis or Levelup for the public key list
+var list_of_publickeys = {};
+
+exports.seed_nodes = list_of_seeds;
+
 
 exports.start = function start(settings) {
     try {
@@ -10,25 +19,29 @@ exports.start = function start(settings) {
             throw new Error("Invalid P2P configuration settings");
         }
         
-        // start the P2P overlay networks and Kademlia DHT        
-        var peernet = new PeerNetwork();
-        
+        // start the P2P overlay networks and Kademlia DHT by adding the first 2 peer nodes       
         for (var i = 0; i < settings.nodes.length; i++) {
             var node = settings.nodes[i];
             assert(node.address, 'No p2p address is specified');
             assert(node.port, 'No p2p port is specified');
             assert(node.nick, 'No p2p nick is specified');
             
-            // Create our first node
-            var seed_node = peernet.create_peer({
+            //  Create our first nodea
+            //  this seed nodea will never send a message and therefore
+            //  the public key is not required to verify its signature
+            //var seed_node = peernet.create_peer({
+            //    address: node.address,
+            //    port: node.port,
+            //    nick: node.nick,
+            //    seeds: node.seeds
+            //});    
+            var peernode = wotkad({
                 address: node.address,
                 port: node.port,
-                nick: node.nick,
-                alg: {}, 
-                private_key: {},
-                public_key: {},
+                nick: node.nick,        
                 seeds: node.seeds
-            });    
+            });
+            list_of_seeds.push(peernode);
         }
 
         logger.info('P2P overlay network started');
@@ -36,5 +49,44 @@ exports.start = function start(settings) {
     catch (err) {
         logger.error("P2P handler start error %j", err, {});
     }
+}
 
+exports.get_public_key = function (nick, callback) {
+    var pkey = list_of_publickeys[nick];
+    if (pkey) {
+        return callback(null, pkey );
+    }
+
+    var node = list_of_seeds[0];
+    node.get(nick, function (err, msg) {
+        try {
+            if (err) {
+                //logger.error("get_public_key error %j", err, {});
+                return callback(err);
+            }
+            
+            // parse the message
+            var wotmsg = new WoTMessage();
+            var payload = wotmsg.get_message_payload(msg);
+            if (payload && payload.data && payload.data.type && payload.data.type == wotmsg.MSGTYPE.ADDPK && payload.data[wotmsg.MSGFIELD.PUBKEY] != null) {
+                //  this message is actually trying to add the public key to the network first time
+                //  validate the message and let add the public key
+                var decoded = wotmsg.decode(msg, payload.data[wotmsg.MSGFIELD.PUBKEY]);
+                if (decoded && decoded.data[wotmsg.MSGFIELD.PUBKEY]) {
+                    var pkey = decoded.data[wotmsg.MSGFIELD.PUBKEY];
+                    list_of_publickeys[nick] = pkey;
+                    return callback(null, pkey);
+                }
+            }            
+        }
+        catch (e) {
+            logger.error("get_public_key exception %j", e, {});
+        }
+
+        callback("Failed to get public key at get_public_key()");
+    });    
+}
+
+exports.get_public_key_sync = function (nick) {
+    return list_of_publickeys[nick];
 }

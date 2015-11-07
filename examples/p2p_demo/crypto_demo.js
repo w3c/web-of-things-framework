@@ -5,13 +5,19 @@ var ecdsa = require('../../libs/crypto/ecc/EccDsa');
 var eccsign = require('../../libs/crypto/ecc/EccSign');
 var eccverify = require('../../libs/crypto/ecc/EccVerify');
 var jwt = require('../../libs/message/jwt');
+var WoTMessage = require('../../libs/message/wotmsg');
 
 var random_bytes = secrand.randomBuffer(32);
-var salt = crypto.createHash('sha1').update(random_bytes).digest().toString('hex');
-var key = new EccKey(salt);
+var pwd = crypto.createHash('sha1').update(random_bytes).digest().toString('hex');
+var key = new EccKey(pwd);
 
-var token = jwt.encode({ data: { foo: "bar" } }, key.privateKey, {expiresIn: 1800, issuer: "me", subject :"some message"});
-var decoded = jwt.decode(token, key.publicKeyStr);
+var wotmsg = new WoTMessage();
+var token = wotmsg.create(key.privateKey, { foo: "bar" }, null, 1800, "door12", "some message" );
+var decoded = wotmsg.decode(token, key.publicKeyStr);
+console.log(decoded.data.foo == "bar");
+
+token = jwt.encode({ data: { foo: "bar" } }, key.privateKey, {expiresIn: 1800, issuer: "door12", subject :"some message"});
+decoded = jwt.decode(token, key.publicKeyStr);
 console.log(decoded.data.foo == "bar");
 
 var obj = { foo: "bar" };

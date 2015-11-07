@@ -99,12 +99,12 @@ jwt.encode = function encode(payload, key, options) {
         payload.iat = payload.iat || timestamp;
     }
     
-    if (options.expiresIn) {
-        if (typeof options.expiresIn === 'number') { // must be in seconds
-            payload.exp = timestamp + options.expiresIn;
+    if (options.expires) {
+        if (typeof options.expires === 'number') { // must be in seconds
+            payload.exp = timestamp + options.expires;
         }
         else {
-            throw new Error('JWT encode error: "expiresIn" must be a number of seconds');
+            throw new Error('JWT encode error: expires must be a number of seconds');
         }
     }
 
@@ -114,6 +114,10 @@ jwt.encode = function encode(payload, key, options) {
     
     if (options.issuer) {
         payload.iss = options.issuer;
+    }
+    
+    if (options.subject) {
+        payload.sub = options.subject;
     }
     
     if (options.subject) {
@@ -131,6 +135,20 @@ jwt.encode = function encode(payload, key, options) {
     
     return segments.join('.');
 };
+
+jwt.get_message_payload = function (msg) {
+    var segments = msg.split('.');
+    if (segments.length !== 3) {
+        throw new Error('JWT decode error: invalid segment count');
+    }
+    
+    // All segment should be base64
+    var payloadSeg = segments[1];
+    var payload = JSON.parse(base64urlDecode(payloadSeg));    
+    
+    return payload;
+}
+
 
 
 function verify(crypto, input, public_key, signature) {

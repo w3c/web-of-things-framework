@@ -7,10 +7,7 @@ var peernet = new PeerNetwork();
 var options = {
     address: '127.0.0.1',
     port: 65529,
-    nick: 'seed1',
-    alg: {}, 
-    private_key: {},
-    public_key: {}
+    nick: 'seed1'
 };
 var seed1 = peernet.create_peer(options);
 
@@ -18,9 +15,6 @@ options = {
     address: '127.0.0.1',
     port: 65530,
     nick: 'seed2',
-    alg: {}, 
-    private_key: {},
-    public_key: {},
     seeds: [{ address: '127.0.0.1', port: 65529 }]
 };
 var seed2 = peernet.create_peer(options);
@@ -30,9 +24,6 @@ options = {
     address: '127.0.0.1',
     port: 65531,
     nick: 'node2',
-    alg: {}, 
-    private_key: {},
-    public_key: {},
     seeds: [{ address: '127.0.0.1', port: 65529 }]
 };
 var peer2 = peernet.create_peer(options);
@@ -41,9 +32,6 @@ options = {
     address: '127.0.0.1',
     port: 65532,
     nick: 'node3',
-    alg: {}, 
-    private_key: {},
-    public_key: {},
     seeds: [{ address: '127.0.0.1', port: 65530 }]
 };
 var peer3 = peernet.create_peer(options);

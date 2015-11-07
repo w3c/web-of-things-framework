@@ -586,7 +586,7 @@ Node.prototype._handleFindValue = function(params) {
 
     this._storage.get(params.key, function(err, value) {
         if (err || !value) {
-            node._log.debug('value not found, sending contacts to %s', params.nodeID);
+            //node._log.debug('value not found, sending contacts to %s', params.nodeID);
 
             var notFoundMessage = new Message('FIND_VALUE_REPLY', {
             referenceID: params.rpcID,
