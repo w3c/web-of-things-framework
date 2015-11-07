@@ -46,11 +46,18 @@ Install the node web socket module (and other dependencies):
 To start the server use the following command from a terminal shell:
 
 ```
-  cd examples
+  cd examples\coap_demo
   node demo.js
 ```
+to run the CoAP demo
 
-To load the demo web page point your web browser to
+```
+  cd examples\http_demo
+  node demo.js
+```
+to run the HTTP REST demo
+
+Both for the CoAP and HTTP demo point your web browser to load the demo web page at
 
   http://localhost:8888/
   
@@ -59,6 +66,13 @@ and open the browser console to view the log.
 Click on the Things menu item in the browser to view the loaded things.
 
 Open other browser instance at http://localhost:8888/ and invoke actions and writable properties, the framework should send data to both browser sessions.
+
+```
+  cd examples\p2p_demo
+  node demo.js
+```
+to run the P2P Kademlia (DHT) and peer to peer demo. 
+
  
 
 1. <a name="1">http://www.w3.org/blog/2015/05/building-the-web-of-things</a>
