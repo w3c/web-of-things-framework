@@ -34,7 +34,10 @@ WoTMessage.prototype.MSGTYPE =  {
 }
 
 WoTMessage.prototype.MSGFIELD = {
-    PUBKEY: "public_key"
+    PUBKEY: "public_key",
+    ECDHPK: "ecdh_public",
+    HOST: "address",
+    PORT: "port"
 }
 
 WoTMessage.prototype.PEERMSG = {
@@ -91,7 +94,38 @@ WoTMessage.prototype.create = function (private_key, payload, algorithm, expires
 }
 
 
-WoTMessage.prototype.create_peermsg = function (private_key, payload) {
+WoTMessage.prototype.serialize = function (input) {
+    var text = null;
+    try {
+        if (typeof input != 'string') {
+            if (typeof input == 'object') {
+                try {
+                    text = JSON.stringify(input);
+                }
+                catch (e) {
+                    text = input.toString();
+                }
+            }
+            else {
+                text = input.toString();
+            }
+        }
+        else {
+            text = input;
+        }
+    }
+    catch (err) {
+        throw new Error("Error in serializing payload, error: %j", err, {});
+    }
+    
+    if (!text)
+        throw new Error("Error in serializing payload");
+
+    return text;
+}
+
+
+WoTMessage.prototype.create_peermsg = function (ECC_private_key, ECDH_key, ECDH_public, payload, issuer, audience, expires) {
     if (!private_key) {
         throw new Error("WoTMessage error: private_key parameter is missing");
     }
@@ -100,8 +134,18 @@ WoTMessage.prototype.create_peermsg = function (private_key, payload) {
         throw new Error("WoTMessage error: payload parameter is missing");
     }
     
+    var datastr = this.serialize(payload);
+    
+    var symmetric_secret = ECDH_key.computeSecret(ECDH_public, 'hex', 'hex');
+    
+    var symm_cipher = crypto.createCipher('aes256', symmetric_secret);
+    var cipher_text = symm_cipher.update(datastr, 'utf8', 'base64');
+    cipher_text += symm_cipher.final('base64');
+    
+    var data = {data: cipher_text}
+    
     // create a JWT token
-    var token = this.create(private_key, payload);
+    var token = this.create(ECC_private_key, data, null, expires, issuer, null, audience);
     assert(typeof token == 'string', "Invalid JWT token, token must be string");
     
     // add the peer message headers

@@ -94,7 +94,9 @@ PeerNetwork.prototype.validate_keyvaluepair = function (key, msg, callback) {
             try {
                 var wotmsg = new WoTMessage();
                 var payload = wotmsg.get_message_payload(message);
-                result = payload && payload.data && payload.data.type && payload.data.type == wotmsg.MSGTYPE.ADDPK && payload.data[wotmsg.MSGFIELD.PUBKEY] != null;
+                result = payload && payload.data && payload.data.type && payload.data.type == wotmsg.MSGTYPE.ADDPK 
+                            && payload.data[wotmsg.MSGFIELD.PUBKEY] && payload.data[wotmsg.MSGFIELD.PUBKEY] != null
+                            && payload.data[wotmsg.MSGFIELD.ECDHPK] && payload.data[wotmsg.MSGFIELD.ECDHPK] != null;
             }
             catch (err) {
                 logger.error("PeerNetwork validate_keyvaluepair is_pkeyadd_message error: %j", err, {});
@@ -125,7 +127,7 @@ PeerNetwork.prototype.validate_keyvaluepair = function (key, msg, callback) {
             return callback(is_valid);
         }
         else {
-            p2phandler.get_public_key(nick, function (err, pkey) {
+            p2phandler.get_contact(nick, function (err, contact) {
                 if (err) {
                     // not exists ?
                     if (key.indexOf("/") > -1) {
@@ -142,6 +144,7 @@ PeerNetwork.prototype.validate_keyvaluepair = function (key, msg, callback) {
                     }
                 }
                 else {
+                    var pkey = contact.public_key;
                     var is_valid = validate_msg(msg, pkey);
                     return callback(is_valid);
                 }

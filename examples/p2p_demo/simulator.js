@@ -36,7 +36,11 @@ var device_node = function (thing, address, port, seedaddr, seedport) {
     //  The node must updload its public key to the network so other peers can verify the signed messages
     var random_bytes = secrand.randomBuffer(32);
     var pwd = crypto.createHash('sha1').update(random_bytes).digest().toString('hex');
-    this.cryptokey = new EccKey(pwd);
+    this.cryptokey = new EccKey(pwd);    
+
+    this.ecdh_key = crypto.createECDH('secp256k1');
+    this.ecdh_key.generateKeys();
+    this.ecdh_public_key = this.ecdh_key.getPublicKey('hex');
 
     this.node.on('connect', function (err, value) {
         if (err) {
@@ -49,6 +53,9 @@ var device_node = function (thing, address, port, seedaddr, seedport) {
         var wotmsg = new WoTMessage();
         var payload = { type: wotmsg.MSGTYPE.ADDPK };
         payload[wotmsg.MSGFIELD.PUBKEY] = self.cryptokey.publicKeyStr;
+        payload[wotmsg.MSGFIELD.ECDHPK] = self.ecdh_public_key;
+        payload[wotmsg.MSGFIELD.HOST] = address;
+        payload[wotmsg.MSGFIELD.PORT] = port;
         var jwt_token = wotmsg.create(self.cryptokey.privateKey, payload);
 
         //  For this public key upload message the key is the device name
