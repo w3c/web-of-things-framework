@@ -11,6 +11,7 @@ var PeerNetwork = require('../../libs/transport/p2p/wotkad/peer_network');
 var simulator = require('./simulator');
 var p2phandler = require('../../transports/p2p/handler');
 var WoTMessage = require('../../libs/message/wotmsg');
+var peercomm = require('../../libs/transport/p2p/wotkad/peer_comm');
 
 var config = global.appconfig;
 
@@ -88,8 +89,8 @@ var device = function (thing_name) {
                         datafn(key, value);
                     });
                 }
-            });
-    
+            });            
+           
         });
 
         callback();
@@ -147,6 +148,10 @@ var things = [
                             var data = decode_message("Toyota", msg);
                             if (data) {
                                 logger.debug('Toyota P2P update speed: ' + data.value + ' ' + data.unit);
+                                var buf = new Buffer(254);
+                                buf.writeUInt32BE(0x75115507, 0);
+                                buf.writeUInt16BE(0xDAD, 4);
+                                peercomm.sendmsg(buf, 60000, 'localhost');    
                             }
                         }
                     }

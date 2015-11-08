@@ -51,14 +51,22 @@ PeerNetwork.prototype.create_peer = function (options) {
         port: options.port,
         nick: options.nick,        
         seeds: options.seeds,
-        validateKeyValuePair: this.validate_keyvaluepair
+        validateKeyValuePair: this.validate_keyvaluepair,
+        peermsgHandler: options.peermsgHandler
     });
     
-    peernode.on('store', this.msg_stored.bind(this));
+    peernode.on('msgstored', this.msg_stored.bind(this));
     
     return peernode;  
 }
 
+//PeerNetwork.prototype.peer_msg_handler = function (buffer, info) {
+//    var id = buffer.readUInt32BE(0);
+//    var type = buffer.readUInt16BE(4);
+//    if (id == 0x75115507 && type == 0xDAD) {
+//        var b = buffer;
+//    }
+//}
 
 PeerNetwork.prototype.msg_stored = function (node_id, item) {
     if (!item || !item.key || !item.hash)
@@ -75,37 +83,9 @@ PeerNetwork.prototype.msg_stored = function (node_id, item) {
     this.emit("data", key);
 }
 
-
-//PeerNetwork.prototype.get_public_key = function (key, msg, callback) {
-//    var elements = key.split("/");
-//    var nick = elements[0];
-//    p2phandler.get_public_key(nick, function (err, pkey) {
-//        if (err) {
-//            // not exists ?
-//            if (key.indexOf("/") > -1) {
-//                return callback(err);
-//            }
-
-//            var wotmsg = new WoTMessage();
-//            pkey = WoTMessage.get_message_payload(msg);
-//        }
-//    });
-
-//    var elements = key.split("/");
-//    var nick = elements[0];
-//    var pkey = this.public_keys[nick];
-//    if (pkey) {
-//        return callback(null, pkey);
-//    }
-
-//    //  try to get the public key from the message
-//    if (key.indexOf("/") == -1) {
-//        var wotmsg = new WoTMessage();
-//        pkey = WoTMessage.get_public_key(msg);
-//    }
-//}
-
-
+//  All messages must be signed with the sender's public key
+//  The cryptography signature of messages is validated by the validate_keyvaluepair method.
+//  The validate_keyvaluepair method refuse to propogate the message to the network if the verification fails.
 PeerNetwork.prototype.validate_keyvaluepair = function (key, msg, callback) {
     try {
         

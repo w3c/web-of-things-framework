@@ -106,6 +106,15 @@ RPC.prototype._handleMessage = function(buffer, info) {
     var contact;
 
     try {
+        try {
+            var id = buffer.readUInt32BE(0);
+            var type = buffer.readUInt16BE(4);
+            if (id == 0x75115507 && type == 0xDAD) {
+                return this.emit('peermsg', buffer, info);
+            }
+        }
+        catch (e) { }
+
         data = JSON.parse(buffer.toString('utf8'));
         params = data.params;
         contact = this._createContact(params);
@@ -114,6 +123,11 @@ RPC.prototype._handleMessage = function(buffer, info) {
         //this._log.debug('received valid message %j', message, {}); 
     } 
     catch (err) {
+        //try {
+        //    var id = buffer.readUInt32BE(0);
+        //    var type = buffer.readUInt16BE(4);
+        //}
+        //catch (e) { }
         return this.emit('MESSAGE_DROP', buffer, info);
     }
 

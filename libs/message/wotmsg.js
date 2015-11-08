@@ -37,6 +37,11 @@ WoTMessage.prototype.MSGFIELD = {
     PUBKEY: "public_key"
 }
 
+WoTMessage.prototype.PEERMSG = {
+    ID: 0x75115507,
+    SEND: 0xDAD
+}
+
 WoTMessage.prototype.create = function (private_key, payload, algorithm, expires, issuer, subject, audience) {    
     if (!private_key) {
         throw new Error("WoTMessage error: private_key parameter is missing");
@@ -84,6 +89,33 @@ WoTMessage.prototype.create = function (private_key, payload, algorithm, expires
     
     return token;    
 }
+
+
+WoTMessage.prototype.create_peermsg = function (private_key, payload) {
+    if (!private_key) {
+        throw new Error("WoTMessage error: private_key parameter is missing");
+    }
+
+    if (!payload) {
+        throw new Error("WoTMessage error: payload parameter is missing");
+    }
+    
+    // create a JWT token
+    var token = this.create(private_key, payload);
+    assert(typeof token == 'string', "Invalid JWT token, token must be string");
+    
+    // add the peer message headers
+    var len = token.length;
+    var buffer = new appconfig(len + 6);
+    buffer.writeUInt32BE(this.PEERMSG.ID, 0);
+    buffer.writeUInt16BE(this.PEERMSG.SEND, 4);
+    // combine the header and JWT token
+    buffer.write(token, 6, len);
+    
+    return buffer;
+}
+
+
 
 WoTMessage.prototype.decode = function (payload, public_key) {
     if (!public_key) {

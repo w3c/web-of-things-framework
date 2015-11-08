@@ -16,11 +16,20 @@ var device_node = function (thing, address, port, seedaddr, seedport) {
 
     logger.debug("starting P2P device simulator for " + this.name);
     
+    this.peer_msg_handler = function (buffer, info) {
+        var id = buffer.readUInt32BE(0);
+        var type = buffer.readUInt16BE(4);
+        if (id == 0x75115507 && type == 0xDAD) {
+            var b = buffer;
+        }
+    };
+
     options = {
         address: address,
         port: port,
         nick: this.name,
-        seeds: [{ address: seedaddr, port: seedport }]
+        seeds: [{ address: seedaddr, port: seedport }],
+        peermsgHandler: this.peer_msg_handler
     };
     this.node = peernet.create_peer(options);
     
