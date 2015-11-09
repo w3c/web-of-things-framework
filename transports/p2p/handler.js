@@ -6,7 +6,8 @@ var WoTMessage = require('../../libs/message/wotmsg');
 
 var list_of_seeds = [];
 //  TODO use persistent store Redis or Levelup for the public key list
-var list_of_publickeys = {};
+var contacts = {};
+var list_of_ecdhpkeys = {};
 
 exports.seed_nodes = list_of_seeds;
 
@@ -51,12 +52,7 @@ exports.start = function start(settings) {
     }
 }
 
-exports.get_public_key = function (nick, callback) {
-    var pkey = list_of_publickeys[nick];
-    if (pkey) {
-        return callback(null, pkey );
-    }
-
+function update_contact(nick, callback) {
     var node = list_of_seeds[0];
     node.get(nick, function (err, msg) {
         try {
@@ -68,25 +64,81 @@ exports.get_public_key = function (nick, callback) {
             // parse the message
             var wotmsg = new WoTMessage();
             var payload = wotmsg.get_message_payload(msg);
-            if (payload && payload.data && payload.data.type && payload.data.type == wotmsg.MSGTYPE.ADDPK && payload.data[wotmsg.MSGFIELD.PUBKEY] != null) {
+            if (payload && payload.data && payload.data.type && payload.data.type == wotmsg.MSGTYPE.ADDPK 
+                && payload.data[wotmsg.MSGFIELD.PUBKEY] != null && payload.data[wotmsg.MSGFIELD.ECDHPK] != null) {
                 //  this message is actually trying to add the public key to the network first time
                 //  validate the message and let add the public key
                 var decoded = wotmsg.decode(msg, payload.data[wotmsg.MSGFIELD.PUBKEY]);
                 if (decoded && decoded.data[wotmsg.MSGFIELD.PUBKEY]) {
                     var pkey = decoded.data[wotmsg.MSGFIELD.PUBKEY];
-                    list_of_publickeys[nick] = pkey;
-                    return callback(null, pkey);
+                    var ecdhpk = decoded.data[wotmsg.MSGFIELD.ECDHPK];
+                    var address = decoded.data[wotmsg.MSGFIELD.HOST];
+                    var port = decoded.data[wotmsg.MSGFIELD.PORT];
+                    var contact = { public_key: pkey, ecdh_public: ecdhpk, address: address, port: port }
+                    contacts[nick] = contact;
+                    return callback(null, contact);
                 }
-            }            
+            }
         }
         catch (e) {
-            logger.error("get_public_key exception %j", e, {});
+            logger.error("get_contact exception %j", e, {});
+            callback("get_contact error " + e.message);
         }
-
-        callback("Failed to get public key at get_public_key()");
-    });    
+    });   
 }
 
+exports.get_public_key = function (nick, callback) {
+    var pkey = contacts[nick].public_key;
+    if (pkey) {
+        return callback(null, pkey );
+    }
+    
+    update_contact(nick, function (err) {
+        if (err) {         
+            return callback(err);
+        }
+        pkey = contacts[nick].public_key;
+        if (pkey) {
+            return callback(null, pkey);
+        }
+    });
+}
+
+exports.get_ecdh_pkey = function (nick, callback) {
+    var ecdhpk = contacts[nick].ecdh_public;
+    if (ecdhpk) {
+        return callback(null, ecdhpk);
+    }
+    
+    update_contact(nick, function (err) {
+        if (err) {
+            return callback(err);
+        }
+        ecdhpk = contacts[nick].ecdh_public;
+        if (ecdhpk) {
+            return callback(null, ecdhpk);
+        }
+    });
+}
+
+exports.get_contact = function (nick, callback) {
+    var contact = contacts[nick];
+    if (contact) {
+        return callback(null, contact);
+    }
+    
+    update_contact(nick, function (err) {
+        if (err) {
+            return callback(err);
+        }
+        contact = contacts[nick];
+        if (contact) {
+            return callback(null, contact);
+        }
+    });
+}
+
+
 exports.get_public_key_sync = function (nick) {
-    return list_of_publickeys[nick];
+    return contacts[nick] && contacts[nick].public_key ? contacts[nick].public_key : null;
 }

@@ -229,6 +229,10 @@ Node.prototype._bindRPCMessageHandlers = function() {
     this._rpc.on('FIND_NODE', this._handleFindNode.bind(this));
     this._rpc.on('FIND_VALUE', this._handleFindValue.bind(this));
     this._rpc.on('CONTACT_SEEN', this._updateContact.bind(this));
+    
+    if (this._options.peermsgHandler && (typeof this._options.peermsgHandler == "function")) {
+        this._rpc.on('peermsg', this._options.peermsgHandler.bind(this));
+    }
 
     this._rpc.on('ready', function() {
         self._log.debug('node listening on %j', self._self.toString());
@@ -545,7 +549,7 @@ Node.prototype._storeValidatedKeyValue = function (item, params) {
         node._rpc.send(contact, message);
 
         // signal an event that the message was stored
-        node.emit('store', node._self.nodeID, item );
+        node.emit('msgstored', node._self.nodeID, item );
     });
 };
 
