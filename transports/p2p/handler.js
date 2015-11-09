@@ -74,7 +74,7 @@ function update_contact(nick, callback) {
                     var ecdhpk = decoded.data[wotmsg.MSGFIELD.ECDHPK];
                     var address = decoded.data[wotmsg.MSGFIELD.HOST];
                     var port = decoded.data[wotmsg.MSGFIELD.PORT];
-                    var contact = { public_key: pkey, ecdhpk: ecdhpk, address: address, port: port }
+                    var contact = { public_key: pkey, ecdh_public: ecdhpk, address: address, port: port }
                     contacts[nick] = contact;
                     return callback(null, contact);
                 }
@@ -105,7 +105,7 @@ exports.get_public_key = function (nick, callback) {
 }
 
 exports.get_ecdh_pkey = function (nick, callback) {
-    var ecdhpk = contacts[nick].ecdhpk;
+    var ecdhpk = contacts[nick].ecdh_public;
     if (ecdhpk) {
         return callback(null, ecdhpk);
     }
@@ -114,7 +114,7 @@ exports.get_ecdh_pkey = function (nick, callback) {
         if (err) {
             return callback(err);
         }
-        ecdhpk = contacts[nick].ecdhpk;
+        ecdhpk = contacts[nick].ecdh_public;
         if (ecdhpk) {
             return callback(null, ecdhpk);
         }

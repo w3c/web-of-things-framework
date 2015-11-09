@@ -12,15 +12,30 @@ var simulator = require('./simulator');
 var p2phandler = require('../../transports/p2p/handler');
 var WoTMessage = require('../../libs/message/wotmsg');
 var peercomm = require('../../libs/transport/p2p/wotkad/peer_comm');
+var crypto = require('crypto')
+var secrand = require('secure-random');
+var EccKey = require('../../libs/crypto/ecc/EccKey');
+var p2phandler = require('../../transports/p2p/handler');
+
 
 var config = global.appconfig;
 
 var peernet = new PeerNetwork();
 
-var device = function (thing_name) {
+var PeerHandler = function (thing_name, client_name) {
 
     var self = this;
     this.name = thing_name;
+    this.nick = client_name;
+    
+    // generate the cryptography keys
+    var random_bytes = secrand.randomBuffer(32);
+    var pwd = crypto.createHash('sha1').update(random_bytes).digest().toString('hex');
+    this.cryptokey = new EccKey(pwd);
+    
+    this.ecdh_key = crypto.createECDH('secp256k1');
+    this.ecdh_key.generateKeys();
+    this.ecdh_public_key = this.ecdh_key.getPublicKey('hex');
     
     self.property_get = function (property, callback) {
         logger.debug("get property from the P2P network: " + property);
@@ -57,6 +72,36 @@ var device = function (thing_name) {
         return false;       
     }
     
+    this.peer_msg_handler = function (buffer, info) {
+        var id = buffer.readUInt32BE(0);
+        var type = buffer.readUInt16BE(4);
+        if (id == 0x75115507 && type == 0xDAD) {
+            var b = buffer;
+        }
+    };
+    
+    this.send_peer_message = function (msg) {
+        try {
+            p2phandler.get_contact(this.name, function (err, contact) {
+                if (err) {
+                    return logger.error("send_peer_message error %j", err, {});
+                }
+                
+                try {
+                    var wotmsg = new WoTMessage();
+                    var encoded_msgbuffer = wotmsg.create_peermsg(self.cryptokey.privateKey, self.ecdh_key, contact[wotmsg.MSGFIELD.ECDHPK], msg, self.nick, self.name);
+                    peercomm.sendmsg(encoded_msgbuffer, contact.port, contact.address);
+                }
+                catch (e) {
+                    logger.error("PeerHandler send_peer_message error %j", e, {});
+                }
+            });
+        }
+        catch (err) {
+            logger.error("PeerHandler send_peer_message error %j", err, {});
+        }
+    }
+    
     // create the P2P peer node
     self.init = function ( model, address, port, callback, datafn) {
         this.model = model;
@@ -66,8 +111,9 @@ var device = function (thing_name) {
         options = {
             address: address,
             port: port,
-            nick: uuid.v4(),
-            seeds: [{ address: seedaddr, port: seedport }]
+            nick: this.nick,
+            seeds: [{ address: seedaddr, port: seedport }],
+            peermsgHandler: this.peer_msg_handler
         };
         this.node = peernet.create_peer(options);
         
@@ -75,6 +121,26 @@ var device = function (thing_name) {
             if (err) {
                 return logger.error("peer connect error %j", err, {});
             }
+            
+            //  publish the public keys so this client can communicate with the devices
+            //  via direct peer to peer messaging as well
+            // create the WoT message 
+            var wotmsg = new WoTMessage();
+            var payload = { type: wotmsg.MSGTYPE.ADDPK };
+            payload[wotmsg.MSGFIELD.PUBKEY] = self.cryptokey.publicKeyStr;
+            payload[wotmsg.MSGFIELD.ECDHPK] = self.ecdh_public_key;
+            payload[wotmsg.MSGFIELD.HOST] = address;
+            payload[wotmsg.MSGFIELD.PORT] = port;
+            var jwt_token = wotmsg.create(self.cryptokey.privateKey, payload);
+            
+            //  For this public key upload message the key is the device name
+            self.node.put(self.nick, jwt_token, function (err) {
+                if (err) {
+                    return logger.error("node put error %j", err, {});
+                }
+                //  the public key has been uplodad, other peers can verify the messages -> ready to process device messages
+                self.is_publickey_uplodaed = true;
+            });
             
             logger.debug("peer " + self.name + " %j connected to overlay network", value, {});
             
@@ -126,8 +192,8 @@ function decode_message(nick, msg) {
     return null;
 }
 
-var toyota_car = new device("Toyota");
-var ford_car = new device("Ford");
+var toyota_car = new PeerHandler("Toyota", "ToyotaClient01");
+var ford_car = new PeerHandler("Ford", "FordClient01");
 
 var things = [
     {
@@ -141,17 +207,21 @@ var things = [
                         if (err) {
                             return logger.error("P2P thing Toyota initialisation error: " + err);
                         }
+
+                        //  start a peer message send simulator
+                        var peermsgsend = function () {
+                            var msg = {data: "message from ToyotaClient01 at " + new Date().toTimeString() }
+                            toyota_car.send_peer_message(msg);
+                        };
+                        setInterval(peermsgsend, 15000);
+
                     },
                     function (key, msg) {
                         if (key == "Toyota/property/speed") {
                             //  verify and decode the message using the sender public key
                             var data = decode_message("Toyota", msg);
                             if (data) {
-                                logger.debug('Toyota P2P update speed: ' + data.value + ' ' + data.unit);
-                                var buf = new Buffer(254);
-                                buf.writeUInt32BE(0x75115507, 0);
-                                buf.writeUInt16BE(0xDAD, 4);
-                                peercomm.sendmsg(buf, 60000, 'localhost');    
+                                logger.debug('Toyota P2P update speed: ' + data.value + ' ' + data.unit);                                
                             }
                         }
                     }

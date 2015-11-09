@@ -20,6 +20,8 @@ Copyright (C) 2015 The W3C WoT Team
 var assert = require('assert');
 var crypto = require('crypto');
 var jwt = require('./jwt');
+var util = require('util');
+
 
 function WoTMessage() {
     if (!(this instanceof WoTMessage)) {
@@ -124,14 +126,77 @@ WoTMessage.prototype.serialize = function (input) {
     return text;
 }
 
+WoTMessage.prototype.parse_peermsg = function (buffer, ecdh_key, getkeyfn, callback) {
+    var self = this;
 
-WoTMessage.prototype.create_peermsg = function (ECC_private_key, ECDH_key, ECDH_public, payload, issuer, audience, expires) {
-    if (!private_key) {
-        throw new Error("WoTMessage error: private_key parameter is missing");
+    if (!buffer) {
+        throw new Error("WoTMessage parse_peermsg error: msg parameter is missing");
+    }
+    
+    if (!util.isBuffer(buffer)) {
+        throw new Error("WoTMessage parse_peermsg error: invalid buffer");
+    }
+    
+    var id = buffer.readUInt32BE(0);
+    var type = buffer.readUInt16BE(4);
+    if (id != this.PEERMSG.ID || type != this.PEERMSG.SEND) {
+        throw new Error("WoTMessage parse_peermsg error: invalid peer message");
     }
 
+    var payload = buffer.toString('utf8', 6);
+    var elements = jwt.parse(payload);
+    
+    var payload_element = elements[1];
+    
+    getkeyfn(payload_element.iss, function (err, contact) {
+        try {
+            if (err) {
+                return callback(err);
+            }
+            
+            // first verify the message 
+            var decoded_payload = self.decode(payload, contact[self.MSGFIELD.PUBKEY]);
+            if (!decoded_payload) {
+                return callback("parse_peermsg jwt.decode returned invalid payload" );
+            }
+            
+            // decrypt the symmetric cipher text
+            var cipherText = decoded_payload.data;
+            if (!cipherText) {
+                return callback("parse_peermsg jwt.decode returned invalid cipher text");
+            }
+
+            var ecdhpk = contact[self.MSGFIELD.ECDHPK];
+            var symmetric_secret = ecdh_key.computeSecret(ecdhpk, 'hex', 'hex');
+            
+            var decipher = crypto.createDecipher('aes256', symmetric_secret);
+            var plain_text = decipher.update(cipherText, 'base64', 'utf8');
+            plain_text += decipher.final();
+            
+            // it must be a JSON data object
+            var data = JSON.parse(plain_text);
+            
+            callback(null, data);
+        }
+        catch (e) {
+            callback("parse_peermsg exception " + e.message);
+        }
+    });  
+}
+
+
+WoTMessage.prototype.create_peermsg = function (ECC_private_key, ECDH_key, ECDH_public, payload, issuer, audience, expires) {
+    if (!ECC_private_key) {
+        throw new Error("WoTMessage create_peermsg error: private_key parameter is missing");
+    }
+    if (!ECDH_key) {
+        throw new Error("WoTMessage create_peermsg error: ECDH key parameter is missing");
+    }
+    if (!ECDH_public) {
+        throw new Error("WoTMessage create_peermsg error: ECDH public key parameter is missing");
+    }
     if (!payload) {
-        throw new Error("WoTMessage error: payload parameter is missing");
+        throw new Error("WoTMessage create_peermsg error: payload parameter is missing");
     }
     
     var datastr = this.serialize(payload);
@@ -146,11 +211,11 @@ WoTMessage.prototype.create_peermsg = function (ECC_private_key, ECDH_key, ECDH_
     
     // create a JWT token
     var token = this.create(ECC_private_key, data, null, expires, issuer, null, audience);
-    assert(typeof token == 'string', "Invalid JWT token, token must be string");
+    assert(token && (typeof token == 'string'), "Invalid JWT token, token must be string");
     
     // add the peer message headers
     var len = token.length;
-    var buffer = new appconfig(len + 6);
+    var buffer = new Buffer(len + 6);
     buffer.writeUInt32BE(this.PEERMSG.ID, 0);
     buffer.writeUInt16BE(this.PEERMSG.SEND, 4);
     // combine the header and JWT token
