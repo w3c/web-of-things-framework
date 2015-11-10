@@ -69,4 +69,33 @@ The cryptographic keys are represented in WoT security by the JSON Web Key (JWK)
 
 
 
-### Implementation and design details
+## Implementation and design details
+
+The basic premises of the WoT security are
+*	Things and human users use public/private key (PPK) infrastructure and PPK cryptography functions to secure messages
+*	Each actors of the system must generate a public/private key pair. (Typically keys generated prior to configuring the device and will be burned into the devices' firmware). 
+*	The Thing/user publishes the public key to other users of the system.
+*	The data integrity and authenticity of the messages is guaranteed with PPK signatures
+*	All messages between users are secured with AES 128 and AES 256 symmetric encryption/decryption. 
+*	The system uses Diffie Hellman key exchange algorithms to facilitate the exchange and security of session keys.
+
+#### Elliptic Curve Cryptography (ECC)
+Mainly due to the limited resources on embedded devices the WoT system uses Elliptic Curve Cryptography. As the computation power available to attackers continues to increase, cryptography system must use stronger keys. The below table summarizes what are the various algorithm-key size combinations. The aim should be using AES-256 for symmetric data encryption rather than the prior accepted AES-128 protocol. For elliptic curve sessions the the system eventually will use strong 512–bit keys. To achieve the same level of security with RSA encryption, 15,360 bit keys are required, which is computationally infeasible in embedded systems today. This stark contrast between the feasibility of ECC over RSA for embedded systems indicates that ECC is the algorithm of the future for embedded systems. (source: http://www.atmel.com/images/atmel-8951-cryptoauth-rsa-ecc-comparison-embedded-systems-whitepaper.pdf )
+The latest researches with regards to the attacks on Diffie-Hellman key exchange (source: https://weakdh.org/imperfect-forward-secrecy-ccs15.pdf) also indicate that ECC is the adequate cryptography approach for embedded devices. Researchers exploited flaws in Diffie-Hellman using Logjam Attack. Researches also suggest that that it is plausibly within NSA’s resources to have performed number field sieve precomputations for at least a small number of 1024-bit Diffie-Hellman groups. This would allow them to break any key exchanges made with those groups in close to real time. Therefore the solution is to use stronger keys, which make ECC the only viable PPK approach for embedded devices.
+
+Various algorithm-key size combinations
+
+![image](https://cloud.githubusercontent.com/assets/778649/11066987/4b923d04-87c2-11e5-9d97-f8ababc1bd5d.png)
+
+
+
+Key strength vs MIPS years required to break
+
+![image](https://cloud.githubusercontent.com/assets/778649/11066996/5230a9ca-87c2-11e5-9dcc-d93843792e2d.png)
+
+
+### UML Diagrams
+
+###### High Level Message Send Activity Diagram
+
+![image] (https://cloud.githubusercontent.com/assets/778649/11069210/f728cee4-87cc-11e5-8ef2-3440c762eb7d.png)

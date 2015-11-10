@@ -99,6 +99,10 @@ There are also plenty of areas where you could contribute that don’t involve p
 
 Please see the other project documentation (*.md), e.g. [protocol bindings](https://github.com/w3c/web-of-things-framework/blob/master/bindings.md) and also the list of project issues where we are looking for help, including design topics and bugs.
 
+### Acknowledgements
+
+This work has been funded in part (through October 2015) by the European Union's 7th Research Framework Programme (FP7/ 2013-2015) under grant agreement nº317862 - Compose.
+
 ### Related Projects
 
 These are not as far advanced as the NodeJS project, and your help is welcomed.
