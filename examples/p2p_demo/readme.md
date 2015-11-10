@@ -8,7 +8,7 @@ The P2P design aims to utilize the scalability and high availability features of
 
 The main purpose of the DHT is to provide device discovery service, decentralized data storage for device data, particularly for devices that are source of big-data, to provide publishing of device schemas and accessibility information as well as facilitate communication between devices and public/private networks. The P2P also suitable for networks with small number of devices if users prefer peer to peer networking over client/server topology.
 
-This is a hybrid design as direct communication is possible with the devices via UDP peer to peer messaging (TODO). In case of direct peer to peer communication the device data is not stored in the DHT.
+This is a hybrid design as direct communication is possible with the devices via UDP peer to peer messaging. In case of direct peer to peer communication the device data is not stored in the DHT.
 
 The message handling uses JSON Web Token (JWT). Currently it supports ECC based cryptography, ES256, ES384, ES512 algorithms. The message signature aims to comply with the JSON Web Signature (JWS) standard. 
 Devices, things and human users can send messages directly to each other via UDP instead of publishing the data to the public DHT. Such direct messages are encrypted with shared symmetric cryptography keys. The cryptography keys are shared between devices/users using Diffie-Hellman key exchange. The system uses the EC Diffie-Hellman key exchanges mehods (ECDH) of the NodeJs crypto library to perform the symmetric key exchange. This implementation aims to comply witht he JSON Web Encryption (JWE) sandards. (TODO: perhaps need to add standard key wrapping methods).
