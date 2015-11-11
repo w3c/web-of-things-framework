@@ -96,6 +96,15 @@ Key strength vs MIPS years required to break
 
 ### UML Diagrams
 
-###### High Level Message Send Activity Diagram
+###### High level component diagram
+
+This component diagrams describes the authentication and message modules and handlers of the the WoT security implementation.  WoT uses ECC cryptography by default, but - as most likely many existing devices use RSA cryptography - the system also implements and allows using RSA crypto functions.
+
+![image](https://cloud.githubusercontent.com/assets/778649/11096622/0bd0ce16-8893-11e5-9e54-6314d9117ca9.png)
+
+
+###### High level message send activity diagram
+
+This high level UML activity diagram describes the WoT message create process.
 
 ![image] (https://cloud.githubusercontent.com/assets/778649/11069210/f728cee4-87cc-11e5-8ef2-3440c762eb7d.png)
