@@ -100,7 +100,7 @@ Key strength vs MIPS years required to break
 
 This component diagrams describes the authentication and message modules and handlers of the the WoT security implementation.  WoT uses ECC cryptography by default, but - as most likely many existing devices use RSA cryptography - the system also implements and allows using RSA crypto functions.
 
-![image](https://cloud.githubusercontent.com/assets/778649/11096622/0bd0ce16-8893-11e5-9e54-6314d9117ca9.png)
+![image](https://cloud.githubusercontent.com/assets/778649/11097088/39a79cfa-8895-11e5-8f40-461fbabc9dfb.png)
 
 
 ###### High level message send activity diagram
