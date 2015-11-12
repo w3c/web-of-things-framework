@@ -80,8 +80,7 @@ The basic premises of the WoT security are
 *	The system uses Diffie Hellman key exchange algorithms to facilitate the exchange and security of session keys.
 
 #### Elliptic Curve Cryptography (ECC)
-Mainly due to the limited resources on embedded devices the WoT system uses Elliptic Curve Cryptography. As the computation power available to attackers continues to increase, cryptography system must use stronger keys. The below table summarizes what are the various algorithm-key size combinations. The aim should be using AES-256 for symmetric data encryption rather than the prior accepted AES-128 protocol. For elliptic curve sessions the the system eventually will use strong 512–bit keys. To achieve the same level of security with RSA encryption, 15,360 bit keys are required, which is computationally infeasible in embedded systems today. This stark contrast between the feasibility of ECC over RSA for embedded systems indicates that ECC is the algorithm of the future for embedded systems. (source: http://www.atmel.com/images/atmel-8951-cryptoauth-rsa-ecc-comparison-embedded-systems-whitepaper.pdf )
-The latest researches with regards to the attacks on Diffie-Hellman key exchange (source: https://weakdh.org/imperfect-forward-secrecy-ccs15.pdf) also indicate that ECC is the adequate cryptography approach for embedded devices. Researchers exploited flaws in Diffie-Hellman using Logjam Attack. Researches also suggest that that it is plausibly within NSA’s resources to have performed number field sieve precomputations for at least a small number of 1024-bit Diffie-Hellman groups. This would allow them to break any key exchanges made with those groups in close to real time. Therefore the solution is to use stronger keys, which make ECC the only viable PPK approach for embedded devices.
+Mainly due to the limited resources on embedded devices the WoT system uses Elliptic Curve Cryptography. As the computation power available to attackers continues to increase, cryptography system must use stronger keys. The below table summarizes what are the various algorithm-key size combinations. 
 
 Various algorithm-key size combinations
 
@@ -94,8 +93,20 @@ Key strength vs MIPS years required to break
 ![image](https://cloud.githubusercontent.com/assets/778649/11066996/5230a9ca-87c2-11e5-9dcc-d93843792e2d.png)
 
 
+The aim should be using AES-256 for symmetric data encryption rather than the prior accepted AES-128 protocol. For elliptic curve sessions the the system eventually will use strong 512–bit keys. To achieve the same level of security with RSA encryption, 15,360 bit keys are required, which is computationally infeasible in embedded systems today. This stark contrast between the feasibility of ECC over RSA for embedded systems indicates that ECC is the algorithm of the future for embedded systems. (source: http://www.atmel.com/images/atmel-8951-cryptoauth-rsa-ecc-comparison-embedded-systems-whitepaper.pdf )
+The latest researches with regards to the attacks on Diffie-Hellman key exchange (source: https://weakdh.org/imperfect-forward-secrecy-ccs15.pdf) also indicate that ECC is the adequate cryptography approach for embedded devices. Researchers exploited flaws in Diffie-Hellman using Logjam Attack. Researches also suggest that that it is plausibly within NSA’s resources to have performed number field sieve precomputations for at least a small number of 1024-bit Diffie-Hellman groups. This would allow them to break any key exchanges made with those groups in close to real time. Therefore the solution is to use stronger keys, which make ECC the only viable PPK approach for embedded devices.
+
 ### UML Diagrams
 
-###### High Level Message Send Activity Diagram
+###### High level component diagram
+
+This component diagrams describes the authentication and message modules and handlers of the the WoT security implementation.  WoT uses ECC cryptography by default, but - as most likely many existing devices use RSA cryptography - the system also implements and allows using RSA crypto functions.
+
+![image](https://cloud.githubusercontent.com/assets/778649/11097088/39a79cfa-8895-11e5-8f40-461fbabc9dfb.png)
+
+
+###### High level message send activity diagram
+
+This high level UML activity diagram describes the WoT message create process.
 
 ![image] (https://cloud.githubusercontent.com/assets/778649/11069210/f728cee4-87cc-11e5-8ef2-3440c762eb7d.png)
