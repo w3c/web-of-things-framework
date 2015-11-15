@@ -17,10 +17,11 @@ Copyright (C) 2015 The W3C WoT Team
  
 */
 
+var util = require('util');
 var assert = require('assert');
 var crypto = require('crypto');
 var jwt = require('./jwt');
-var util = require('util');
+var jwe = require('./jwe').handler;
 
 
 function WoTMessage() {
@@ -161,18 +162,16 @@ WoTMessage.prototype.parse_peermsg = function (buffer, ecdh_key, getkeyfn, callb
             }
             
             // decrypt the symmetric cipher text
-            var cipherText = decoded_payload.data;
-            if (!cipherText) {
+            var cipher_text = decoded_payload.data;
+            if (!cipher_text) {
                 return callback("parse_peermsg jwt.decode returned invalid cipher text");
             }
 
             var ecdhpk = contact[self.MSGFIELD.ECDHPK];
-            var symmetric_secret = ecdh_key.computeSecret(ecdhpk, 'hex', 'hex');
             
-            var decipher = crypto.createDecipher('aes256', symmetric_secret);
-            var plain_text = decipher.update(cipherText, 'base64', 'utf8');
-            plain_text += decipher.final();
-            
+            //  The payload must be an JSON Web Encryption (JWE) data structure
+            //  Decode and decrypt the JWE structure
+            var plain_text = jwe.decrypt(ecdh_key, ecdhpk, cipher_text);
             // it must be a JSON data object
             var data = JSON.parse(plain_text);
             
@@ -201,19 +200,16 @@ WoTMessage.prototype.create_peermsg = function (ECC_private_key, ECDH_key, ECDH_
     
     var datastr = this.serialize(payload);
     
-    var symmetric_secret = ECDH_key.computeSecret(ECDH_public, 'hex', 'hex');
-    
-    var symm_cipher = crypto.createCipher('aes256', symmetric_secret);
-    var cipher_text = symm_cipher.update(datastr, 'utf8', 'base64');
-    cipher_text += symm_cipher.final('base64');
-    
+    // get JSON Web Encryption (JWE) encrypted structure
+    var cipher_text = jwe.encrypt(jwe.CRYPTOSYS.ECC, ECDH_key, ECDH_public, datastr);
     var data = {data: cipher_text}
     
-    // create a JWT token
+    // create a JSON Web Token (JWT)
     var token = this.create(ECC_private_key, data, null, expires, issuer, null, audience);
     assert(token && (typeof token == 'string'), "Invalid JWT token, token must be string");
     
-    // add the peer message headers
+    //  Add the peer message headers
+    //  This is a WoT specific implementation to define WoT peer to peer messages
     var len = token.length;
     var buffer = new Buffer(len + 6);
     buffer.writeUInt32BE(this.PEERMSG.ID, 0);
