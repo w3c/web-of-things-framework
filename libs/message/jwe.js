@@ -20,7 +20,7 @@ Copyright (C) 2015 The W3C WoT Team
 var crypto = require('crypto');
 
 
-var EwtHandler = (function () {
+var JWEHandler = (function () {
     var obj = {};
 
     obj.CRYPTOSYS = {
@@ -126,5 +126,5 @@ var EwtHandler = (function () {
 
 
 module.exports = {
-    handler: EwtHandler
+    handler: JWEHandler
 }

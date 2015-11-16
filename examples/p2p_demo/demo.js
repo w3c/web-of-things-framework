@@ -1,9 +1,11 @@
 ﻿// set this global config variable first
 global.appconfig = require('./config');
+// set the global logger
+global.applogger = require('../../logger');
 
 var crypto = require('crypto') 
 var events = require("events");
-var logger = require('../../logger');
+var logger = global.applogger; //require('../../logger');
 var db = require('../../data/db')();
 var wot = require('../../framework');
 var uuid = require('uuid');
