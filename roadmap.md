@@ -20,7 +20,7 @@ You are encouraged to join the [W3C Web of Things Community Group](https://www.w
 
 The initial implementation of the Web of Things Framework was very simple and relied on HTTP for accessing thing descriptions, and WebSockets for messaging. We're looking for help with refining this to cover a broader range of use cases and richer metadata, as well as examples of IoT device drivers, and work on extending the server to support bindings to other protocols, see later on.
 
-### Richer metdata
+### Richer metadata
 
 The relevant metadata for the Web of Things needs to cover a wide range:
 
@@ -115,9 +115,9 @@ Security will be very important to the growth of the IoT, and we are looking for
 
 In essence, we need good security practices to protect the Web of Things from unauthorised monitoring and attacks.  This will involve a layered approach depending upon the need. For example, it may be appropriate to encrypt different kinds of data with different keys, despite running on top of the encryption offered by transport level security (TLS).
 
-Reslience is about system level robustness. The large number of IoT devices will make hardware and software faults inevitable. How to detect and work around these faults. Likewise for how to detect and gracefully work around cyberattacks, or even unpexpected spikes in demand for services. This suggests the need for monitoring the system behaviour and raising alerts, and for policies for adapting to changes.
+Resilience is about system level robustness. The large number of IoT devices will make hardware and software faults inevitable. How to detect and work around these faults. Likewise for how to detect and gracefully work around cyberattacks, or even unpexpected spikes in demand for services. This suggests the need for monitoring the system behaviour and raising alerts, and for policies for adapting to changes.
 
-A related requirement is to make systems resilient to different versions of services.  Can we enable todays services to work with yesterday's devices, and likewise for tomorrow's devices? One idea is to allow services to ignore new fields that they don't understand. This can include embedded data blobs that need to be passed on to services that know how to deal with them. 
+A related requirement is to make systems resilient to different versions of services.  Can we enable today's services to work with yesterday's devices, and likewise for tomorrow's devices? One idea is to allow services to ignore new fields that they don't understand. This can include embedded data blobs that need to be passed on to services that know how to deal with them. 
 
 We should be able to learn from experience with Linux package management systems which have proven to be very successful when it comes to managing dependencies between software packages and libraries. In essence, this involves adding version numbers to thing descriptions, along with constraints on version numbers for the things, this thing depends upon.  For this to work effectively, we need a framework for updating services, and for having multiple versions available at the same time.  A framework for updating services will also be essential for addressing security flaws.
 
