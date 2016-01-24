@@ -28,28 +28,39 @@ var ms = require('ms');
 */
 module.exports = {
 
-  ALPHA: 3,
-  B: 160,
-  K: 20,
+    ALPHA: 3,
+    B: 160,
+    K: 20,
+    
+    // TODO make these configurable
+    T_REFRESH: ms('3600s'),
+    T_REPLICATE: ms('3600s'),  
+    T_REPUBLISH: ms('86400s'),
+    T_EXPIRE: ms('3660s'),   // must be bigger than the replicate so the deleted keys can be replicated
+    
+    T_OFFLMSGREP: 5000,
 
-  T_REFRESH: ms('3600s'),
-  T_REPLICATE: ms('3600s'),
-  T_REPUBLISH: ms('86400s'),
+    // TODO make this configurable
+    T_MSG_EXPIRE: ms('259200s'), // 72 hours of message expiry
+    
+    // TODO make this configurable
+    T_ITEM_EXPIRE: ms('86460s'), // 24 hours of item expiry
 
-  // T_EXPIRE is 5s higher than protocol spec to avoid republish race condition
-  T_EXPIRE: ms('86405s'),
+    T_RESPONSETIMEOUT: ms('5s'),
+    
+    T_MAINTAIN_INTERVAL: 60000, 
+    
 
-  T_RESPONSETIMEOUT: ms('100s'),
-
-  MESSAGE_TYPES: [
-    'PING',
-    'PONG',
-    'STORE',
-    'STORE_REPLY',
-    'FIND_NODE',
-    'FIND_NODE_REPLY',
-    'FIND_VALUE',
-    'FIND_VALUE_REPLY'
-  ]
+    MESSAGE_TYPES: [
+        'PING',
+        'PONG',
+        'STORE',
+        'STORE_REPLY',
+        'FIND_NODE',
+        'FIND_NODE_REPLY',
+        'FIND_VALUE',
+        'FIND_VALUE_REPLY',
+        'PEERMSG'
+    ]
 
 };

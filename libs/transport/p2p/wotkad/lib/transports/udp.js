@@ -46,7 +46,7 @@ function UDPTransport(options) {
 
     this._socket.on('error', function(err) {
         var contact = self._contact;
-        self._log.warn('failed to bind to supplied address %s', contact.address);
+        self._log.error('failed to bind to supplied address %s', contact.address);
         self._log.info('binding to all interfaces as a fallback');
         self._socket.close();
 
@@ -58,8 +58,8 @@ function UDPTransport(options) {
     this._socket.on('listening', function() {
         self.emit('ready');
     });
-
-    this._socket.bind(this._contact.port, this._contact.address);
+    
+    this._socket.bind(this._contact.port, this._contact.address );
 }
 
 /**

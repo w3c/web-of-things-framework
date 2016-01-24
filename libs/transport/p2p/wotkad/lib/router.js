@@ -18,6 +18,7 @@ Copyright (C) 2015 The W3C WoT Team
 */
 'use strict';
 
+var util = require('util');
 var assert = require('assert');
 var async = require('async');
 var _ = require('lodash');
@@ -25,6 +26,7 @@ var constants = require('./constants');
 var utils = require('./utils');
 var Message = require('./message');
 var Contact = require('./contact');
+var logger = global.applogger;
 
 /**
 * Represents a router for finding nodes and values
@@ -104,12 +106,30 @@ Router.prototype._iterativeFind = function(contacts, callback) {
 Router.prototype._queryContact = function(contactInfo, callback) {
     var self = this;
     var contact = this.node._rpc._createContact(contactInfo);
+    
+    var address = this.node._rpc._contact.address;
+    var port = this.node._rpc._contact.port;
+    
+    if (contact.address == address && contact.port == port) {
+        try {
+            logger.debug("removing contact with own address and port nodeID: %s", contact.nodeID);
+            self._removeFromShortList(contact.nodeID);
+        }
+        catch (e) { }
+        return callback();
+    }
+    
+    //logger.debug("rpc.send " + contact.address + ":" + contact.port + " message: %j", this.message);
 
     this.node._rpc.send(contact, this.message, function(err, params) {
         if (err) {
+            var msg = util.format("_rpc.send error %s ; contact %j", (err.message ? err.message : err), contact);
+            logger.error(msg);
             self._removeFromShortList(contact.nodeID);
             return callback();
         }
+        
+        //logger.debug("rpc.send result: %j", params);
 
         self._handleFindResult(params, contact, callback);
     });
@@ -147,7 +167,15 @@ Router.prototype._handleFindResult = function (params, contact, callback) {
 
     var parsedValue;
     try {
-        parsedValue = JSON.parse(params.value).value;
+        if (params.value && (typeof params.value == "object" || typeof params.value == "Object")) {
+            parsedValue = params.value.value;
+        }
+        else if (params.value && (typeof params.value == "string" || typeof params.value == "String")) {
+            parsedValue = JSON.parse(params.value).value;
+        }
+        else {
+            throw new Error("invalid params.vale");
+        }        
     } 
     catch (err) {
         this.node._log.error('failed to parse value %s', params.value);
@@ -197,8 +225,9 @@ Router.prototype._removeFromShortList = function(nodeID) {
     });
 
     for (var i = 0; i < this.shortlist.length; i++) {
-        if (!(this.shortlist[i] instanceof Contact)) {
-            throw new Error('Invalid contact');
+        if (!this.shortlist[i].nodeID || !this.shortlist[i].address || !this.shortlist[i].port) {
+            this.node._log.error('shortlist invalid contact %j', this.shortlist[i]);
+            throw new Error('Invalid contact removeFromShortList()');
         }
     }
 };

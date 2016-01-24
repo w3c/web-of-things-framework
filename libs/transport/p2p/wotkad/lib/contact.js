@@ -30,7 +30,7 @@ var utils = require('./utils');
 function Contact(options) {
 
     assert(this instanceof Contact, 'Invalid instance was supplied');
-    assert(options instanceof Object, 'Invalid options were supplied');
+    assert(typeof options == "object", 'Invalid options were supplied');
 
     Object.defineProperty(
         this, 

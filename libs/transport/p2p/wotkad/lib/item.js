@@ -32,9 +32,9 @@ var crypto = require('crypto');
 * @param {string} publisher - nodeID
 * @param {number} timestamp - optional
 */
-function Item(key, value, publisher, timestamp) {
+function Item(key, value, publisher, timestamp, recipient) {
     if (!(this instanceof Item)) {
-        return new Item(key, value, publisher, timestamp);
+        return new Item(key, value, publisher, timestamp, recipient);
     }
 
     assert.ok(typeof key === 'string', 'Invalid key supplied');
@@ -56,6 +56,7 @@ function Item(key, value, publisher, timestamp) {
     this.value = value;
     this.publisher = publisher;
     this.timestamp = timestamp || Date.now();
+    this.recipient = recipient || "";
 }
 
 module.exports = Item;
