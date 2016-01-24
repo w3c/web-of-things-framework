@@ -17,7 +17,6 @@
     "express": "^4.13.1",
     "express-handlebars": "^2.0.1",
     "hat": "0.0.3",
-    "jsonwebtoken": "^5.4.1",
     "leveldown": "^1.4.2",
     "levelup": "^1.2.1",
     "lodash": "^3.10.1",
