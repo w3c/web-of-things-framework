@@ -9,7 +9,7 @@ var EventEmitter = require('events').EventEmitter
 var map = new Map();
 
 function KadLocalStorage(namespace) {
-    if (namespace.indexOf('_') >= 0) throw new Error('Invalid namespace, character "_" in the namespace and nick name is not allowed')
+    if (namespace.indexOf('_') >= 0) throw new Error('Invalid namespace, character "_" in the namespace and account name is not allowed')
     this._prefix = namespace + '_'
 }
 

@@ -37,12 +37,14 @@ function AddressPortContact(options) {
         return new AddressPortContact(options);
     }
 
-    assert(options instanceof Object, 'Invalid options were supplied');
+    assert(typeof options == "object", 'Invalid options were supplied');
     assert(typeof options.address === 'string', 'Invalid address was supplied');
     assert(typeof options.port === 'number', 'Invalid port was supplied');
+    assert(typeof options.account === 'string', 'Invalid account was supplied');
 
     this.address = options.address;
     this.port = options.port;
+    this.account = options.account;
 
     Contact.call(this, options)
 }
@@ -53,7 +55,7 @@ function AddressPortContact(options) {
 * #_createNodeID
 */
 AddressPortContact.prototype._createNodeID = function() {
-    return utils.createID(this.toString());
+    return utils.createID(this.account); //this.toString());
 };
 
 /**

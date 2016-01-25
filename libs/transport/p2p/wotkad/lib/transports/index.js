@@ -20,6 +20,6 @@ Copyright (C) 2015 The W3C WoT Team
 'use strict';
 
 module.exports = {
-  TCP: require('./tcp'),
-  UDP: require('./udp')
+    UDP: require('./udp'),
+    TCP: require('./tcp')
 };

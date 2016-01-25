@@ -13,6 +13,10 @@ You should have received a copy of the GNU General Public License along with W3C
  
 File created by Tibor Zsolt Pardi
 
+Based on https://github.com/gordonwritescode/kad.
+
+Credit to Gordon Hall at https://github.com/gordonwritescode to publish the orginal kad solution.
+
 Copyright (C) 2015 The W3C WoT Team
  
 */
@@ -28,7 +32,6 @@ var merge = require('merge');
 var constants = require('./constants');
 var Contact = require('./contact');
 var Message = require('./message');
-var logger = require('../../../../../logger');
 
 inherits(RPC, events.EventEmitter);
 
@@ -48,7 +51,7 @@ function RPC(options) {
   this._createMessageID = hat.rack(constants.B);
   this._pendingCalls = {};
   this._contact = this._createContact(options);
-  this._log = logger;
+  this._log = options.log;
 
   setInterval(this._expireCalls.bind(this), constants.T_RESPONSETIMEOUT + 5);
 }
@@ -61,11 +64,11 @@ function RPC(options) {
 * @param {function} callback
 */
 RPC.prototype.send = function (contact, message, callback) {
+
+    contact = this._createContact(contact);
+
+    //assert(contact.address && contact.port, 'Invalid contact supplied');
     //assert(contact instanceof Contact, 'Invalid contact supplied');
-    //if (!(contact instanceof Contact)) {
-    //    return; 
-    //}
-    assert(contact.address && contact.port, 'Invalid contact supplied');
     assert(message instanceof Message, 'Invalid message supplied');
 
     merge(message.params, {
@@ -84,6 +87,17 @@ RPC.prototype.send = function (contact, message, callback) {
         };
     }
 };
+
+//  The message parameter must be a buffer
+RPC.prototype.peer_send = function (contact, message) {
+    assert(contact && contact.address && contact.port, 'RPC peer_send error: Invalid contact supplied');
+    assert(message && (typeof message == "object" || typeof message == "Object" || typeof message == "Buffer" || typeof message == "buffer"), 
+        'RPC peer_send error: Invalid message supplied');
+
+    //var data = new Buffer(JSON.stringify(message), 'utf8');
+    this._send(message, contact);
+};
+
 
 /**
 * Close the underlying socket
@@ -106,29 +120,16 @@ RPC.prototype._handleMessage = function(buffer, info) {
     var contact;
 
     try {
-        try {
-            var id = buffer.readUInt32BE(0);
-            var type = buffer.readUInt16BE(4);
-            if (id == 0x75115507 && type == 0xDAD) {
-                return this.emit('peermsg', buffer, info);
-            }
-        }
-        catch (e) { }
-
         data = JSON.parse(buffer.toString('utf8'));
         params = data.params;
         contact = this._createContact(params);
         message = new Message(data.type, params, contact);
 
-        //this._log.debug('received valid message %j', message, {}); 
+        //this._log.debug('received valid message %j', message); 
     } 
     catch (err) {
-        //try {
-        //    var id = buffer.readUInt32BE(0);
-        //    var type = buffer.readUInt16BE(4);
-        //}
-        //catch (e) { }
-        return this.emit('MESSAGE_DROP', buffer, info);
+        this.emit('MESSAGE_DROP', buffer, info);
+        return this._log.error('_handleMessage error %j', err); 
     }
 
     var referenceID = message.params.referenceID;
@@ -137,12 +138,15 @@ RPC.prototype._handleMessage = function(buffer, info) {
     if (referenceID && pendingCall) {
         pendingCall.callback(null, message.params);
         delete this._pendingCalls[referenceID];
+        if (message.type == "PONG") {
+            this.emit(message.type, message.params, info);
+        }
     } 
     else {
         this.emit('CONTACT_SEEN', contact);
         
         //this._log.debug('emit message %s', message.type); 
-        this.emit(message.type, message.params);
+        this.emit(message.type, message.params, info);
     }
 };
 

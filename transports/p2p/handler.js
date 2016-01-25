@@ -7,10 +7,8 @@ var WoTMessage = require('../../libs/message/wotmsg');
 var list_of_seeds = [];
 //  TODO use persistent store Redis or Levelup for the public key list
 var contacts = {};
-var list_of_ecdhpkeys = {};
 
 exports.seed_nodes = list_of_seeds;
-
 
 exports.start = function start(settings) {
     try {
