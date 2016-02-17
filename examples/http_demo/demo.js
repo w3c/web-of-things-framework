@@ -1,4 +1,4 @@
-﻿// set this global config variable first
+// set this global config variable first
 global.appconfig = require('./config');
 // set the global logger
 global.applogger = require('../../logger');
@@ -8,25 +8,26 @@ global.is_door12_defined = true;
 global.is_switch12_defined = true;
 
 var events = require("events");
-var logger = global.applogger; 
+var logger = global.applogger;
 var db = require('../../data/db')();
 var wot = require('../../framework');
 var simulator = require('./simulator');
 var eventh = require('../../libs/events/thingevents');
 var adapter = require('../../libs/adapters/http');
+var express = require('express');
 
 var device = function (thing_name) {
 
-    var self = this;   
-    
+    var self = this;
+
     self.property_get = function (property, callback) {
         logger.debug("get property from HTTP device: " + property );
         var msg = {
             type: 'property_get',
             name: thing_name,
             property: property
-        };                
-        
+        };
+
         adapter.send(self.adapter_uri, "/", msg, function (err, result) {
             if (err) {
                 return callback(err);
@@ -36,12 +37,12 @@ var device = function (thing_name) {
                 callback(null, result.value);
             }
             else {
-                callback("Invalid HTTP property_get response");       
-            }     
+                callback("Invalid HTTP property_get response");
+            }
         });
     }
-    
-    
+
+
     self.setProperty = function (property, value) {
         logger.debug("send patch to device: " + property + ", value " + value);
         var msg = {
@@ -55,7 +56,7 @@ var device = function (thing_name) {
             // TODO handles the result
         });
     }
-    
+
     self.action = function (action) {
         logger.debug("invoke action " + action + " at device simulator");
         var msg = {
@@ -68,31 +69,31 @@ var device = function (thing_name) {
             // TODO handles the result
         });
     }
-    
+
     // create the HTTP adapter
     self.init = function(callback) {
         db.find_adapter(thing_name, "http", function (err, data) {
             if (err) {
                 return callback(err);
             }
-            
+
             //start the CoAP client/server
             if (!data || !data.device || !data.protocol || !data.host) {
                 return callback("Invalid http adapter configuration data");
-            }           
-            
+            }
+
             self.protocol = data.protocol;
             self.host = data.host;
             self.port = data.port;
             self.adapter_uri = self.protocol + "://" + self.host + ":" + self.port;
-            
+
             adapter.init(data, function (err) {
                 callback(err);
             });
 
         });
     }
-    
+
     self.unbind = function (callback) {
         adapter.unbind(function (err) {
             callback(err);
@@ -100,13 +101,13 @@ var device = function (thing_name) {
     }
 
     return self;
-    
+
 };
 
-/* 
+/*
     The thing definition includes name, model and implementation
     {
-        "name": "door12",    
+        "name": "door12",
         "model": {
             "@events": {
                 "bell": null,
@@ -127,7 +128,7 @@ var device = function (thing_name) {
 
 
 //
-//  The implementations of the things  
+//  The implementations of the things
 //
 
 var door_device = new device("door12");
@@ -139,7 +140,7 @@ var things = [
             db.find_thing("door12", callback);
         },
         "implementation": {
-            start: function (thing) {               
+            start: function (thing) {
                 door_device.init(function (err) {
                     if (err) {
                         return logger.error("HTTP door12 adapter initialisation error: " + err);
@@ -159,8 +160,8 @@ var things = [
                         callback(err);
                         return logger.error("HTTP adapter property_get error: " + err);
                     }
-                    
-                    callback(null, value);   
+
+                    callback(null, value);
                 });
             },
             //  must be the property set handler implemented here otherwise
@@ -181,7 +182,7 @@ var things = [
     {
         "thing": function (callback) {
             db.find_thing("switch12", callback);
-        },        
+        },
         "implementation": {
             start: function (thing) {
                 switch_device.init(function (err) {
@@ -190,7 +191,7 @@ var things = [
                     }
                 });
             },
-            stop: function (thing) { 
+            stop: function (thing) {
                 switch_device.unbind(function (err) {
                     if (err) {
                         return logger.error("HTTP adapter unbind error: " + err);
@@ -203,7 +204,7 @@ var things = [
                         callback(err);
                         return logger.error("HTTP adapter property_get error: " + err);
                     }
-                    
+
                     callback(null, value);
                 });
             },
@@ -216,7 +217,7 @@ var things = [
     //{
     //    "thing": function (callback) {
     //        db.find_thing("door33", callback);
-    //    },        
+    //    },
     //    "implementation": {
     //        start: function (thing) {
     //            d.onProperty("door33", function (err, property, value) {
@@ -238,6 +239,14 @@ catch (e) {
     logger.error("Error in initialising framework " + e.message);
 }
 
+// create express instance
+var api = express();
+
+// keep reference to config
+api.config = global.appconfig;
+
+// mount the URL router onto 'api'
+api.use('/', require('./api'));
 
 // start the device HTTP simulator
-simulator.start();
+simulator.start(api);

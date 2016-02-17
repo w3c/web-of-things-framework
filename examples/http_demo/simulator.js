@@ -1,14 +1,15 @@
-﻿var logger = require('../../logger');
-var restify = require('restify');
-
 var config = global.appconfig;
+
+var logger = require('../../logger');
+var http = require('http');
+var restify = require('restify');
 
 var COAP_RESULT_SUCCESS = 0;
 var COAP_ERROR_INVALID_REQUEST = 1;
 var COAP_ERROR_INVALID_REQUEST_FUNC = 2;
 var COAP_SERVER_ERROR = 3;
 
-function http_send(action, payload) {      
+function http_send(action, payload) {
     var url = config.servers.http.fqdn;
     var client = restify.createJsonClient({
         url: url,
@@ -20,83 +21,29 @@ function http_send(action, payload) {
         if (err) {
             return logger.error("Error in sending to /api/thing: " + err.message);
         }
-        
+
         if (!data || !data.result) {
             logger.error("Error in in sending to /api/thing");
         }
 
         client.close();
     });
-    
+
 }
 
-var simulator = function ( thing, port) {
+var simulator = function (app, thing, port) {
     logger.debug("starting HTTP device simulator for " + thing.name);
-    
-    var model = thing.model;
 
-    var server = restify.createServer();
-    server
-        .use(restify.fullResponse())
-        .use(restify.bodyParser());
-    
-    
-    server.post('/', function create(req, res, next) {
-        var data = req.params;
-        if (!data || !data.name || !data.type) {
-            return next(new Error('Device HTTP listener error: invalid parameters'));
-        }
+    var config = app.config || {};
 
-        try {
-            if (!data.type || !data.name || data.name != thing.name) {
-                return;
-            }
-            
-            logger.debug('HTTP device simulator received: ' + data.type + ' from ' + data.name);
-            
-            //console.log(req.params);
-            switch (data.type) {
-                case 'action':
-                    //  handle the action
-                    var action = data.action;
-                    if (model.actions[action]) {
-                        model.actions[action]();
-                    }
-                    res.send(200, { result: true });
-                    return next();
-                    break;
-            
-                case 'patch':
-                    //  set property
-                    var property = data.property;
-                    var value = data.value;
-                    if (model.properties[property]) {
-                        model.properties[property](value);
-                    }
-                    res.send(200, { result: true });
-                    return next();
-                    break;                
-            
-                case 'property_get':
-                    //  get property
-                    var property = data.property;
-                    var value = model.properties.get(property);
-                    res.send(200, { thing: thing.name, property: property, value: value });
-                    return next();
-                    break;
+    if (thing) {
+        // keep reference to thing and its model
+        app.thing = thing;
+    }
 
-                default:
-                    next(new Error('HTTP device listener error: invalid action type'));
-                    break;
-            }
-        }
-        catch (e) {
-            logger.error(e);
-            next(new Error('property get error: ' + e.message));
-        }       
-        
-    });
-    
+    // create HTTP server and listen incoming request
+    var server = http.createServer(app);
+
     server.listen(port, function () {
         logger.info('HTTP device simulator listener for thing ' + thing.name + ' started on port ' + port);
     });
@@ -114,7 +61,7 @@ var door = {
         "events": {
             "bell": function () {
                 //  Demonstrates to raise an event from the device by ringing the bell in every 30 seconds.
-                //  This implementation emits an event to the WoT listner. This will be most likely an HTTP end point call 
+                //  This implementation emits an event to the WoT listner. This will be most likely an HTTP end point call
                 //  from the device to the WoT listener in real world applications, but for this demo example we just emit an event
                 var ringbell = function () {
                     var data = {
@@ -124,7 +71,7 @@ var door = {
                             // this will be some relevant device data instead of this demo timestamp value
                             timestamp: Math.floor(Date.now() / 1000)
                         }
-                    };                    
+                    };
                     //send to the WoT CoAP server
                     http_send("eventsignall", data);
                 };
@@ -145,7 +92,7 @@ var door = {
                     thing: 'door12',
                     patch: 'is_camera_on',
                     data: value
-                };                
+                };
                 //send to the WoT CoAP server
                 http_send("propertychange", data);
 
@@ -247,7 +194,7 @@ var lightswitch = {
                         patch: 'power_consumption',
                         data: cons
                     };
-                    
+
                     lightswitch_prop_values["power_consumption"] = cons;
 
                     //send to new property to the WoT CoAP server
@@ -259,13 +206,14 @@ var lightswitch = {
     }
 };
 
-
-exports.start = function start() {
+exports.start = function start(app) {
     logger.debug('Start device simulator to communicate with WoT via the HTTP protocol');
-    var door_device = new simulator(door, 8890);
+    var door_device = new simulator(app, door, 8890);
     door.model.properties.battery_value();
     door.model.events.bell();
-    
-    var switch_device = new simulator(lightswitch, 8891);
+
+    var switch_device = new simulator(app, lightswitch, 8891);
     lightswitch.model.properties.power_consumption();
 }
+
+
