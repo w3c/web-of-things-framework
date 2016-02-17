@@ -8,7 +8,7 @@
   "dependencies": {
     "async": "^1.5.0",
     "bigi": "^1.4.1",
-    "body-parser": "^1.13.2",
+    "body-parser": "^1.15.0",
     "clarinet": "^0.11.0",
     "coap": "^0.12.0",
     "collections": "^1.2.4",

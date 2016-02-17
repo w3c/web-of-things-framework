@@ -15,6 +15,7 @@ var simulator = require('./simulator');
 var eventh = require('../../libs/events/thingevents');
 var adapter = require('../../libs/adapters/http');
 var express = require('express');
+var bodyParser = require('body-parser');
 
 var device = function (thing_name) {
 
@@ -241,6 +242,10 @@ catch (e) {
 
 // create express instance
 var api = express();
+
+// setup express middleware
+api.use(bodyParser.json());
+api.use(bodyParser.urlencoded({ extended: false }));
 
 // keep reference to config
 api.config = global.appconfig;
