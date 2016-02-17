@@ -1,1 +1,1 @@
-﻿# TODO list and scope of work of P2P, decentralized Internet of Things
+﻿# P2P, decentralized Internet of Things specifications
