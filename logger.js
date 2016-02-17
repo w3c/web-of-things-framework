@@ -1,4 +1,4 @@
-﻿var path = require('path');
+var path = require('path');
 var fs = require('fs');
 var winston = require('winston');
 
@@ -58,7 +58,7 @@ var logger = new (winston.Logger)({
 });
 
 function log_error(err, val1, val2, val3, val4) {
-    try {        
+    try {
         if (err) {
             //  most of js exceptions have a "message" field
             //  try to use that to get a friendly error message
@@ -151,3 +151,7 @@ function log_debug(msg, val1, val2, val3, val4) {
 exports.error = log_error;
 exports.info = log_info;
 exports.debug = log_debug;
+
+// the write stream for morgan
+var accessLogStream = fs.createWriteStream(logDir + '/access.log', {flags: 'a'});
+exports.accessLogStream = accessLogStream;

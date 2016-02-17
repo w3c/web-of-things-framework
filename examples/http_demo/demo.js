@@ -1,14 +1,11 @@
 // set this global config variable first
 global.appconfig = require('./config');
-// set the global logger
-global.applogger = require('../../logger');
 
 // define what things will be handled by this demo
 global.is_door12_defined = true;
 global.is_switch12_defined = true;
 
 var events = require("events");
-var logger = global.applogger;
 var db = require('../../data/db')();
 var wot = require('../../framework');
 var simulator = require('./simulator');
@@ -16,6 +13,8 @@ var eventh = require('../../libs/events/thingevents');
 var adapter = require('../../libs/adapters/http');
 var express = require('express');
 var bodyParser = require('body-parser');
+var logger = require('../../logger');
+var morgan = require('morgan')
 
 var device = function (thing_name) {
 
@@ -243,9 +242,12 @@ catch (e) {
 // create express instance
 var api = express();
 
-// setup express middleware
+// setup bodyParser middleware
 api.use(bodyParser.json());
 api.use(bodyParser.urlencoded({ extended: false }));
+
+// setup the logger and write stream
+api.use(morgan('combined', {stream: logger.accessLogStream}))
 
 // keep reference to config
 api.config = global.appconfig;
