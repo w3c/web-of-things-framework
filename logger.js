@@ -151,7 +151,3 @@ function log_debug(msg, val1, val2, val3, val4) {
 exports.error = log_error;
 exports.info = log_info;
 exports.debug = log_debug;
-
-// the write stream for morgan
-var accessLogStream = fs.createWriteStream(logDir + '/access.log', {flags: 'a'});
-exports.accessLogStream = accessLogStream;
