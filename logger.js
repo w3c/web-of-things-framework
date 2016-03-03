@@ -148,6 +148,14 @@ function log_debug(msg, val1, val2, val3, val4) {
     }
 }
 
+// write stream object
+var log_stream = {
+    write: function(message, encoding){
+        log_info(message);
+    }
+};
+
 exports.error = log_error;
 exports.info = log_info;
 exports.debug = log_debug;
+exports.stream = log_stream;

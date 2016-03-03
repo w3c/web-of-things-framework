@@ -247,13 +247,7 @@ api.use(bodyParser.json());
 api.use(bodyParser.urlencoded({ extended: false }));
 
 // setup the logger
-// use the Winston write stream for Morgan
-var logStream = {
-    write: function(message, encoding){
-        logger.info(message);
-    }
-};
-api.use(morgan('combined', {stream: logStream}))
+api.use(morgan('combined', {stream: logger.stream}))
 
 // keep reference to config
 api.config = global.appconfig;
