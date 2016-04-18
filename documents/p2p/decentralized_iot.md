@@ -1,4 +1,4 @@
-﻿# Decentralized peer-to-peer Internet of Things.
+﻿# Decentralised peer-to-peer Internet of Things.
 
 A decentralised, peer-to-peer (P2P) system is a collection of applications run on several local computers, which connect remotely to each other to complete a function or a task. A decentralised peer to peer overlay network manages connections between human and Internet of Things peers. The participants in the network are the peer nodes. The peer to peer network is scalable and an unlimited number of nodes can participate in the network.
 
