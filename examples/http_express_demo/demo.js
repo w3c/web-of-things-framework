@@ -246,8 +246,8 @@ var api = express();
 api.use(bodyParser.json());
 api.use(bodyParser.urlencoded({ extended: false }));
 
-// setup the logger and write stream
-api.use(morgan('combined', {stream: logger.accessLogStream}))
+// setup the logger
+api.use(morgan('combined', {stream: logger.stream}))
 
 // keep reference to config
 api.config = global.appconfig;

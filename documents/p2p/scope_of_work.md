@@ -1,0 +1,1 @@
+﻿# Scope of work of P2P, decentralized Internet of Things

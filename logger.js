@@ -1,4 +1,4 @@
-﻿var path = require('path');
+var path = require('path');
 var fs = require('fs');
 var winston = require('winston');
 
@@ -57,53 +57,105 @@ var logger = new (winston.Logger)({
     ]
 });
 
-function log_log(level, msg, val1, val2, val3, val4) {
-    try {        
-        if (msg) {
+function log_error(err, val1, val2, val3, val4) {
+    try {
+        if (err) {
             //  most of js exceptions have a "message" field
             //  try to use that to get a friendly error message
-            if (msg.message) {
-                logger.log(level, msg.message);
+            if (err.message) {
+                logger.error(err.message);
             }
             else {
                 if (val1 && val2 && val3 && val4) {
-                    logger.log(level, msg, val1, val2, val3, val4);
+                    logger.error(err, val1, val2, val3, val4);
                 }
                 else if (val1 && val2 && val3) {
-                    logger.log(level, msg, val1, val2, val3);
+                    logger.error(err, val1, val2, val3);
                 }
                 else if (val1 && val2) {
-                    logger.log(level, msg, val1, val2);
+                    logger.error(err, val1, val2);
                 }
                 else if (val1) {
-                    logger.log(level, msg, val1);
+                    logger.error(err, val1);
                 }
                 else {
-                    logger.log(level, msg);
+                    logger.error(err);
                 }
+            }
+        }
+    }
+    catch (e) {
+        if (err) {
+            // still log to the console
+            console.log(err.message ? err.message : err);
+        }
+    }
+}
+
+function log_info(msg, val1, val2, val3, val4) {
+    try {
+        if (msg) {
+            if (val1 && val2 && val3 && val4) {
+                logger.info(msg, val1, val2, val3, val4);
+            }
+            else if (val1 && val2 && val3) {
+                logger.info(msg, val1, val2, val3);
+            }
+            else if (val1 && val2) {
+                logger.info(msg, val1, val2);
+            }
+            else if (val1) {
+                logger.info(msg, val1);
+            }
+            else {
+                logger.info(msg);
             }
         }
     }
     catch (e) {
         if (msg) {
             // still log to the console
-            console.log(msg.message ? msg.message : msg);
+            console.log(msg)
         }
     }
 }
 
-function log_error(msg, val1, val2, val3, val4) {
-	log_log('error', msg, val1, val2, val3, val4);
-}
-
-function log_info(msg, val1, val2, val3, val4) {
-	log_log('info', msg, val1, val2, val3, val4);
-}
-
 function log_debug(msg, val1, val2, val3, val4) {
-	log_log('debug', msg, val1, val2, val3, val4);
+    try {
+        if (msg) {
+            if (val1 != undefined && val2 != undefined && val3 != undefined && val4 != undefined) {
+                logger.debug(msg, val1, val2, val3, val4);
+            }
+            else if (val1 != undefined && val2 != undefined && val3 != undefined ) {
+                logger.debug(msg, val1, val2, val3);
+            }
+            else if (val1 != undefined && val2 != undefined) {
+                logger.debug(msg, val1, val2);
+            }
+            else if (val1 != undefined ) {
+                logger.debug(msg, val1);
+            }
+            else {
+                logger.debug(msg);
+            }
+        }
+    }
+    catch (e) {
+        if (msg) {
+            // still log to the console
+            console.log(msg)
+        }
+    }
 }
+
+// write stream object
+var log_stream = {
+    write: function(message, encoding){
+        log_info(message);
+    }
+};
 
 exports.error = log_error;
 exports.info = log_info;
 exports.debug = log_debug;
+exports.stream = log_stream;

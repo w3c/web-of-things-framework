@@ -1,4 +1,4 @@
-﻿## WoT Framework P2P (peer to peer) Demo 
+﻿﻿## WoT Framework P2P (peer to peer) Demo 
 
 Run the P2P demo by executing "node demo.js" from the \examples\p2pdemo directory.
 
