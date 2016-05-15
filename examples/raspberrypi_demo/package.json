@@ -1,0 +1,21 @@
+{
+  "name": "streembit-pi",
+  "version": "1.0.1",
+  "description": "streembit-pi",
+  "main": "streembit.js",
+  "author": {
+    "name": "TZ Pardi",
+    "email": "tzpardi@streembit.com"
+  },
+  "dependencies": {
+    "collections": "^3.0.0",
+    "ds18x20": "^0.2.0",
+    "leveldown": "^1.4.3",
+    "levelup": "^1.3.1",
+    "pm2": "^1.0.0",
+    "secure-random": "^1.1.1",
+    "socket.io": "^1.4.3",
+    "streembitlib": "git+https://github.com/streembit/streembitlib.git",
+    "uuid": "^2.0.1"
+  }
+}

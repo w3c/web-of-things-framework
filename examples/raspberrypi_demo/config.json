@@ -1,0 +1,24 @@
+﻿{
+    "node": {
+        "account": "",
+        "address": "",
+        "port": 32320,
+        "seeds": [
+            { "address": "seed.streemio.org", "port": 32320, "public_key": "033b726f5ff2fc02a009ab2ef0844b807372af4b13d1236c2df9752de1ee93f5fa" },
+            { "address": "seed.streemio.net", "port": 32320, "public_key": "033d92278f9440c8b4061dddf862f5e224d0ff312e642edfa2c93c86671442609f" },
+            { "address": "seed.streemio.biz", "port": 32320, "public_key": "026f2303d7932ed86bf21b7150bcd45024f3926d37b615798855994b6b53e8b81b" },
+            { "address": "seed.streemo.uk", "port": 32320, "public_key": "035f4881a0c7d50af6fcf7cc40c3eab60c382bf7f8cd83cd2a3ff5064afd893c70" }
+        ]
+    },
+    "log": {
+        "level": "debug"
+    },
+    "transport":  "tcp",
+    "private_network": false,
+    "private_network_accounts": [ ],
+    "devices": [ ],
+    "contactsonly": true,
+    "contacts": [
+    ]
+
+}
