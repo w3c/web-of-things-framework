@@ -1,7 +1,7 @@
 # streembit-pi
-Raspberry Pi IoT implementation of Streembit using Node.js 
+Raspberry Pi decentralized, peer-to-peer IoT implementation 
 
-Setting up the Streembit system on the Raspberry Pi device
+Setting up the system on the Raspberry Pi device
 ----------------------------------------------------------
 
 Login to the Raspberry Pi device via terminal.   
