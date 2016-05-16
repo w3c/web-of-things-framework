@@ -1,4 +1,4 @@
-# streembit-pi
+# wot-pi
 Raspberry Pi decentralized, peer-to-peer IoT implementation 
 
 Setting up the system on the Raspberry Pi device
