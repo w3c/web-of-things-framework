@@ -6,30 +6,6 @@ Centralized corporate owned cloud is certainly an easier way to build out IoT pl
 
 In the near future, the doors, air condition units, and security system of homes will be fully internet connected. The users will be able to control their home automation system from a mobile phone device. It is essential that only the end user has full control over the IoT devices. Decentralised P2P Internet of Things aims to provide users with such exclusive control.
 
-The purpose of the readme is to describe 
-* security, including authentication, access control and data integrity
-* device discovery
-* existing and new standards 
-* protocols
-* interoperability with client/server systems
-
-for decentralised P2P Internet of Things.
-
-### Security
-A decentralised P2P IoT system performs public private key infrastructure based authentication and access control functions to securely connect peer nodes. The application generates at least one private/public key pair on each peer node including on the Internet-of-Things devices. The actors of the system publish their public keys to the peer to peer network via a Kademlia distributed hash table (DHT). Each peer node knows the public key of the other connected peer nodes. The system identifies peer nodes in the peer to peer network by their public key. To ensure data integrity the nodes sign the messages with their private key. The nodes sign all messages - there are no unsigned messages circulated in the system. The requirement for signing the messages also help to mitigate the risks of Sybil attacks and DDoS attacks.   
-The [device discovery readme](items/security.md) describes the scurity design and implementation for decentralised P2P IoT.
-
-
-### Device discovery
-Decentralised IoT allows providers and context producers to register their IoT Objects on the network, and in turn allow context consumers to discover them in a secure and peer to peer manner.     
-The [device discovery readme](items/device_discovery.md) describes device discovery in decentralised P2P IoT.
-
-### Standards 
-The [standards readme](items/standards.md) describes the decentralised P2P IoT standardization process.
-
-### Interoperability with client/server systems
-
-
 ### Protocol design
-The [interoperability readme](items/interoperability.md) describes how P2P IoT communicate with client/server systems.
+The [protocol readme document](protocol.md) describes the decentralized, peer-to-peer overlay network.
 
