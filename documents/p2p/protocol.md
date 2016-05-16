@@ -11,6 +11,7 @@
 	  +	4.1.1 Nodes   
 	  +	4.1.2 Transport layer  
 	  +	4.1.3 Storage  
+	  +	4.1.4 Blockchain
 	+ 4.2 System functions  
 		+ 4.2.1 Contact discovery 
 		+ 4.2.2 Service discovery 
