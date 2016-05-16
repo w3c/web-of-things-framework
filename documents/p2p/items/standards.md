@@ -1,1 +1,0 @@
-﻿# Decentralised, P2p IoT Standards
