@@ -26,7 +26,7 @@ This is made possible through rich metadata that describes the data and interact
 
 ## Abstract Messages and Communication Patterns
 
-When an application updates a property of a thing, this change needs to be propagated to other instances of that thing. This can be modelled in terms of an abstract message that is passed along the proxy chain. The mapping from abstract messages to concrete protocols varies from one protocol to the next, and depends on the communication patterns involved, e.g. push, pull, peer to peer, pub-sub and so forth. In some cases, this may involve buffering data for efficient transfer. Likewise, data from a set of sensors may be multiplexed into the same message.
+When an application updates a property of a thing, this change needs to be propagated to other instances of that thing. This can be modelled in terms of an abstract message that is passed along the proxy chain. A variety of other messages are needed to support actions, events etc. The mapping from abstract messages to concrete protocols varies from one protocol to the next, and depends on the communication patterns involved, e.g. push, pull, peer to peer, pub-sub and so forth. In some cases, this may involve buffering data for efficient transfer. Likewise, data from a set of sensors may be multiplexed into the same message.
 
 ## Further reading
 
