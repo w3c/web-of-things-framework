@@ -24,27 +24,14 @@ Applications are decoupled from the underlying protocols and communication patte
 
 This is made possible through rich metadata that describes the data and interaction models exposed to applications and the information needed for platforms to interoperate. This includes the details for how the application data model maps to a particular protocol, the specific security requirements, and the semantic description of things to ensure that platforms are using the same meaning for a thing when they exchange its data.
 
-## Abstract messages
+## Abstract Messages and Communication Patterns
 
-The protocol bindings can be described in terms of a mapping to a set of abstract messages:
-
-* property update with the thing, the property path and the new value
-* action invocation with the thing, the call id, the action name and the value to be passed
-* action response with the thing, the call id, the action name and the value to be passed
-* event notification with the thing, the event name and the value to be passed
-* (un)register for an event name
-* (un)register local proxy for remote thing
-* (un)register remote proxy for local thing
-* death of a thing or ancestor proxy
-
-As a distributed system the Web of Things is intrinsically asynchronous. When an application updates a thing's property value, this change is propagated to the rest of the software objects for this thing. Property updates form an implicit class of events, enabling applications to listen for changes in addition to reading and writing property values. The abstract message for a property update may involve a path description when the update is for a part of compound value.
-
-Some people are confused by what it means to pass a thing as a value. The answer is that at the abstract messaging layer, this just involves passing the URI for the thing's description. The platform is then responsible for constructing a local object as a proxy for the thing, and for initialising its property values.  Things are independent of their location. Applications see things as software objects in the execution space on the device the application is running on. At the abstract messaging layer a stream is a message carrying a single value in the time sequence of values that make up the stream.
+When an application updates a property of a thing, this change needs to be propagated to other instances of that thing. This can be modelled in terms of an abstract message that is passed along the proxy chain. The mapping from abstract messages to concrete protocols varies from one protocol to the next, and depends on the communication patterns involved, e.g. push, pull, peer to peer, pub-sub and so forth. In some cases, this may involve buffering data for efficient transfer. Likewise, data from a set of sensors may be multiplexed into the same message.
 
 ## Further reading
 
 * [proposal for the type system for things](./types.md).
 * [mapping from abstract messages to specific protocols](./abstract-msgs.md)
 * [proposal for representing things in JSON](./json-td.md)
-* [Application platforms for the Web of Things](./app-platforms.md)
+* [application platforms for the Web of Things](./app-platforms.md)
 
