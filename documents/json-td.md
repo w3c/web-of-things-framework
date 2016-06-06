@@ -154,7 +154,7 @@ In this example "out" could have been left out since the action doesn't have any
 
 ## Streams
 
-Properties can be defined as streams with the addition of metadata such as the sampling rate, e.g.
+Properties can be defined as streams with the addition of metadata for the sampling rate or sampling interval, e.g.
 
 ```
 "properties" : {
