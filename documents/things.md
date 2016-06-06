@@ -46,4 +46,5 @@ Some people are confused by what it means to pass a thing as a value. The answer
 * [proposal for the type system for things](./types.md).
 * [mapping from abstract messages to specific protocols](./abstract-msgs.md)
 * [proposal for representing things in JSON](./json-td.md)
+* [Application platforms for the Web of Things](./app-platforms.md)
 
