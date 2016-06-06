@@ -6,7 +6,7 @@ Based upon the rich experience with event driven programming, the starting point
 
 ## Things
 
-Things can have properties, actions and events:
+Things may have a combination of properties, actions and events:
 
 ## Properties
 
@@ -14,25 +14,25 @@ Things may have zero or more properties. Each property has a distinct name and a
 
 ## Actions
 
-These correspond to asynchronous methods. Applications can invoke named actions passing a value. Actions are associated with a sequence of zero or more responses which may carry a value. In principle, actions and responses could carry multiple values. Programming languages support positional arguments and named arguments.  However, given the ability to provide compound values with named fields, this extra complexity may not be justified.  The way in which responses are passed to applications could vary. One approach involves passing a call back to the action when invoking it. Another involves the action synchronously returning a "Promise" upon which the application can declare handlers.
+Things may have zero or more actions. These correspond to asynchronous methods. Applications can invoke named actions passing a value. Actions are associated with a sequence of zero or more responses which may carry a value. In principle, actions and responses could carry multiple values. Programming languages support positional arguments and named arguments.  However, given the ability to provide compound values with named fields, this extra complexity may not be justified.  The way in which responses are passed to applications could vary. One approach involves passing a call back to the action when invoking it. Another involves the action synchronously returning a "Promise" upon which the application can declare handlers.
 
 ## Events
 
-Objects can raise events to notify applications when something has happened, for example, an indicator light has failed.  Events have a name and a value.  Applications can register call backs for events with the same name. In principle, this could be extended to allow applications can register for a named collection of event names. One way to do that is with compound names and wild cards.
+Things may have zero or more events. Objects can raise events to notify applications when something has happened, for example, an indicator light has failed.  Events have a name and a value.  Applications can register call backs for events with the same name. In principle, this could be extended to allow applications can register for a named collection of event names. One way to do that is with compound names and wild cards.
 
 ## Values
 
 Each value has a type. The core types include:
 
-_null:_ this denotes the absence of a value
-_boolean:_ either true or false
-_number:_ including integers and floating point
-_string:_ a sequence of UTF-8 characters
+* **null**: this denotes the absence of a value
+* **boolean**: either true or false
+* **number**: including integers and floating point
+* **string**: a sequence of UTF-8 characters
 
 The following are anonymous compound types which can be nested to arbitrary depths:
 
-_object:_ a set of name/value pairs, possibly empty
-_array:_ a sequence of values, possibly empty
+* **object**: a set of name/value pairs, possibly empty
+* **array**: a sequence of values, possibly empty
 
 In addition, I propose to have things and streams as first class types, i.e. you can assign them to properties, pass them through events, when invoking actions or in responses to actions. Things are as defined above. Streams are an interface to a time sequence of values. 
 
