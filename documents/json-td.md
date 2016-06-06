@@ -17,8 +17,6 @@ When an application on one device wants to interact with a remote thing, it can 
 
 For devices where RAM is in short supply, it is appealing to be able to store literals in FLASH memory. This implies the desirability of a way to distinguish what is changeable from what is not. This is analogous to the use of "const" in C++. It would be useful with atomic and compound data.  Thing Descriptions should also make it possible for platforms to optimise the storage of data types, e.g. can a number be stored in a single byte or does it need more?  Can sets be represented as bit vectors?  In summary, Thing Descriptions should enable developers to provide information that platforms can use to optimise the storage and representation of data.
 
-
-
 ## An alternative approach
 
 The description starts with a JSON object with properties for the thing's "properties", "actions" and "events". These are in turn JSON objects with the names for the corresponding properties, actions and events. For example:
@@ -153,6 +151,24 @@ Actions are a little more complicated since you need to specify the type for the
 }
 ```
 In this example "out" could have been left out since the action doesn't have any responses. A common annotation for "out" is whether it repeats, i.e. "repeats" : true.  Values for events, actions and responses can be things as per the earlier example for properties.
+
+## Streams
+
+Properties can be defined as streams with the addition of metadata such as the sampling rate, e.g.
+
+```
+"properties" : {
+    "acceleration" : {
+        type = {
+            "x" : "number",
+            "y" : "number",
+            "z" : "number"
+        },
+        "sps" : 250
+    }
+}
+```
+which defines a property named "acceleration" with 3 sub-properties giving the acceleration along the x, y and z axes. The "sps" annotation defines the number of samples per second.
 
 ## Mapping to RDF
 
