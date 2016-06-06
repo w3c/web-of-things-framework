@@ -176,7 +176,7 @@ The URI for the thing description is taken as the subject for all of the top lev
 
 ## Integrity constraints as expressions
 
-To express richer constraints we may want to explore the use of operator expressions analogous to conditional expressions in programming languages. These could cover constraints that apply across properties, actions and events. It could also include cardinality constraints involving, for example, the number if items in array.
+To express richer constraints we may want to explore the use of operator expressions analogous to conditional expressions in programming languages. These could cover constraints that apply across properties, actions and events. It could also include cardinality constraints involving, for example, the number of items in an array. This would motivate a broadening of the syntax for JSON to allow for operator expressions as values, as otherwise, such expressions would need to be embedded within a string along with the need to escape double quote marks with a preceding backslash.
 
 Even richer constraints are best expressed as ontologies for semantic models of particular application domains. A simple example would state if a thing is a temperature sensor then it must define its physical units as one of {kelvin, celsius, fahrenheit}. Such ontologies are analogous to schemas for thing descriptions, whereas a thing description is a schema for the data and interaction model exposed to applications.
 
