@@ -6,7 +6,7 @@ Based upon the rich experience with event driven programming, the starting point
 
 ## Things
 
-Things may have a combination of properties, actions and events:
+Things may have a combination of metadata, properties, actions and events:
 
 ## Properties
 
