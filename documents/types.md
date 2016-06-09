@@ -1,6 +1,6 @@
 # Proposal for the type system for Things
 
-This issue concerns the type system for web of things applications, and is distinct from what takes place at the abstract messaging layer and specific protocol bindings. In addition, this particular issue avoids discussing the choice of representation for thing descriptions.
+This describes a proposal for the type system for web of things applications, and is distinct from what takes place at the abstract messaging layer and specific protocol bindings. In addition, this particular issue avoids discussing the choice of representation for thing descriptions.
 
 Based upon the rich experience with event driven programming, the starting point is software objects that are exposed to applications, and which stand for a physical or abstract entity. These objects are the "things" in the web of things and have a URI as part of the W3C Resource Description Framework. 
 
