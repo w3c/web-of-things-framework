@@ -16,4 +16,4 @@ How is this relevant to Web search engines?  Imagine, the ability to install app
 
 I am enjoying the slow process of implementing this as open source software, since being able to show people working examples is much more compelling than a slide presentation. My hope is that we can enable a thriving market of apps and services based upon open standards that lower the costs for integration across platforms and in doing so greatly expand the market potential.
 
-Dave Raggett, 6 June 2016
+Dave Raggett, June 2016
