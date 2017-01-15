@@ -2,8 +2,10 @@
   "name": "webofthings",
   "version": "0.0.1",
   "scripts": {
-    "start": "node demo.js",
-    "test": "./node_modules/.bin/mocha"
+    "start": "npm run start:coap_demo & npm run start:http_demo",
+    "start:coap_demo": "node ./examples/coap_demo/demo.js",
+    "start:http_demo": "node ./examples/http_demo/demo.js",
+    "test": "mocha"
   },
   "dependencies": {
     "async": "^1.5.0",
