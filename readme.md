@@ -1,5 +1,7 @@
 # Web of Things Framework for NodeJS
 
+[![Join the chat at https://gitter.im/w3c/web-of-things-framework](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/w3c/web-of-things-framework?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 This is an experimental implementation of the [Web of Things Framework](#1), including a combined HTTP and Web Sockets server, as well as a web page library for demoing access to "things" from within web page scripts. This work has been done in support of the [W3C Web of Things Interest Group](#3).
 
 A hundred billion IoT devices are expected to be deployed over the next ten years. There are many IoT platforms, and an increasing number of IoT technologies. However, the IoT products are currently beset by silos and a lack of interoperability, which blocks the benefits of the network effect from taking hold.  At W3C, we are exploring the potential for bridging IoT platforms and devices through the World Wide Web via a new class of Web servers that are connected through a common framework, and available in a variety of scales from microcontrollers, to smart phones and home/office hubs, and cloud-based server farms.
